@@ -19,7 +19,7 @@ public class App extends Application {
         stage.show();
     }
 
-    /** Login: tamaño fijo */
+    /** Login */
     public static void showLogin(Stage stage) throws IOException {
         Parent root = loadFXML("login");
         double width  = 1100;
@@ -43,10 +43,9 @@ public class App extends Application {
         stage.centerOnScreen();
     }
 
-    /** Main Layout: ocupa toda la pantalla por tamaño (sin estado maximized) */
+    /** Main Layout */
     public static void showMainLayoutFullArea(Stage stage) throws IOException {
-        Parent root = loadFXML("main_layout"); // <-- nombre del FXML
-
+        Parent root = loadFXML("main_layout");
         if (scene == null) {
             scene = new Scene(root);
             stage.setScene(scene);
@@ -56,13 +55,18 @@ public class App extends Application {
 
         stage.setTitle("HSBK – Principal");
 
-        // Calcula área visible (respeta barra de tareas/dock)
+        // Resetear límites del login
+        stage.setMinWidth(0);
+        stage.setMinHeight(0);
+        stage.setMaxWidth(Double.MAX_VALUE);
+        stage.setMaxHeight(Double.MAX_VALUE);
+
+        // Calcular el área visible (respeta barra de tareas/dock)
         Rectangle2D vb = Screen.getPrimary().getVisualBounds();
 
-        // Llenar la pantalla por tamaño (NO activar maximized)
-        stage.setResizable(false);      // permite redimensionar si quieres
         stage.setMaximized(false);
         stage.setFullScreen(false);
+        stage.setResizable(false);
 
         stage.setX(vb.getMinX());
         stage.setY(vb.getMinY());
