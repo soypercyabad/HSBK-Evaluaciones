@@ -3,6 +3,7 @@ target/
 
 # IntelliJ
 .idea/
+.fastRequest
 *.iml
 out/
 
