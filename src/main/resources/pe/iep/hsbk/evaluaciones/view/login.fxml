@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<GridPane
+        prefHeight="680"
+        prefWidth="1100"
+        xmlns="http://javafx.com/javafx/17.0.12"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="pe.iep.hsbk.evaluaciones.controller.LoginController">
+
+    <!-- CSS (relativo al FXML: /view -> ../css) -->
+    <stylesheets>
+        <URL value="@../css/login.css"/>
+    </stylesheets>
+
+    <columnConstraints>
+        <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+        <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+    </columnConstraints>
+
+    <rowConstraints>
+        <RowConstraints vgrow="ALWAYS"/>
+    </rowConstraints>
+
+    <!-- Izquierda: formulario -->
+    <AnchorPane styleClass="left-pane" GridPane.columnIndex="0">
+        <children>
+            <VBox
+                    spacing="16"
+                    AnchorPane.leftAnchor="64.0"
+                    AnchorPane.rightAnchor="64.0"
+                    AnchorPane.topAnchor="60.0">
+                <children>
+                    <Label
+                            prefHeight="16.0"
+                            prefWidth="425.0"
+                            styleClass="title-xl"
+                            text="Ingresa con tu cuenta">
+                        <font>
+                            <Font size="96.0"/>
+                        </font>
+                    </Label>
+
+                    <Label text="Usuario"/>
+                    <TextField fx:id="txtUsuario" promptText="Tu usuario"/>
+
+                    <Label text="Contraseña"/>
+                    <PasswordField fx:id="txtPassword" promptText="Tu contraseña"/>
+
+                    <CheckBox fx:id="chkRemember" text="Recordarme"/>
+
+                    <Button
+                            maxWidth="Infinity"
+                            onAction="#onLogin"
+                            styleClass="btn-primary"
+                            text="Ingresar"/>
+                </children>
+            </VBox>
+        </children>
+    </AnchorPane>
+
+    <!-- Derecha: UNA sola imagen llena + logo opcional arriba -->
+    <StackPane GridPane.columnIndex="1">
+        <!-- Imagen grande que se ajusta al contenedor -->
+        <ImageView fx:id="rightImage" fitHeight="0.0" fitWidth="0.0" preserveRatio="true">
+            <image>
+                <Image url="@../assets/portada.png"/>
+            </image>
+        </ImageView>
+
+        <!-- Logo (opcional) arriba-centrado -->
+        <ImageView
+                fx:id="logoImage"
+                fitHeight="120"
+                opacity="0.95"
+                preserveRatio="true"
+                StackPane.alignment="TOP_CENTER">
+            <StackPane.margin>
+                <Insets top="24.0"/>
+            </StackPane.margin>
+            <image>
+                <Image url="@../assets/logo.png"/>
+            </image>
+        </ImageView>
+    </StackPane>
+
+</GridPane>

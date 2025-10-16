@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="pe.iep.hsbk.evaluaciones.controller.StudentsListController"
+      spacing="16" styleClass="page">
+    <padding><Insets top="16" right="24" bottom="24" left="24"/></padding>
+
+    <!-- TOP BAR -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label text="Profesor: Percy Molina" styleClass="top-title"/>
+    </HBox>
+
+    <!-- TABS DE GRADO -->
+    <HBox spacing="8" styleClass="tabs-row">
+        <children>
+            <ToggleButton text="1°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
+            <ToggleButton text="2°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
+            <ToggleButton text="3°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
+            <ToggleButton text="4°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
+            <ToggleButton text="5°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
+            <ToggleButton text="6°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
+        </children>
+    </HBox>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <HBox spacing="24">
+        <!-- Columnita con botones de sección -->
+        <VBox spacing="8" prefWidth="140">
+            <children>
+                <Button text="Sección A" onAction="#onSeccionA" styleClass="section-btn"/>
+                <Button text="Sección B" onAction="#onSeccionB" styleClass="section-btn"/>
+                <Button text="Sección C" onAction="#onSeccionC" styleClass="section-btn"/>
+                <Button text="Sección D" onAction="#onSeccionD" styleClass="section-btn"/>
+                <Button text="Sección E" onAction="#onSeccionE" styleClass="section-btn"/>
+            </children>
+        </VBox>
+
+        <!-- Lista de alumnos -->
+        <VBox spacing="12" VBox.vgrow="ALWAYS">
+            <Label text="Lista de Alumnos" styleClass="block-title"/>
+
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <TextField fx:id="txtBuscar" promptText="Buscar por apellido, nombre o código" HBox.hgrow="ALWAYS"/>
+                <Button text="Buscar" onAction="#onBuscar" styleClass="primary-btn"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button text="Descargar" onAction="#onDescargar" styleClass="outline-btn"/>
+            </HBox>
+
+            <TableView fx:id="tblAlumnos" VBox.vgrow="ALWAYS" styleClass="table-card">
+                <columns>
+                    <TableColumn fx:id="colSel" text="" prefWidth="40"/>
+                    <TableColumn fx:id="colApellidos" text="Apellidos" prefWidth="260"/>
+                    <TableColumn fx:id="colNombres" text="Nombres" prefWidth="240"/>
+                    <TableColumn fx:id="colCodigo" text="Codigo" prefWidth="180"/>
+                    <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="120"/>
+                </columns>
+            </TableView>
+
+        </VBox>
+    </HBox>
+</VBox>

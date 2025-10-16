@@ -1,0 +1,48 @@
+/* Panel izquierdo */
+.left-pane {
+  -fx-background-color: #eeeeee;
+}
+
+.title-xl {
+  -fx-font-size: 28px;
+  -fx-font-weight: 800;
+  -fx-text-fill: #1f2937;
+}
+
+.text-field,
+.password-field {
+  -fx-background-radius: 12;
+  -fx-border-radius: 12;
+  -fx-padding: 10 12;
+}
+
+.btn-primary {
+  -fx-background-color: #07b4b4;
+  -fx-text-fill: white;
+  -fx-font-weight: 700;
+  -fx-background-radius: 12;
+  -fx-padding: 12 16;
+}
+
+.btn-primary:hover {
+  -fx-opacity: .96;
+}
+
+.btn-primary:pressed {
+  -fx-opacity: .90;
+}
+
+.btn-primary:focused {
+  -fx-effect: dropshadow(gaussian, rgba(7, 180, 180, .45), 10, .2, 0, 0);
+}
+
+/* Tipografía global */
+.grid-pane,
+.left-pane,
+.button,
+.label-form,
+.text-field,
+.password-field {
+  -fx-font-family: "Inter", "Segoe UI", system-ui;
+  -fx-font-size: 13px;
+}

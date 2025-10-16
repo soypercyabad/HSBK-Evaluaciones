@@ -1,0 +1,126 @@
+/* Colores base aproximados al Figma */
+.root {
+    -teal: #0e5d57;
+    -teal-soft: #0f6f66;
+    -bg: #f2f4f5;
+    -card: #ffffff;
+    -stroke: #e6e6ea;
+    -txt: #2a2d2f;
+    -muted: #7a7f85;
+    -primary: #14b8a6; /* botón buscar */
+}
+
+/* LAYOUT */
+.sidebar {
+    -fx-background-color: -teal;
+}
+.nav-btn {
+    -fx-background-color: transparent;
+    -fx-font-size: 14;
+    -fx-text-fill: #e9fffb;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 8 12 8 12;
+}
+.nav-btn-active {
+    -fx-background-color: #EDFEFF;
+    -fx-font-size: 14;
+    -fx-text-fill: #111827;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 12;
+}
+.nav-btn:hover {
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-text-fill: white;
+}
+.logout-btn {
+    -fx-background-color: rgba(255,255,255,0.15);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+}
+
+.content-container {
+    -fx-background-color: -bg;
+}
+
+/* PAGE */
+.page { -fx-background-color: -bg; }
+.top-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -txt;
+}
+
+/* TABS – ToggleButtons alineados como pestañas */
+.tabs-row { -fx-padding: 0 0 0 0; }
+.tab {
+    -fx-background-color: #e9eef0;
+    -fx-text-fill: -txt;
+    -fx-background-radius: 6;
+    -fx-padding: 10 18 10 18;
+    -fx-font-weight: bold;
+}
+.tab:selected {
+    -fx-background-color: -card;
+    -fx-border-color: -stroke;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+}
+
+/* SECCIONES */
+.section-btn {
+    -fx-background-color: -card;
+    -fx-text-fill: -txt;
+    -fx-background-radius: 8;
+    -fx-border-color: -stroke;
+    -fx-border-width: 1;
+}
+.section-btn:hover { -fx-background-color: #f7fafb; }
+
+/* ACCIONES SUPERIORES */
+.primary-btn {
+    -fx-background-color: -primary;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+}
+.outline-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: -primary;
+    -fx-text-fill: -primary;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+/* TITULITOS */
+.block-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* TABLA */
+.table-card {
+    -fx-background-color: -card;
+    -fx-background-radius: 8;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 8;
+    -fx-padding: 8;
+}
+.table-view .column-header-background {
+    -fx-background-color: #f5f7f9;
+}
+.table-view .column-header, .table-view .filler {
+    -fx-border-color: -stroke;
+}
+.icon-btn {
+    -fx-background-color: transparent;
+    -fx-padding: 6 10 6 10;
+}
+.icon-btn:hover {
+    -fx-background-color: #eef6f5;
+    -fx-background-radius: 6;
+}
