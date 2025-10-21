@@ -1,32 +1,28 @@
 package pe.iep.hsbk.evaluaciones.model;
 
 public class Usuario {
-  private String id;
+  private Long id;
   private String username;
+  private String passwordHash;
   private String nombre;
-  private String apellido;
-  private String claveSecreta;
-  private String rol; // Docente - Tutor - Admin
   private boolean activo;
 
   public Usuario() {
   }
 
-  public Usuario(String id, String username, String nombre, String apellido, String claveSecreta, String rol, boolean activo) {
+  public Usuario(Long id, String username, String passwordHash, String nombre, boolean activo) {
     this.id = id;
     this.username = username;
+    this.passwordHash = passwordHash;
     this.nombre = nombre;
-    this.apellido = apellido;
-    this.claveSecreta = claveSecreta;
-    this.rol = rol;
     this.activo = activo;
   }
 
-  public String getId() {
+  public Long getId() {
     return id;
   }
 
-  public void setId(String id) {
+  public void setId(Long id) {
     this.id = id;
   }
 
@@ -38,6 +34,14 @@ public class Usuario {
     this.username = username;
   }
 
+  public String getPasswordHash() {
+    return passwordHash;
+  }
+
+  public void setPasswordHash(String passwordHash) {
+    this.passwordHash = passwordHash;
+  }
+
   public String getNombre() {
     return nombre;
   }
@@ -46,35 +50,29 @@ public class Usuario {
     this.nombre = nombre;
   }
 
-  public String getApellido() {
-    return apellido;
-  }
-
-  public void setApellido(String apellido) {
-    this.apellido = apellido;
-  }
-
-  public String getClaveSecreta() {
-    return claveSecreta;
-  }
-
-  public void setClaveSecreta(String claveSecreta) {
-    this.claveSecreta = claveSecreta;
-  }
-
-  public String getRol() {
-    return rol;
-  }
-
-  public void setRol(String rol) {
-    this.rol = rol;
-  }
-
   public boolean isActivo() {
     return activo;
   }
 
   public void setActivo(boolean activo) {
     this.activo = activo;
+  }
+
+  @Override
+  public String toString() {
+    return nombre + " (" + username + ")";
+  }
+
+  @Override
+  public int hashCode() {
+    return id == null ? System.identityHashCode(this) : id.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Usuario)) return false;
+    Usuario other = (Usuario) o;
+    return id != null && id.equals(other.id);
   }
 }

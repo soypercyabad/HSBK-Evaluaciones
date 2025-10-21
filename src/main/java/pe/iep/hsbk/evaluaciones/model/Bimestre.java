@@ -1,54 +1,64 @@
 package pe.iep.hsbk.evaluaciones.model;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class Bimestre {
-  private String id;
-  private String nombre;
-  private LocalDateTime fechaInicio;
-  private LocalDateTime fechaFin;
+  private Long id;
+  private Long periodoId;
+  private byte numero; // 1..4
+  private LocalDate fechaInicio;
+  private LocalDate fechaFin;
   private boolean abierto;
 
   public Bimestre() {
   }
 
-  public Bimestre(String id, String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, boolean abierto) {
+  public Bimestre(Long id, Long periodoId, byte numero, LocalDate fechaInicio, LocalDate fechaFin, boolean abierto) {
     this.id = id;
-    this.nombre = nombre;
+    this.periodoId = periodoId;
+    this.numero = numero;
     this.fechaInicio = fechaInicio;
     this.fechaFin = fechaFin;
     this.abierto = abierto;
   }
 
-  public String getId() {
+  public Long getId() {
     return id;
   }
 
-  public void setId(String id) {
+  public void setId(Long id) {
     this.id = id;
   }
 
-  public String getNombre() {
-    return nombre;
+  public Long getPeriodoId() {
+    return periodoId;
   }
 
-  public void setNombre(String nombre) {
-    this.nombre = nombre;
+  public void setPeriodoId(Long periodoId) {
+    this.periodoId = periodoId;
   }
 
-  public LocalDateTime getFechaInicio() {
+  public byte getNumero() {
+    return numero;
+  }
+
+  public void setNumero(byte numero) {
+    this.numero = numero;
+  }
+
+  public LocalDate getFechaInicio() {
     return fechaInicio;
   }
 
-  public void setFechaInicio(LocalDateTime fechaInicio) {
+  public void setFechaInicio(LocalDate fechaInicio) {
     this.fechaInicio = fechaInicio;
   }
 
-  public LocalDateTime getFechaFin() {
+  public LocalDate getFechaFin() {
     return fechaFin;
   }
 
-  public void setFechaFin(LocalDateTime fechaFin) {
+  public void setFechaFin(LocalDate fechaFin) {
     this.fechaFin = fechaFin;
   }
 
@@ -58,5 +68,23 @@ public class Bimestre {
 
   public void setAbierto(boolean abierto) {
     this.abierto = abierto;
+  }
+
+  @Override
+  public String toString() {
+    return "Bim " + numero;
+  }
+
+  @Override
+  public int hashCode() {
+    return id == null ? System.identityHashCode(this) : id.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Bimestre)) return false;
+    Bimestre other = (Bimestre) o;
+    return id != null && id.equals(other.id);
   }
 }

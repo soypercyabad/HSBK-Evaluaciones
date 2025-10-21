@@ -1,19 +1,15 @@
 package pe.iep.hsbk.evaluaciones.model;
 
-public class Curso {
+public class Nivel {
   private Long id;
-  private Long nivelId;
   private String nombre;
-  private boolean activo;
 
-  public Curso() {
+  public Nivel() {
   }
 
-  public Curso(Long id, Long nivelId, String nombre, boolean activo) {
+  public Nivel(Long id, String nombre) {
     this.id = id;
-    this.nivelId = nivelId;
     this.nombre = nombre;
-    this.activo = activo;
   }
 
   public Long getId() {
@@ -24,28 +20,12 @@ public class Curso {
     this.id = id;
   }
 
-  public Long getNivelId() {
-    return nivelId;
-  }
-
-  public void setNivelId(Long nivelId) {
-    this.nivelId = nivelId;
-  }
-
   public String getNombre() {
     return nombre;
   }
 
   public void setNombre(String nombre) {
     this.nombre = nombre;
-  }
-
-  public boolean isActivo() {
-    return activo;
-  }
-
-  public void setActivo(boolean activo) {
-    this.activo = activo;
   }
 
   @Override
@@ -61,8 +41,8 @@ public class Curso {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Curso)) return false;
-    Curso other = (Curso) o;
+    if (!(o instanceof Nivel)) return false;
+    Nivel other = (Nivel) o;
     return id != null && id.equals(other.id);
   }
 }

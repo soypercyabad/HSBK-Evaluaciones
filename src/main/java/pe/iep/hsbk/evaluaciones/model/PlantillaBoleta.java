@@ -1,18 +1,18 @@
 package pe.iep.hsbk.evaluaciones.model;
 
-public class Curso {
+public class PlantillaBoleta {
   private Long id;
-  private Long nivelId;
   private String nombre;
+  private String contenidoHtml;
   private boolean activo;
 
-  public Curso() {
+  public PlantillaBoleta() {
   }
 
-  public Curso(Long id, Long nivelId, String nombre, boolean activo) {
+  public PlantillaBoleta(Long id, String nombre, String contenidoHtml, boolean activo) {
     this.id = id;
-    this.nivelId = nivelId;
     this.nombre = nombre;
+    this.contenidoHtml = contenidoHtml;
     this.activo = activo;
   }
 
@@ -24,20 +24,20 @@ public class Curso {
     this.id = id;
   }
 
-  public Long getNivelId() {
-    return nivelId;
-  }
-
-  public void setNivelId(Long nivelId) {
-    this.nivelId = nivelId;
-  }
-
   public String getNombre() {
     return nombre;
   }
 
   public void setNombre(String nombre) {
     this.nombre = nombre;
+  }
+
+  public String getContenidoHtml() {
+    return contenidoHtml;
+  }
+
+  public void setContenidoHtml(String contenidoHtml) {
+    this.contenidoHtml = contenidoHtml;
   }
 
   public boolean isActivo() {
@@ -61,8 +61,8 @@ public class Curso {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Curso)) return false;
-    Curso other = (Curso) o;
+    if (!(o instanceof PlantillaBoleta)) return false;
+    PlantillaBoleta other = (PlantillaBoleta) o;
     return id != null && id.equals(other.id);
   }
 }

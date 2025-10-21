@@ -2,28 +2,28 @@ package pe.iep.hsbk.evaluaciones.model;
 
 import java.time.LocalDateTime;
 
-public class Nota {
+public class RecomendacionAlumno {
   private Long id;
   private Long matriculaId;
-  private Long cursoId;
   private Long bimestreId;
-  private Long evaluacionTipoId;
-  private Double calificacion;     // DECIMAL(5,2)
-  private String letra;            // AD/A/B/C/00
+  private Long recomendacionId;
+  private String mensajePersonal;
+  private Long usuarioId;
   private LocalDateTime fechaRegistro;
   private LocalDateTime fechaActualizacion;
 
-  public Nota() {
+  public RecomendacionAlumno() {
   }
 
-  public Nota(Long id, Long matriculaId, Long cursoId, Long bimestreId, Long evaluacionTipoId, Double calificacion, String letra, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion) {
+  public RecomendacionAlumno(Long id, Long matriculaId, Long bimestreId, Long recomendacionId,
+                             String mensajePersonal, Long usuarioId,
+                             LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion) {
     this.id = id;
     this.matriculaId = matriculaId;
-    this.cursoId = cursoId;
     this.bimestreId = bimestreId;
-    this.evaluacionTipoId = evaluacionTipoId;
-    this.calificacion = calificacion;
-    this.letra = letra;
+    this.recomendacionId = recomendacionId;
+    this.mensajePersonal = mensajePersonal;
+    this.usuarioId = usuarioId;
     this.fechaRegistro = fechaRegistro;
     this.fechaActualizacion = fechaActualizacion;
   }
@@ -44,14 +44,6 @@ public class Nota {
     this.matriculaId = matriculaId;
   }
 
-  public Long getCursoId() {
-    return cursoId;
-  }
-
-  public void setCursoId(Long cursoId) {
-    this.cursoId = cursoId;
-  }
-
   public Long getBimestreId() {
     return bimestreId;
   }
@@ -60,28 +52,28 @@ public class Nota {
     this.bimestreId = bimestreId;
   }
 
-  public Long getEvaluacionTipoId() {
-    return evaluacionTipoId;
+  public Long getRecomendacionId() {
+    return recomendacionId;
   }
 
-  public void setEvaluacionTipoId(Long evaluacionTipoId) {
-    this.evaluacionTipoId = evaluacionTipoId;
+  public void setRecomendacionId(Long recomendacionId) {
+    this.recomendacionId = recomendacionId;
   }
 
-  public Double getCalificacion() {
-    return calificacion;
+  public String getMensajePersonal() {
+    return mensajePersonal;
   }
 
-  public void setCalificacion(Double calificacion) {
-    this.calificacion = calificacion;
+  public void setMensajePersonal(String mensajePersonal) {
+    this.mensajePersonal = mensajePersonal;
   }
 
-  public String getLetra() {
-    return letra;
+  public Long getUsuarioId() {
+    return usuarioId;
   }
 
-  public void setLetra(String letra) {
-    this.letra = letra;
+  public void setUsuarioId(Long usuarioId) {
+    this.usuarioId = usuarioId;
   }
 
   public LocalDateTime getFechaRegistro() {
@@ -102,7 +94,7 @@ public class Nota {
 
   @Override
   public String toString() {
-    return "Nota{id=" + id + "}";
+    return "RecomendacionAlumno{id=" + id + "}";
   }
 
   @Override
@@ -113,8 +105,8 @@ public class Nota {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Nota)) return false;
-    Nota other = (Nota) o;
+    if (!(o instanceof RecomendacionAlumno)) return false;
+    RecomendacionAlumno other = (RecomendacionAlumno) o;
     return id != null && id.equals(other.id);
   }
 }

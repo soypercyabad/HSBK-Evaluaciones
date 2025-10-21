@@ -1,18 +1,20 @@
 package pe.iep.hsbk.evaluaciones.model;
 
-public class Firma {
+public class TutorAsignacion {
   private Long id;
   private Long usuarioId;
-  private byte[] imagen;
+  private Long seccionId;
+  private Long periodoId;
   private boolean activo;
 
-  public Firma() {
+  public TutorAsignacion() {
   }
 
-  public Firma(Long id, Long usuarioId, byte[] imagen, boolean activo) {
+  public TutorAsignacion(Long id, Long usuarioId, Long seccionId, Long periodoId, boolean activo) {
     this.id = id;
     this.usuarioId = usuarioId;
-    this.imagen = imagen;
+    this.seccionId = seccionId;
+    this.periodoId = periodoId;
     this.activo = activo;
   }
 
@@ -32,12 +34,20 @@ public class Firma {
     this.usuarioId = usuarioId;
   }
 
-  public byte[] getImagen() {
-    return imagen;
+  public Long getSeccionId() {
+    return seccionId;
   }
 
-  public void setImagen(byte[] imagen) {
-    this.imagen = imagen;
+  public void setSeccionId(Long seccionId) {
+    this.seccionId = seccionId;
+  }
+
+  public Long getPeriodoId() {
+    return periodoId;
+  }
+
+  public void setPeriodoId(Long periodoId) {
+    this.periodoId = periodoId;
   }
 
   public boolean isActivo() {
@@ -50,7 +60,7 @@ public class Firma {
 
   @Override
   public String toString() {
-    return "Firma{id=" + id + "}";
+    return "TutorAsignacion{id=" + id + "}";
   }
 
   @Override
@@ -61,8 +71,8 @@ public class Firma {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Firma)) return false;
-    Firma other = (Firma) o;
+    if (!(o instanceof TutorAsignacion)) return false;
+    TutorAsignacion other = (TutorAsignacion) o;
     return id != null && id.equals(other.id);
   }
 }
