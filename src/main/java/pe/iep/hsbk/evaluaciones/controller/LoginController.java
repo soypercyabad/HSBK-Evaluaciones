@@ -31,23 +31,21 @@ public class LoginController {
             ex.printStackTrace();
 
             // Info
-            Dialogs.info(stage, "Listo", null, "Operación completada.");
+            Dialogs.info(stage, null, "Operación completada.");
 
-// Warning
-            Dialogs.warn(stage, "Atención", "Datos faltantes", "Debes ingresar el usuario.");
+            // Warning
+            Dialogs.warn(stage, "Datos faltantes", "Debes ingresar el usuario.");
 
-// Error
-            Dialogs.error(stage, "Error", null, "No se pudo guardar los cambios.");
+            // Error
+            Dialogs.error(stage, null, "No se pudo guardar los cambios.");
 
-// Confirmación
-            if (Dialogs.confirm(stage, "Confirmar", null, "¿Deseas eliminar el registro?")) {
+            // Confirmación
+            if (Dialogs.confirm(stage, null, "¿Deseas eliminar el registro?")) {
                 // ejecutar acción
             }
 
             // Error con stacktrace
             Dialogs.errorConStacktrace(stage, "Error inesperado", "Ocurrió un problema", ex.getMessage(), ex);
-
-
         }
     }
 

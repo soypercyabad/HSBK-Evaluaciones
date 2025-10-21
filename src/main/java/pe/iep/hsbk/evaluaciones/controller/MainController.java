@@ -7,6 +7,7 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import pe.iep.hsbk.evaluaciones.App;
+import pe.iep.hsbk.evaluaciones.util.Dialogs;
 
 public class MainController {
 
@@ -49,7 +50,9 @@ public class MainController {
   private void onLogout() {
     try {
       Stage stage = (Stage) contentContainer.getScene().getWindow();
-      App.showLogin(stage); // ← vuelve al login tamaño fijo
+      if (Dialogs.confirm(stage, "¿Seguro que desea cerrar sesión?", "")) {
+        App.showLogin(stage); // ← vuelve al login tamaño fijo
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -9,12 +9,18 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class App extends Application {
     private static Scene scene;
 
+    // java
     @Override
     public void start(Stage stage) throws IOException {
+        // ...
+        var is = getClass().getResourceAsStream("/pe/iep/hsbk/evaluaciones/assets/icono.png");
+        if (is == null) throw new IllegalStateException("Icono no encontrado: /pe/iep/hsbk/evaluaciones/assets/icono.png");
+        stage.getIcons().add(new javafx.scene.image.Image(is));
         showLogin(stage);
         stage.show();
     }

@@ -2,65 +2,83 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.*?>
-<?import javafx.scene.text.*?>
 
-<VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="pe.iep.hsbk.evaluaciones.controller.StudentsListController"
-      spacing="16" styleClass="page">
-    <padding><Insets top="16" right="24" bottom="24" left="24"/></padding>
+<VBox spacing="16" styleClass="page"
+      xmlns="http://javafx.com/javafx/17.0.12"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="pe.iep.hsbk.evaluaciones.controller.StudentsListController">
+
+    <padding>
+        <Insets bottom="24" left="24" right="24" top="16" />
+    </padding>
 
     <!-- TOP BAR -->
     <HBox alignment="CENTER_LEFT" spacing="12">
-        <Label text="Profesor: Percy Molina" styleClass="top-title"/>
+        <Label styleClass="top-title" text="Profesor: Percy Molina" />
     </HBox>
 
-    <!-- TABS DE GRADO -->
-    <HBox spacing="8" styleClass="tabs-row">
-        <children>
-            <ToggleButton text="1°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
-            <ToggleButton text="2°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
-            <ToggleButton text="3°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
-            <ToggleButton text="4°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
-            <ToggleButton text="5°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
-            <ToggleButton text="6°" toggleGroup="$grpGrados" onAction="#onChangeGrado" styleClass="tab"/>
-        </children>
-    </HBox>
+    <!-- GRADOS con SCROLL HORIZONTAL -->
+    <!-- GRADOS con scroll horizontal SIN scroll vertical -->
+    <ScrollPane styleClass="tabs-scroll"
+                hbarPolicy="AS_NEEDED"
+                vbarPolicy="NEVER"
+                fitToHeight="true"
+                fitToWidth="false"
+                pannable="true" minHeight="54">   <!-- alto “target” del contenido -->
+        <content>
+            <!-- fillHeight hace que los hijos usen la altura disponible -->
+            <HBox spacing="8.0" styleClass="tabs-row" fillHeight="true" alignment="CENTER_LEFT">
+                <ToggleButton onAction="#onChangeGrado" selected="true" styleClass="tab" text="1°" userData="1">
+                    <toggleGroup><ToggleGroup fx:id="grpGrados"/></toggleGroup>
+                </ToggleButton>
+                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="2°" toggleGroup="$grpGrados" userData="2"/>
+                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="3°" toggleGroup="$grpGrados" userData="3"/>
+                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="4°" toggleGroup="$grpGrados" userData="4"/>
+                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="5°" toggleGroup="$grpGrados" userData="5"/>
+                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="6°" toggleGroup="$grpGrados" userData="6"/>
+            </HBox>
+        </content>
+    </ScrollPane>
+
 
     <!-- CONTENIDO PRINCIPAL -->
     <HBox spacing="24">
-        <!-- Columnita con botones de sección -->
-        <VBox spacing="8" prefWidth="140">
-            <children>
-                <Button text="Sección A" onAction="#onSeccionA" styleClass="section-btn"/>
-                <Button text="Sección B" onAction="#onSeccionB" styleClass="section-btn"/>
-                <Button text="Sección C" onAction="#onSeccionC" styleClass="section-btn"/>
-                <Button text="Sección D" onAction="#onSeccionD" styleClass="section-btn"/>
-                <Button text="Sección E" onAction="#onSeccionE" styleClass="section-btn"/>
-            </children>
-        </VBox>
+        <!-- SECCIONES con SCROLL VERTICAL -->
+        <ScrollPane styleClass="sections-scroll"
+                    prefWidth="160" fitToWidth="true"
+                    hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+            <content>
+                <VBox prefWidth="140" spacing="8">
+                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección A" userData="A" selected="true">
+                        <toggleGroup><ToggleGroup fx:id="grpSecciones"/></toggleGroup>
+                    </ToggleButton>
+                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección B" toggleGroup="$grpSecciones" userData="B"/>
+                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección C" toggleGroup="$grpSecciones" userData="C"/>
+                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección D" toggleGroup="$grpSecciones" userData="D"/>
+                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección E" toggleGroup="$grpSecciones" userData="E"/>
+                </VBox>
+            </content>
+        </ScrollPane>
 
         <!-- Lista de alumnos -->
         <VBox spacing="12" VBox.vgrow="ALWAYS">
-            <Label text="Lista de Alumnos" styleClass="block-title"/>
-
-            <HBox spacing="8" alignment="CENTER_LEFT">
+            <Label styleClass="block-title" text="Lista de Alumnos"/>
+            <HBox alignment="CENTER_LEFT" spacing="8">
                 <TextField fx:id="txtBuscar" promptText="Buscar por apellido, nombre o código" HBox.hgrow="ALWAYS"/>
-                <Button text="Buscar" onAction="#onBuscar" styleClass="primary-btn"/>
+                <Button onAction="#onBuscar" styleClass="primary-btn" text="Buscar"/>
                 <Pane HBox.hgrow="ALWAYS"/>
-                <Button text="Descargar" onAction="#onDescargar" styleClass="outline-btn"/>
+                <Button onAction="#onDescargar" styleClass="outline-btn" text="Descargar"/>
             </HBox>
 
-            <TableView fx:id="tblAlumnos" VBox.vgrow="ALWAYS" styleClass="table-card">
+            <TableView fx:id="tblAlumnos" styleClass="table-card" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="colSel" text="" prefWidth="40"/>
-                    <TableColumn fx:id="colApellidos" text="Apellidos" prefWidth="260"/>
-                    <TableColumn fx:id="colNombres" text="Nombres" prefWidth="240"/>
-                    <TableColumn fx:id="colCodigo" text="Codigo" prefWidth="180"/>
-                    <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="120"/>
+                    <TableColumn fx:id="colSel" prefWidth="50" text=""/>
+                    <TableColumn fx:id="colApellidos" prefWidth="260" text="Apellidos"/>
+                    <TableColumn fx:id="colNombres" prefWidth="240" text="Nombres"/>
+                    <TableColumn fx:id="colCodigo" prefWidth="180" text="Código"/>
+                    <TableColumn fx:id="colAcciones" prefWidth="100" text="Acciones"/>
                 </columns>
             </TableView>
-
         </VBox>
     </HBox>
 </VBox>
