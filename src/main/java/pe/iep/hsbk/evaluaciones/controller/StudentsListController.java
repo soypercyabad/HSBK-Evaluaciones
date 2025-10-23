@@ -46,20 +46,20 @@ public class StudentsListController implements SesionAware {
   @FXML private TableColumn<Alumno, String> colCodigo;
   @FXML private TableColumn<Alumno, Void> colAcciones;
 
-  // Contenedores donde se pintarán los toggles dinámicamente
+  // Contenedores para toggles dinámicos
   @FXML private HBox paneGrados;
   @FXML private VBox paneSecciones;
 
-  // ToggleGroups creados en código
+  // ToggleGroups
   private final ToggleGroup grpGrados = new ToggleGroup();
   private final ToggleGroup grpSecciones = new ToggleGroup();
 
   // Sesión
   private UserSession userSession;
-  private Long periodoId;     // obtenido por nombre, ej. "2025"
-  private Long nivelId = 1L;  // ajusta: 1=Primaria, 2=Secundaria (o pásalo por setter)
+  private Long periodoId; // 2025
+  private Long nivelId;   // 1=Primaria, 2=Secundaria
 
-  // Estado selección actual (IDs reales)
+  // Selecciones actuales
   private Long gradoSelId;
   private Long seccionSelId;
 
@@ -75,8 +75,9 @@ public class StudentsListController implements SesionAware {
   private final AlumnoDao alumnoDao = new AlumnoDaoImpl();
 
   // Caches
-  private final Map<Long, List<Seccion>> cacheSeccionesPorGrado = new HashMap<>();
-  private final Map<String, List<Alumno>> cacheAlumnosPorSeccionPeriodo = new HashMap<>();
+  private final Map<String, List<Grado>>   cacheGradosPorPeriodoNivel   = new HashMap<>();
+  private final Map<Long,   List<Seccion>> cacheSeccionesPorGrado       = new HashMap<>();
+  private final Map<String, List<Alumno>>  cacheAlumnosPorSeccionPeriodo= new HashMap<>();
 
   @Override
   public void setSession(UserSession s) {
@@ -97,13 +98,15 @@ public class StudentsListController implements SesionAware {
     }
 
     try {
-      // obtiene periodo por nombre de sesión (p.ej. "2025")
-      String perNombre = (userSession != null && userSession.getPeriodoNombre()!=null)
+      String perNombre = (userSession != null && userSession.getPeriodoNombre() != null)
           ? userSession.getPeriodoNombre()
           : "2025";
       periodoId = periodoDao.getPeriodoIdPorNombre(perNombre);
 
-      poblarGrados(); // → esto a su vez poblará secciones y alumnos
+      // Solo poblar si YA tenemos nivel (lo setea MainController vía setNivelId)
+      if (periodoId != null && nivelId != null) {
+        poblarGrados();
+      }
     } catch (Exception e) {
       e.printStackTrace();
       Dialogs.error(null, "Error", "No se pudo inicializar grados/secciones.");
@@ -113,9 +116,13 @@ public class StudentsListController implements SesionAware {
   // ======== UI dinámica: grados / secciones ========
   private void poblarGrados() throws Exception {
     paneGrados.getChildren().clear();
-    grpGrados.getToggles().clear(); // limpia el grupo
+    grpGrados.getToggles().clear();
 
-    var grados = gradoDao.listarGradosActivos(periodoId, nivelId);
+    String key = periodoId + ":" + nivelId;
+    var grados = cacheGradosPorPeriodoNivel.computeIfAbsent(key, k -> {
+      try { return gradoDao.listarGradosActivos(periodoId, nivelId); }
+      catch (Exception e) { throw new RuntimeException(e); }
+    });
 
     for (var g : grados) {
       ToggleButton tb = new ToggleButton(g.getNombre());
@@ -126,7 +133,7 @@ public class StudentsListController implements SesionAware {
       paneGrados.getChildren().add(tb);
     }
 
-    if (!grados.isEmpty()) {
+    if (!grados.isEmpty() && !grpGrados.getToggles().isEmpty()) {
       grpGrados.selectToggle(grpGrados.getToggles().get(0));
       onChangeGradoDynamic();
     } else {
@@ -168,14 +175,13 @@ public class StudentsListController implements SesionAware {
       paneSecciones.getChildren().add(tb);
     }
 
-    if (!secciones.isEmpty()) {
+    if (!secciones.isEmpty() && !grpSecciones.getToggles().isEmpty()) {
       grpSecciones.selectToggle(grpSecciones.getToggles().get(0));
       onChangeSeccionDynamic();
     } else {
       master.clear();
     }
   }
-
 
   private void onChangeSeccionDynamic() {
     Toggle sel = grpSecciones.getSelectedToggle();
@@ -187,7 +193,18 @@ public class StudentsListController implements SesionAware {
 
   private void cargarAlumnos() {
     try {
-      var data = alumnoDao.listarPorSeccionPeriodo(Math.toIntExact(seccionSelId), Math.toIntExact(periodoId));
+      String key = seccionSelId + ":" + periodoId;
+      var data = cacheAlumnosPorSeccionPeriodo.computeIfAbsent(key, k -> {
+        try {
+          return alumnoDao.listarPorSeccionPeriodo(
+              Math.toIntExact(seccionSelId), Math.toIntExact(periodoId));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+
+      // Evitar que queden checks de otra sección
+      selectedMap.keySet().retainAll(data);
       master.setAll(data);
       refiltrar();
     } catch (Exception e) {
@@ -268,7 +285,7 @@ public class StudentsListController implements SesionAware {
     );
   }
 
-  // ==== Handlers de tus botones de arriba ====
+  // ==== Handlers ====
   @FXML private void onBuscar() { refiltrar(); }
 
   @FXML
@@ -285,5 +302,25 @@ public class StudentsListController implements SesionAware {
       }
       Dialogs.info(null, "Descarga Completada", "El archivo se ha generado en:\n" + out.getAbsolutePath());
     } catch (Exception e) { e.printStackTrace(); }
+  }
+
+  // Llamado por el menú
+  public void setNivelId(long nivelId) {
+    if (Objects.equals(this.nivelId, nivelId)) return;
+    this.nivelId = nivelId;
+
+    // invalidar caches
+    cacheGradosPorPeriodoNivel.clear();
+    cacheSeccionesPorGrado.clear();
+    cacheAlumnosPorSeccionPeriodo.clear();
+
+    if (this.periodoId != null) {
+      try {
+        poblarGrados();
+      } catch (Exception e) {
+        e.printStackTrace();
+        Dialogs.error(null, "Error", "No se pudo inicializar grados/secciones.");
+      }
+    }
   }
 }

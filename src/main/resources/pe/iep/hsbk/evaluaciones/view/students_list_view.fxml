@@ -29,14 +29,6 @@
         <content>
             <!-- fillHeight hace que los hijos usen la altura disponible -->
             <HBox fx:id="paneGrados" spacing="8.0" styleClass="tabs-row" fillHeight="true" alignment="CENTER_LEFT">
-                <!--<ToggleButton onAction="#onChangeGrado" selected="true" styleClass="tab" text="1°" userData="1">
-                    <toggleGroup><ToggleGroup fx:id="grpGrados"/></toggleGroup>
-                </ToggleButton>
-                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="2°" toggleGroup="$grpGrados" userData="2"/>
-                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="3°" toggleGroup="$grpGrados" userData="3"/>
-                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="4°" toggleGroup="$grpGrados" userData="4"/>
-                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="5°" toggleGroup="$grpGrados" userData="5"/>
-                <ToggleButton onAction="#onChangeGrado" styleClass="tab" text="6°" toggleGroup="$grpGrados" userData="6"/>-->
             </HBox>
         </content>
     </ScrollPane>
@@ -50,13 +42,6 @@
                     hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
             <content>
                 <VBox fx:id="paneSecciones" prefWidth="140" spacing="8">
-                    <!--<ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección A" userData="A" selected="true">
-                        <toggleGroup><ToggleGroup fx:id="grpSecciones"/></toggleGroup>
-                    </ToggleButton>
-                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección B" toggleGroup="$grpSecciones" userData="B"/>
-                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección C" toggleGroup="$grpSecciones" userData="C"/>
-                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección D" toggleGroup="$grpSecciones" userData="D"/>
-                    <ToggleButton onAction="#onChangeSeccion" styleClass="section-btn" text="Sección E" toggleGroup="$grpSecciones" userData="E"/>-->
                 </VBox>
             </content>
         </ScrollPane>

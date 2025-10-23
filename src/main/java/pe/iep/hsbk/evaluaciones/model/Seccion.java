@@ -59,6 +59,4 @@ public class Seccion {
     Seccion other = (Seccion) o;
     return id != null && id.equals(other.id);
   }
-
-  private final Map<Long, List<Seccion>> cacheSeccionesPorGrado = new HashMap<>();
 }

@@ -99,6 +99,4 @@ public class Alumno {
     Alumno other = (Alumno) o;
     return id != null && id.equals(other.id);
   }
-
-  private final Map<String, List<Alumno>> cacheAlumnosPorSeccionPeriodo = new HashMap<>();
 }

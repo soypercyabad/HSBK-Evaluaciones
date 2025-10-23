@@ -29,7 +29,9 @@
 
                 <Button fx:id="btnPrimaria" onAction="#onPrimaria" styleClass="nav-btn" text="Primaria" maxWidth="Infinity"  />
                 <Button fx:id="btnSecundaria" onAction="#onSecundaria" styleClass="nav-btn" text="Secundaria" maxWidth="Infinity"  />
+                <Button fx:id="btnPlantillasBoleta" onAction="#onPlantillasBoletas" styleClass="nav-btn" text="Plant. Boletas" maxWidth="Infinity"  />
                 <Button fx:id="btnFirmas" onAction="#onFirmas" styleClass="nav-btn" text="Firmas" maxWidth="Infinity"  />
+                <Button fx:id="btnSellos" onAction="#onSellos" styleClass="nav-btn" text="Sellos" maxWidth="Infinity"  />
 
                 <Pane VBox.vgrow="ALWAYS" /> <!-- separador flexible -->
 

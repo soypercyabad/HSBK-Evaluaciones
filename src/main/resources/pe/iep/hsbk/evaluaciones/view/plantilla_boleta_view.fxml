@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" spacing="12" styleClass="page">
+    <children>
+        <Label text="Gestión de Plantilla de boletas (en construcción)" styleClass="top-title"/>
+        <Label text="Aquí irán: Carga y previsualización de la plantilla de de boletas de notas."/>
+    </children>
+    <padding><Insets top="16" right="24" bottom="24" left="24"/></padding>
+</VBox>
