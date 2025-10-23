@@ -1,62 +1,50 @@
 package pe.iep.hsbk.evaluaciones.controller;
 
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import pe.iep.hsbk.evaluaciones.App;
+import pe.iep.hsbk.evaluaciones.service.AuthService;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
-
-import java.time.Instant;
 
 public class LoginController {
 
-    private static final int MAX_INTENTOS = 3;
-    private static final int TIEMPO_BLOQUEO_MINUTOS = 10;
+    @FXML private TextField txtUsuario;
+    @FXML private PasswordField txtPassword;
+    @FXML private Button btnIngresar;
 
-    private int intentosFallidos = 0;
-    private Instant tiempoBloqueo = null;
+    private final AuthService authService = new AuthService();
 
     @FXML
-    private void onLogin(ActionEvent event) {
-        System.out.println("Login click");
-
-        // TODO: validar credenciales; si fallan, muestra alert y return
-
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        try {
-            App.showMainLayoutFullArea(stage); // ← main layout a pantalla por tamaño
-        } catch (Exception ex) {
-            ex.printStackTrace();
-
-            // Info
-            Dialogs.info(stage, null, "Operación completada.");
-
-            // Warning
-            Dialogs.warn(stage, "Datos faltantes", "Debes ingresar el usuario.");
-
-            // Error
-            Dialogs.error(stage, null, "No se pudo guardar los cambios.");
-
-            // Confirmación
-            if (Dialogs.confirm(stage, null, "¿Deseas eliminar el registro?")) {
-                // ejecutar acción
-            }
-
-            // Error con stacktrace
-            Dialogs.errorConStacktrace(stage, "Error inesperado", "Ocurrió un problema", ex.getMessage(), ex);
-        }
+    private void initialize() {
+        btnIngresar.setOnAction(e -> doLogin());
     }
 
-    private boolean estaBloqueado() {
-        if (tiempoBloqueo == null) return false;
-        var ahora = Instant.now();
-        if (ahora.isAfter(tiempoBloqueo.plusSeconds(TIEMPO_BLOQUEO_MINUTOS * 60))) {
-            tiempoBloqueo = null;
-            intentosFallidos = 0;
-            return false;
+    private void doLogin() {
+        String usr = txtUsuario.getText();
+        String pwd = txtPassword.getText();
+
+        try {
+            if (usr == null || usr.isBlank() || pwd == null || pwd.isBlank()) {
+                Dialogs.warn(null, "Campos vacíos", "Por favor ingrese usuario y contraseña.");
+                return;
+            }
+
+            AuthService.UserSession sess = authService.login(usr, pwd);
+            if (sess == null) {
+                Dialogs.error(null, "Error de autenticación",
+                    "Usuario o contraseña incorrectos, o usuario inactivo.");
+                return;
+            }
+
+            Stage stage = (Stage) btnIngresar.getScene().getWindow();
+            App.showMain(stage, sess);
+
+        } catch (Exception ex) {
+            Dialogs.errorConStacktrace(null, "Error inesperado",
+                "Ocurrió un problema", ex.getMessage(), ex);
         }
-        return true;
     }
 }

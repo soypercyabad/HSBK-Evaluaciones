@@ -1,5 +1,9 @@
 package pe.iep.hsbk.evaluaciones.model;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Seccion {
   private Long id;
   private Long gradoId;
@@ -55,4 +59,6 @@ public class Seccion {
     Seccion other = (Seccion) o;
     return id != null && id.equals(other.id);
   }
+
+  private final Map<Long, List<Seccion>> cacheSeccionesPorGrado = new HashMap<>();
 }

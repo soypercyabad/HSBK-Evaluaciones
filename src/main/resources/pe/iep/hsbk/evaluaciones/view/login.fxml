@@ -56,8 +56,8 @@
                     <CheckBox fx:id="chkRemember" text="Recordarme"/>
 
                     <Button
+                            fx:id="btnIngresar"
                             maxWidth="Infinity"
-                            onAction="#onLogin"
                             styleClass="btn-primary"
                             text="Ingresar"/>
                 </children>

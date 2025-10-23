@@ -1,5 +1,9 @@
 package pe.iep.hsbk.evaluaciones.model;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Alumno {
   private Long id;
   private String dni;
@@ -95,4 +99,6 @@ public class Alumno {
     Alumno other = (Alumno) o;
     return id != null && id.equals(other.id);
   }
+
+  private final Map<String, List<Alumno>> cacheAlumnosPorSeccionPeriodo = new HashMap<>();
 }

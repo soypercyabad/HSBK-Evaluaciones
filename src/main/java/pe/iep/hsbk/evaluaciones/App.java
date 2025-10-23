@@ -7,94 +7,110 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import pe.iep.hsbk.evaluaciones.controller.MainController;
+import pe.iep.hsbk.evaluaciones.service.AuthService;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class App extends Application {
-    private static Scene scene;
+  private static Scene scene;
 
-    // java
-    @Override
-    public void start(Stage stage) throws IOException {
-        // ...
-        var is = getClass().getResourceAsStream("/pe/iep/hsbk/evaluaciones/assets/icono.png");
-        if (is == null) throw new IllegalStateException("Icono no encontrado: /pe/iep/hsbk/evaluaciones/assets/icono.png");
-        stage.getIcons().add(new javafx.scene.image.Image(is));
-        showLogin(stage);
-        stage.show();
+  @Override
+  public void start(Stage stage) throws IOException {
+    var is = getClass().getResourceAsStream("/pe/iep/hsbk/evaluaciones/assets/icono.png");
+    if (is == null) throw new IllegalStateException("Icono no encontrado: /pe/iep/hsbk/evaluaciones/assets/icono.png");
+    stage.getIcons().add(new javafx.scene.image.Image(is));
+    showLogin(stage);
+    stage.show();
+  }
+
+  /**
+   * Login (tamaño fijo)
+   */
+  public static void showLogin(Stage stage) throws IOException {
+    Parent root = loadFXML("login");
+    double width = 1100;
+    double height = 680;
+
+    if (scene == null) {
+      scene = new Scene(root, width, height);
+      stage.setScene(scene);
+    } else {
+      scene.setRoot(root);
+      stage.setWidth(width);
+      stage.setHeight(height);
     }
 
-    /** Login */
-    public static void showLogin(Stage stage) throws IOException {
-        Parent root = loadFXML("login");
-        double width  = 1100;
-        double height = 680;
+    stage.setTitle("HSBK – Ingreso");
+    stage.setResizable(false);
+    stage.setMinWidth(width);
+    stage.setMaxWidth(width);
+    stage.setMinHeight(height);
+    stage.setMaxHeight(height);
+    stage.setMaximized(false);
+    stage.setFullScreen(false);
+    stage.centerOnScreen();
+  }
 
-        if (scene == null) {
-            scene = new Scene(root, width, height);
-            stage.setScene(scene);
-        } else {
-            scene.setRoot(root);
-            stage.setWidth(width);
-            stage.setHeight(height);
-        }
+  /**
+   * Main con sesión activa (tamaño dinámico)
+   */
+  public static void showMain(Stage stage, AuthService.UserSession session) throws IOException {
+    // Usar FXMLLoader para obtener controller
+    FXMLLoader loader = new FXMLLoader(App.class.getResource("/pe/iep/hsbk/evaluaciones/view/main_layout.fxml"));
+    Parent root = loader.load();
 
-        stage.setTitle("HSBK – Ingreso");
-        stage.setResizable(false);  // quita el botón de maximizar
-        stage.setMinWidth(width);  stage.setMaxWidth(width);
-        stage.setMinHeight(height); stage.setMaxHeight(height);
-        stage.setMaximized(false);
-        stage.setFullScreen(false);
-        stage.centerOnScreen();
+    MainController main = loader.getController();
+    main.initSession(session); // Enviar sesión al controller
+
+    if (scene == null) {
+      scene = new Scene(root);
+      stage.setScene(scene);
+    } else {
+      scene.setRoot(root);
     }
 
-    /** Main Layout */
-    public static void showMainLayoutFullArea(Stage stage) throws IOException {
-        Parent root = loadFXML("main_layout");
-        if (scene == null) {
-            scene = new Scene(root);
-            stage.setScene(scene);
-        } else {
-            scene.setRoot(root);
-        }
+    stage.setTitle("HSBK – Principal");
 
-        stage.setTitle("HSBK – Principal");
+    // Quitar límites del login
+    stage.setMinWidth(0);
+    stage.setMinHeight(0);
+    stage.setMaxWidth(Double.MAX_VALUE);
+    stage.setMaxHeight(Double.MAX_VALUE);
 
-        // Resetear límites del login
-        stage.setMinWidth(0);
-        stage.setMinHeight(0);
-        stage.setMaxWidth(Double.MAX_VALUE);
-        stage.setMaxHeight(Double.MAX_VALUE);
+    // Área visual (respeta barra de tareas)
+    Rectangle2D vb = Screen.getPrimary().getVisualBounds();
 
-        // Calcular el área visible (respeta barra de tareas/dock)
-        Rectangle2D vb = Screen.getPrimary().getVisualBounds();
+    stage.setMaximized(false);
+    stage.setFullScreen(false);
+    stage.setResizable(false);
 
-        stage.setMaximized(false);
-        stage.setFullScreen(false);
-        stage.setResizable(false);
+    stage.setX(vb.getMinX());
+    stage.setY(vb.getMinY());
+    stage.setWidth(vb.getWidth());
+    stage.setHeight(vb.getHeight());
+  }
 
-        stage.setX(vb.getMinX());
-        stage.setY(vb.getMinY());
-        stage.setWidth(vb.getWidth());
-        stage.setHeight(vb.getHeight());
-    }
+  /**
+   * Minimizar (ocultar) la ventana actual
+   */
+  public static void minimizar(Stage stage) {
+    stage.setIconified(true);
+  }
 
-    /** Minimizar (ocultar) la ventana actual */
-    public static void minimizar(Stage stage) {
-        stage.setIconified(true);
-    }
+  // ---- helpers existentes ----
+  static void setRoot(String fxml) throws IOException {
+    scene.setRoot(loadFXML(fxml));
+  }
 
-    static void setRoot(String fxml) throws IOException {
-        scene.setRoot(loadFXML(fxml));
-    }
+  private static Parent loadFXML(String fxml) throws IOException {
+    String path = "/pe/iep/hsbk/evaluaciones/view/" + fxml + ".fxml";
+    var url = App.class.getResource(path);
+    if (url == null) throw new IllegalStateException("FXML no encontrado: " + path);
+    return FXMLLoader.load(url);
+  }
 
-    private static Parent loadFXML(String fxml) throws IOException {
-        String path = "/pe/iep/hsbk/evaluaciones/view/" + fxml + ".fxml";
-        var url = App.class.getResource(path);
-        if (url == null) throw new IllegalStateException("FXML no encontrado: " + path);
-        return FXMLLoader.load(url);
-    }
-
-    public static void main(String[] args) { launch(); }
+  public static void main(String[] args) {
+    launch();
+  }
 }
