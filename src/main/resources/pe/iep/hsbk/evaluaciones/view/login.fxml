@@ -55,11 +55,16 @@
 
                     <CheckBox fx:id="chkRemember" text="Recordarme"/>
 
-                    <Button
-                            fx:id="btnIngresar"
+                    <Button fx:id="btnIngresar"
                             maxWidth="Infinity"
                             styleClass="btn-primary"
                             text="Ingresar"/>
+
+                    <HBox spacing="10" alignment="CENTER">
+                        <ProgressIndicator fx:id="piLogin"
+                                           prefWidth="24" prefHeight="24"
+                                           visible="false" managed="false"/>
+                    </HBox>
                 </children>
             </VBox>
         </children>
