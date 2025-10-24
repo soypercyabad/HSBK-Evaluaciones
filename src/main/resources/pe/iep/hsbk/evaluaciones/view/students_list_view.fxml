@@ -3,68 +3,72 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="16" styleClass="page"
-      xmlns="http://javafx.com/javafx/17.0.12"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="pe.iep.hsbk.evaluaciones.controller.StudentsListController">
+<StackPane xmlns="http://javafx.com/javafx/17.0.12"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="pe.iep.hsbk.evaluaciones.controller.StudentsListController">
 
-    <padding>
-        <Insets bottom="24" left="24" right="24" top="16" />
-    </padding>
+    <!-- CONTENIDO REAL -->
+    <VBox spacing="16" styleClass="page">
+        <padding>
+            <Insets bottom="24" left="24" right="24" top="16" />
+        </padding>
 
-    <!-- TOP BAR -->
-    <HBox alignment="CENTER_LEFT" spacing="120">
-        <Label fx:id ="lblTitleUsuario" styleClass="top-title" />
-        <Label fx:id="lblTitlePeriodo" styleClass="top-title" />
-    </HBox>
+        <!-- TOP BAR -->
+        <HBox alignment="CENTER_LEFT" spacing="120">
+            <Label fx:id ="lblTitleUsuario" styleClass="top-title" />
+            <Label fx:id="lblTitlePeriodo" styleClass="top-title" />
+        </HBox>
 
-    <!-- GRADOS con SCROLL HORIZONTAL -->
-    <!-- GRADOS con scroll horizontal SIN scroll vertical -->
-    <ScrollPane styleClass="tabs-scroll"
-                hbarPolicy="AS_NEEDED"
-                vbarPolicy="NEVER"
-                fitToHeight="true"
-                fitToWidth="false"
-                pannable="true" minHeight="54">   <!-- alto “target” del contenido -->
-        <content>
-            <!-- fillHeight hace que los hijos usen la altura disponible -->
-            <HBox fx:id="paneGrados" spacing="8.0" styleClass="tabs-row" fillHeight="true" alignment="CENTER_LEFT">
-            </HBox>
-        </content>
-    </ScrollPane>
-
-
-    <!-- CONTENIDO PRINCIPAL -->
-    <HBox spacing="24">
-        <!-- SECCIONES con SCROLL VERTICAL -->
-        <ScrollPane styleClass="sections-scroll"
-                    prefWidth="160" fitToWidth="true"
-                    hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+        <!-- GRADOS -->
+        <ScrollPane styleClass="tabs-scroll"
+                    hbarPolicy="AS_NEEDED"
+                    vbarPolicy="NEVER"
+                    fitToHeight="true"
+                    fitToWidth="false"
+                    pannable="true" minHeight="54">
             <content>
-                <VBox fx:id="paneSecciones" prefWidth="140" spacing="8">
-                </VBox>
+                <HBox fx:id="paneGrados" spacing="8.0" styleClass="tabs-row" fillHeight="true" alignment="CENTER_LEFT"/>
             </content>
         </ScrollPane>
 
-        <!-- Lista de alumnos -->
-        <VBox spacing="12" VBox.vgrow="ALWAYS">
-            <Label styleClass="block-title" text="Lista de Alumnos"/>
-            <HBox alignment="CENTER_LEFT" spacing="8">
-                <TextField fx:id="txtBuscar" promptText="Buscar por apellido, nombre o código" HBox.hgrow="ALWAYS"/>
-                <Button onAction="#onBuscar" styleClass="primary-btn" text="Buscar"/>
-                <Pane HBox.hgrow="ALWAYS"/>
-                <Button onAction="#onDescargar" styleClass="outline-btn" text="Descargar"/>
-            </HBox>
+        <!-- CONTENIDO PRINCIPAL -->
+        <HBox spacing="24">
+            <!-- SECCIONES -->
+            <ScrollPane styleClass="sections-scroll"
+                        prefWidth="160" fitToWidth="true"
+                        hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                <content>
+                    <VBox fx:id="paneSecciones" prefWidth="140" spacing="8"/>
+                </content>
+            </ScrollPane>
 
-            <TableView fx:id="tblAlumnos" styleClass="table-card" VBox.vgrow="ALWAYS">
-                <columns>
-                    <TableColumn fx:id="colSel" prefWidth="50" text=""/>
-                    <TableColumn fx:id="colApellidos" prefWidth="260" text="Apellidos"/>
-                    <TableColumn fx:id="colNombres" prefWidth="240" text="Nombres"/>
-                    <TableColumn fx:id="colCodigo" prefWidth="180" text="Código"/>
-                    <TableColumn fx:id="colAcciones" prefWidth="100" text="Acciones"/>
-                </columns>
-            </TableView>
-        </VBox>
-    </HBox>
-</VBox>
+            <!-- Lista de alumnos -->
+            <VBox spacing="12" VBox.vgrow="ALWAYS">
+                <Label styleClass="block-title" text="Lista de Alumnos"/>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <TextField fx:id="txtBuscar" promptText="Buscar por apellido, nombre o código" HBox.hgrow="ALWAYS"/>
+                    <Button onAction="#onBuscar" styleClass="primary-btn" text="Buscar"/>
+                    <Pane HBox.hgrow="ALWAYS"/>
+                    <Button onAction="#onDescargar" styleClass="outline-btn" text="Descargar"/>
+                </HBox>
+
+                <TableView fx:id="tblAlumnos" styleClass="table-card" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colSel" prefWidth="50" text=""/>
+                        <TableColumn fx:id="colApellidos" prefWidth="260" text="Apellidos"/>
+                        <TableColumn fx:id="colNombres" prefWidth="240" text="Nombres"/>
+                        <TableColumn fx:id="colCodigo" prefWidth="180" text="Código"/>
+                        <TableColumn fx:id="colAcciones" prefWidth="100" text="Acciones"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <!-- OVERLAY DE CARGA -->
+    <StackPane fx:id="overlay"
+               style="-fx-background-color: rgba(0,0,0,0.08);"
+               visible="false" managed="false">
+        <ProgressIndicator fx:id="piMain" prefWidth="64" prefHeight="64"/>
+    </StackPane>
+</StackPane>
