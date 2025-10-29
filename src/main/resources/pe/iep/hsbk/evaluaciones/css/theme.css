@@ -110,14 +110,13 @@
     -fx-background-radius: 8;
     -fx-background-insets: 0;
 }
+.primary-btn:hover { -fx-opacity: .96; -fx-cursor: hand; }
 .outline-btn {
     -fx-background-color: transparent;
     -fx-border-color: -primary;
     -fx-text-fill: -primary;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
-    -fx-background-insets: 0;
-    -fx-border-insets: 0;
 }
 .outline-btn:hover { -fx-background-color: -primary; -fx-text-fill: white; -fx-cursor: hand; }
 
@@ -180,3 +179,59 @@
 .sections-scroll .scroll-bar .increment-arrow,
 .sections-scroll .scroll-bar .decrement-arrow { -fx-shape: ""; -fx-padding: 0; -fx-background-color: transparent; }
 .sections-scroll .corner { -fx-background-color: transparent; }
+
+/* Panel "card" para las columnas izquierda y derecha */
+.left-pane {
+    -fx-background-color: -card;
+    -fx-background-radius: 12;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 12;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+}
+
+/* WebView con borde sutil para separar */
+.web-view, .web-view:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: -stroke;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+/* Overlay de carga */
+.overlay {
+    -fx-background-color: rgba(0,0,0,0.08);
+    -fx-alignment: CENTER;
+}
+
+/* Inputs y botones: pequeños ajustes de padding para verse más sólidos */
+.text-field, .combo-box, .button {
+    -fx-background-radius: 8;
+}
+.text-field-examinar {
+    -fx-background-radius: 0 8 8 0;
+}
+.text-field {
+    -fx-padding: 8 8;
+}
+.combo-box {
+    -fx-padding: 4 8;
+}
+.button {
+    -fx-padding: 8 8;
+}
+.examinar-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: -primary;
+    -fx-text-fill: -primary;
+    -fx-padding: 7 8;
+    -fx-background-radius: 8 0 0 8;
+    -fx-border-radius: 8 0 0 8;
+}
+.examinar-btn:hover { -fx-background-color: -primary; -fx-text-fill: white; -fx-cursor: hand; }
+
+/* Títulos en bloques y espaciados más consistentes */
+.block-title {
+    -fx-padding: 8 0 0 0;
+}

@@ -9,7 +9,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.SVGPath;
 import javafx.scene.layout.StackPane;
 import pe.iep.hsbk.evaluaciones.dao.AlumnoDao;
 import pe.iep.hsbk.evaluaciones.dao.GradoDao;
@@ -19,11 +18,13 @@ import pe.iep.hsbk.evaluaciones.dao.impl.AlumnoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.GradoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.PeriodoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.SeccionDaoImpl;
+import pe.iep.hsbk.evaluaciones.enums.Constantes;
 import pe.iep.hsbk.evaluaciones.model.Alumno;
 import pe.iep.hsbk.evaluaciones.model.Grado;
 import pe.iep.hsbk.evaluaciones.model.Seccion;
 import pe.iep.hsbk.evaluaciones.service.AuthService.UserSession;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
+import pe.iep.hsbk.evaluaciones.util.IconButtons;
 import pe.iep.hsbk.evaluaciones.util.SesionAware;
 import pe.iep.hsbk.evaluaciones.util.FXAsync;
 
@@ -33,11 +34,14 @@ import java.io.FileWriter;
 import java.util.*;
 import java.util.Locale;
 
+import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
+
 public class StudentsListController implements SesionAware {
 
   // UI
   @FXML private Label lblTitleUsuario;
   @FXML private Label lblTitlePeriodo;
+  @FXML private Label lblTitleRol;
   @FXML private TextField txtBuscar;
 
   // Tabla
@@ -92,7 +96,8 @@ public class StudentsListController implements SesionAware {
     this.userSession = s;
     if (s != null) {
       lblTitleUsuario.setText("Bienvenido " + s.getNombre() + "!");
-      lblTitlePeriodo.setText("Periodo: " + s.getPeriodoNombre());
+      lblTitlePeriodo.setText("Periodo " + s.getPeriodoNombre());
+      lblTitleRol.setText(formatRoles(s.getRoles()));
     }
   }
 
@@ -297,24 +302,22 @@ public class StudentsListController implements SesionAware {
     colCodigo   .setStyle("-fx-alignment: CENTER-LEFT;");
 
     colAcciones.setCellFactory(col -> new TableCell<>() {
-      private final Button btn = buildEditButton();
-      @Override protected void updateItem(Void item, boolean empty) {
+      private final Button btnEdit = IconButtons.iconButtonForCell(
+          this,
+          28, 28, 0.55,
+          pb -> {
+            System.out.println("Editar: " + pb);
+          },
+          new IconButtons.PathSpec(Constantes.edit, "-fx-fill: transparent; -fx-stroke: #003B65; -fx-stroke-width: 2;")
+      );
+
+      @Override
+      protected void updateItem(Void item, boolean empty) {
         super.updateItem(item, empty);
-        setGraphic(empty ? null : btn);
+        setGraphic(empty ? null : btnEdit);
         setAlignment(Pos.CENTER);
       }
-      private Button buildEditButton() {
-        SVGPath p = new SVGPath();
-        p.setContent("M3,14 L10,7 13,10 6,17 3,17z M10,6 L12,4 15,7 13,9z");
-        Button b = new Button();
-        b.getStyleClass().add("icon-btn");
-        b.setGraphic(new HBox(p));
-        b.setOnAction(e -> {
-          Alumno row = getTableView().getItems().get(getIndex());
-          System.out.println("Editar: " + row);
-        });
-        return b;
-      }
+
     });
 
     filtered = new FilteredList<>(master, a -> true);
@@ -364,4 +367,5 @@ public class StudentsListController implements SesionAware {
       cargarGradosAsync();
     }
   }
+
 }

@@ -22,10 +22,10 @@ public class MainController {
     this.userSession = session;
 
     // Habilitar/deshabilitar navegación según roles
-    boolean puedeDocente = hasRole("DOCENTE");
-    boolean puedePlantillaBoletas = hasRole("ADMIN") || hasRole("DIRECTOR");
-    boolean puedeFirmas = hasRole("ADMIN") || hasRole("DIRECTOR");
-    boolean puedeSellos = hasRole("ADMIN") || hasRole("DIRECTOR");
+    boolean puedeDocente = hasRole("Docente") || hasRole("Tutor");
+    boolean puedePlantillaBoletas = hasRole("Administrador") || hasRole("Director");
+    boolean puedeFirmas = hasRole("Administrador") || hasRole("Director");
+    boolean puedeSellos = hasRole("Administrador") || hasRole("Director");
 
     // Navegación
     show(btnPrimaria, puedeDocente);

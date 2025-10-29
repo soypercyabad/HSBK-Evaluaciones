@@ -1,9 +1,5 @@
 package pe.iep.hsbk.evaluaciones.model;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class Alumno {
   private Long id;
   private String dni;

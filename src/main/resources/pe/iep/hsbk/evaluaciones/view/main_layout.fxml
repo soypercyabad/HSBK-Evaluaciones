@@ -34,7 +34,7 @@
                 <Button fx:id="btnSellos" onAction="#onSellos" styleClass="nav-btn" text="Sellos" maxWidth="Infinity"  />
 
                 <Pane VBox.vgrow="ALWAYS" /> <!-- separador flexible -->
-
+                <!--<Label text="Administrador" styleClass="logout-btn"/>-->
                 <Button onAction="#onLogout" styleClass="logout-btn" text="Cerrar sesión" />
             </children>
 

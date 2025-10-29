@@ -7,6 +7,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import pe.iep.hsbk.evaluaciones.controller.MainController;
 import pe.iep.hsbk.evaluaciones.service.AuthService;
 
@@ -29,26 +30,27 @@ public class App extends Application {
    */
   public static void showLogin(Stage stage) throws IOException {
     Parent root = loadFXML("login");
-    double width = 1100;
-    double height = 680;
 
     if (scene == null) {
-      scene = new Scene(root, width, height);
+      scene = new Scene(root);
       stage.setScene(scene);
     } else {
       scene.setRoot(root);
-      stage.setWidth(width);
-      stage.setHeight(height);
     }
 
     stage.setTitle("HSBK – Ingreso");
-    stage.setResizable(false);
-    stage.setMinWidth(width);
-    stage.setMaxWidth(width);
-    stage.setMinHeight(height);
-    stage.setMaxHeight(height);
+
+    // Área visual (respeta barra de tareas)
+    Rectangle2D vb = Screen.getPrimary().getVisualBounds();
+
     stage.setMaximized(false);
     stage.setFullScreen(false);
+    stage.setResizable(false);
+
+    stage.setX(vb.getMinX());
+    stage.setY(vb.getMinY());
+    stage.setWidth(vb.getWidth() * 0.85);
+    stage.setHeight(vb.getHeight());
     stage.centerOnScreen();
   }
 
@@ -72,23 +74,18 @@ public class App extends Application {
 
     stage.setTitle("HSBK – Principal");
 
-    // Quitar límites del login
-    stage.setMinWidth(0);
-    stage.setMinHeight(0);
-    stage.setMaxWidth(Double.MAX_VALUE);
-    stage.setMaxHeight(Double.MAX_VALUE);
-
     // Área visual (respeta barra de tareas)
     Rectangle2D vb = Screen.getPrimary().getVisualBounds();
 
     stage.setMaximized(false);
     stage.setFullScreen(false);
-    stage.setResizable(false);
+    stage.setResizable(false); //true
 
     stage.setX(vb.getMinX());
     stage.setY(vb.getMinY());
-    stage.setWidth(vb.getWidth());
+    stage.setWidth(vb.getWidth());// * 0.98);
     stage.setHeight(vb.getHeight());
+    stage.centerOnScreen();
   }
 
   /**

@@ -20,8 +20,8 @@
     </stylesheets>
 
     <columnConstraints>
-        <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
-        <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+        <ColumnConstraints hgrow="ALWAYS" percentWidth="40"/>
+        <ColumnConstraints hgrow="ALWAYS" percentWidth="60"/>
     </columnConstraints>
 
     <rowConstraints>
