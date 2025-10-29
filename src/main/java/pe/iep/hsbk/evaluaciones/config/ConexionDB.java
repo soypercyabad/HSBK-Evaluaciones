@@ -10,7 +10,7 @@ public class ConexionDB {
   private static final String PORT = "40876";
   private static final String DB_NAME = "hbk_db";
   private static final String DB_USER = "root";
-  private static final String DB_PASSWORD = "jNhFQsRfmtlJQrYpPLiAnCLBSDcXjEaM";
+  private static final String DB_PASSWORD = "";
 
   private static final String DB_URL =
       "jdbc:mysql://" + HOST + ":" + PORT + "/" + DB_NAME
