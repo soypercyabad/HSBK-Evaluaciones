@@ -14,10 +14,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
-import pe.iep.hsbk.evaluaciones.dao.PlantillaBoletaDao;
-import pe.iep.hsbk.evaluaciones.dao.impl.PlantillaDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.FirmaDao;
+import pe.iep.hsbk.evaluaciones.dao.impl.FirmaDaoImpl;
 import pe.iep.hsbk.evaluaciones.enums.Constantes;
-import pe.iep.hsbk.evaluaciones.model.PlantillaBoleta;
+import pe.iep.hsbk.evaluaciones.model.Firma;
+import pe.iep.hsbk.evaluaciones.model.Usuario;
 import pe.iep.hsbk.evaluaciones.service.AuthService.UserSession;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
 import pe.iep.hsbk.evaluaciones.util.IconButtons;
@@ -32,29 +33,28 @@ import java.util.Locale;
 
 import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
 
-public class PlantillaBoletaController implements SesionAware {
+public class FirmaController implements SesionAware {
 
   // Top labels
   @FXML private Label lblTitleScreen;
   @FXML private Label lblTitleProfile;
 
   // Formulario
-  @FXML private TextField txtNombrePlantilla;
+  @FXML private ComboBox<Usuario> usuarioComboBox;
   @FXML private ComboBox<String> estadoComboBox;
   @FXML private Button btnExaminar;
-  @FXML private TextField txtRutaHtml;
+  @FXML private TextField txtRutaPng;
   @FXML private Button btnRegistrar;
-  @FXML public Button btnBuscar;
-  @FXML public Button btnRecargar;
 
   // Búsqueda
   @FXML private TextField txtBuscar;
 
   // Tabla
-  @FXML private TableView<PlantillaBoleta> tblPlantilla;
-  @FXML private TableColumn<PlantillaBoleta, String> colNombres;
-  @FXML private TableColumn<PlantillaBoleta, String> colEstado;
-  @FXML private TableColumn<PlantillaBoleta, Void>   colAcciones;
+  @FXML private TableView<Firma> tblFirma;
+  @FXML private TableColumn<Firma, String> colNombres;
+  @FXML private TableColumn<Firma, String> colRol;
+  @FXML private TableColumn<Firma, String> colEstado;
+  @FXML private TableColumn<Firma, Void>   colAcciones;
 
   // Preview
   @FXML private WebView webView;
@@ -65,21 +65,21 @@ public class PlantillaBoletaController implements SesionAware {
   @FXML private ProgressIndicator piMain;
 
   // Datos
-  private final ObservableList<PlantillaBoleta> master = FXCollections.observableArrayList();
-  private FilteredList<PlantillaBoleta> filtered;
+  private final ObservableList<Firma> master = FXCollections.observableArrayList();
+  private FilteredList<Firma> filtered;
 
   // DAO
-  private final PlantillaBoletaDao dao = new PlantillaDaoImpl();
+  private final FirmaDao dao = new FirmaDaoImpl();
 
   // Edición
-  private PlantillaBoleta editing = null;
+  private Firma editing = null;
   private UserSession userSession;
 
   @Override
   public void setSession(UserSession s) {
     this.userSession = s;
     if (s != null) {
-      lblTitleScreen.setText(Constantes.PANEL_PLANTILLA_BOLETA);
+      lblTitleScreen.setText(Constantes.PANEL_FIRMA);
       lblTitleProfile.setText(formatRoles(s.getRoles()));
     }
   }
@@ -95,6 +95,8 @@ public class PlantillaBoletaController implements SesionAware {
       estadoComboBox.setValue(Constantes.ESTADO_ACTIVO);
     }
 
+    configurarComboUsuarios();
+    cargarUsuarios();
     configurarTabla();
     cargarLista();
 
@@ -109,17 +111,20 @@ public class PlantillaBoletaController implements SesionAware {
   // ===================== Tabla =====================
   private void configurarTabla() {
     colNombres.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombre()));
+    colRol.setCellValueFactory(d -> new SimpleStringProperty((d.getValue().getRol())));
     colEstado.setCellValueFactory(d -> new SimpleStringProperty(
         d.getValue().isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO));
 
     colNombres.setStyle("-fx-alignment: CENTER-LEFT;");
     colEstado.setStyle("-fx-alignment: CENTER;");
+    colRol.setStyle("-fx-alignment: CENTER;");
 
     colAcciones.setCellFactory(col -> new TableCell<>() {
+
       private final Button btnVer = IconButtons.iconButtonForCell(
           this,
           28, 28, 0.45,
-          pb -> previsualizar(pb),
+          f -> previsualizarFirma(f),
           new IconButtons.PathSpec(Constantes.view,         "-fx-fill: #F06292; -fx-stroke: transparent;"),
           new IconButtons.PathSpec(Constantes.view_pupila,  "-fx-fill: white;    -fx-stroke: transparent;")
       );
@@ -127,11 +132,11 @@ public class PlantillaBoletaController implements SesionAware {
       private final Button btnEdit = IconButtons.iconButtonForCell(
           this,
           28, 28, 0.55,
-          pb -> cargarEnFormulario(pb),
+          f -> cargarEnFormulario(f),
           new IconButtons.PathSpec(Constantes.edit, "-fx-fill: transparent; -fx-stroke: #003B65; -fx-stroke-width: 2;")
       );
 
-      private final HBox box = new HBox(8, btnVer, btnEdit);
+      private final HBox box = new HBox(8, btnVer ,btnEdit);
       { box.setAlignment(Pos.CENTER); }
 
       @Override
@@ -147,7 +152,7 @@ public class PlantillaBoletaController implements SesionAware {
     colAcciones.setSortable(false);
 
     filtered = new FilteredList<>(master, a -> true);
-    tblPlantilla.setItems(filtered);
+    tblFirma.setItems(filtered);
   }
 
   // ===================== Datos =====================
@@ -156,7 +161,7 @@ public class PlantillaBoletaController implements SesionAware {
     FXAsync.run(
         () -> {
           try {
-            return dao.getPlantillaBoletas();
+            return dao.getListFirmas();
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -169,7 +174,46 @@ public class PlantillaBoletaController implements SesionAware {
         ex -> {
           setBusy(false);
           ex.printStackTrace();
-          Dialogs.error(null, "Error", "No se pudo cargar la lista de plantillas.");
+          Dialogs.error(null, "Error", "No se pudo cargar la lista de Firmas.");
+        }
+    );
+  }
+
+  private void configurarComboUsuarios() {
+    // pinta “nombre” en la lista
+    usuarioComboBox.setCellFactory(cb -> new ListCell<>() {
+      @Override protected void updateItem(Usuario u, boolean empty) {
+        super.updateItem(u, empty);
+        setText(empty || u == null ? null : u.getNombre());
+      }
+    });
+    // pinta “nombre” cuando está colapsado (botón del combo)
+    usuarioComboBox.setButtonCell(new ListCell<>() {
+      @Override protected void updateItem(Usuario u, boolean empty) {
+        super.updateItem(u, empty);
+        setText(empty || u == null ? null : u.getNombre());
+      }
+    });
+    usuarioComboBox.setPromptText("Seleccionar usuario");
+    usuarioComboBox.setEditable(false); // obliga a escoger de la lista
+  }
+
+  private void cargarUsuarios() {
+    FXAsync.run(
+        () -> {
+          try {
+            return dao.getUsuariosFirmas();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        },
+        (java.util.List<Usuario> data) -> {
+          usuarioComboBox.setItems(FXCollections.observableArrayList(data));
+          usuarioComboBox.getSelectionModel().clearSelection();
+        },
+        ex -> {
+          ex.printStackTrace();
+          Dialogs.error(null, "Error", "No se pudieron cargar los usuarios.");
         }
     );
   }
@@ -179,6 +223,7 @@ public class PlantillaBoletaController implements SesionAware {
     filtered.setPredicate(p ->
         q.isEmpty()
             || (p.getNombre()!=null && p.getNombre().toLowerCase().contains(q))
+            || (p.getRol()!=null && p.getRol().toLowerCase().contains(q))
             || (p.isActivo() ? "activo" : "desactivo").contains(q)
     );
   }
@@ -190,119 +235,100 @@ public class PlantillaBoletaController implements SesionAware {
 
   @FXML
   private void onExaminar() {
-    var w = txtRutaHtml.getScene().getWindow();
+    var w = txtRutaPng.getScene().getWindow();
     FileChooser fc = new FileChooser();
-    fc.setTitle("Selecciona HTML");
-    fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("HTML", "*.html", "*.htm"));
+    fc.setTitle("Selecciona imagen de firma (.png)");
+    fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG", "*.png"));
     File f = fc.showOpenDialog(w);
     if (f != null) {
-      txtRutaHtml.setText(f.getAbsolutePath());
+      txtRutaPng.setText(f.getAbsolutePath());
     }
   }
 
   @FXML
   private void onGuardar() {
-    String nombre = txtNombrePlantilla.getText() == null ? "" : txtNombrePlantilla.getText().trim();
-    String estado = estadoComboBox.getValue();
-    String ruta   = txtRutaHtml.getText() == null ? "" : txtRutaHtml.getText().trim();
+    final Usuario sel = usuarioComboBox.getValue();
+    final String estado = estadoComboBox.getValue();
+    final String ruta   = txtRutaPng.getText() == null ? "" : txtRutaPng.getText().trim();
     final boolean isNew = (editing == null || editing.getId() == null);
 
-    // Validaciones rápidas en el hilo de UI
-    if (nombre.isEmpty()) { Dialogs.warn(null, "Validación", "El nombre es obligatorio."); return; }
-    if (isNew && ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona un archivo .html para guardar su contenido."); return; }
+    if (sel == null) { Dialogs.warn(null, "Validación", "Selecciona un usuario."); return; }
+    if (ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona la imagen .png de la firma."); return; }
 
     setBusy(true);
 
     FXAsync.run(
         () -> {
           // BACKGROUND
-          String html = null;
-          if (!ruta.isEmpty()) {
-            try {
-              html = Files.readString(new File(ruta).toPath(), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+          byte[] bytesPng;
+          try {
+            bytesPng = java.nio.file.Files.readAllBytes(new java.io.File(ruta).toPath());
+          } catch (IOException e) {
+            throw new RuntimeException("No se pudo leer el archivo PNG", e);
           }
 
-          final PlantillaBoleta pb = (isNew ? new PlantillaBoleta() : editing);
-          pb.setNombre(nombre);
-          pb.setActivo(Constantes.ESTADO_ACTIVO.equalsIgnoreCase(estado));
+          final Firma f = isNew ? new Firma() : editing;
+          f.setUsuarioId(sel.getId());
+          f.setActivo(Constantes.ESTADO_ACTIVO.equalsIgnoreCase(estado));
+          f.setImagen(bytesPng);                         // <- guardamos bytes
 
-          if (isNew) {
-            pb.setContenidoHtml(html);
-            try {
-              dao.guardarPlantillaBoleta(pb);
-            } catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          } else {
-            if (html == null) {
-              try {
-                dao.actualizarEstadoPlantillaBoleta(pb);
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            } else {
-              pb.setContenidoHtml(html);
-              try {
-                dao.actualizarPlantillaBoleta(pb);
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            }
+          try {
+            if (isNew) dao.guardarFirma(f);
+            else       dao.actualizarFirma(f);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
           }
-          return null;
+          return f;
         },
         ok -> {
           // UI
           limpiarForm();
-          cargarLista();  // ya es async
+          cargarLista();     // recarga la tabla
           setBusy(false);
+          Dialogs.info(null, "OK", "Firma guardada correctamente.");
         },
         ex -> {
           setBusy(false);
           ex.printStackTrace();
-          Dialogs.error(null, "Error", "No se pudo guardar la plantilla.");
+          Dialogs.error(null, "Error", "No se pudo guardar la firma.");
         }
     );
   }
 
-  private void cargarEnFormulario(PlantillaBoleta pb) {
-    if (pb == null) return;
-    editing = pb;
-    txtNombrePlantilla.setText(pb.getNombre());
-    estadoComboBox.setValue(pb.isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO);
-    txtRutaHtml.clear();
+  private void cargarEnFormulario(Firma f) {
+    if (f == null) return;
+    editing = f;
+    estadoComboBox.setValue(f.isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO);
+    txtRutaPng.clear();
   }
 
-  private void previsualizar(PlantillaBoleta pb) {
-    if (pb == null) return;
-    String html = pb.getContenidoHtml();
-    if (html == null || html.isBlank()) {
-      engine.loadContent(Constantes.HTML_NOT_FOUND, "text/html");
+  private void previsualizarFirma(Firma f) {
+    if (f == null || f.getImagen() == null || f.getImagen().length == 0) {
+      engine.loadContent("<html><body style='font-family:sans-serif;padding:16px;color:#555'>Sin imagen</body></html>", "text/html");
       return;
     }
+    String b64 = java.util.Base64.getEncoder().encodeToString(f.getImagen());
+    String html =
+        "<html><head><meta charset='UTF-8'></head>" +
+            "<body style='margin:0;display:flex;align-items:center;justify-content:center;background:#f6f7f9;height:100vh'>" +
+            "<img style='max-width:100%;max-height:100%;image-rendering:crisp-edges' src='data:image/png;base64," + b64 + "'/>" +
+            "</body></html>";
     engine.loadContent(html, "text/html");
   }
 
   private void limpiarForm() {
     editing = null;
-    txtNombrePlantilla.clear();
     estadoComboBox.setValue(Constantes.ESTADO_ACTIVO);
-    txtRutaHtml.clear();
+    txtRutaPng.clear();
   }
 
   // ===================== Busy / Overlay =====================
   private void setBusy(boolean busy) {
-    if (txtNombrePlantilla != null) txtNombrePlantilla.setDisable(busy);
     if (estadoComboBox != null) estadoComboBox.setDisable(busy);
     if (btnExaminar != null) btnExaminar.setDisable(busy);
     if (btnRegistrar != null) btnRegistrar.setDisable(busy);
-    if (btnRecargar != null) btnRecargar.setDisable(busy);
-    if (btnBuscar != null) btnBuscar.setDisable(busy);
-    if (txtRutaHtml != null) txtRutaHtml.setDisable(busy);
-    if (tblPlantilla != null) tblPlantilla.setDisable(busy);
+    if (txtRutaPng != null) txtRutaPng.setDisable(busy);
+    if (tblFirma != null) tblFirma.setDisable(busy);
     if (txtBuscar != null) txtBuscar.setDisable(busy);
 
     if (overlay != null) {

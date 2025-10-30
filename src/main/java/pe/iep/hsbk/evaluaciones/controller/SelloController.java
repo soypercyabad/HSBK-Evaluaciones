@@ -32,7 +32,7 @@ import java.util.Locale;
 
 import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
 
-public class PlantillaBoletaController implements SesionAware {
+public class SelloController implements SesionAware {
 
   // Top labels
   @FXML private Label lblTitleScreen;
@@ -44,8 +44,6 @@ public class PlantillaBoletaController implements SesionAware {
   @FXML private Button btnExaminar;
   @FXML private TextField txtRutaHtml;
   @FXML private Button btnRegistrar;
-  @FXML public Button btnBuscar;
-  @FXML public Button btnRecargar;
 
   // Búsqueda
   @FXML private TextField txtBuscar;
@@ -79,7 +77,7 @@ public class PlantillaBoletaController implements SesionAware {
   public void setSession(UserSession s) {
     this.userSession = s;
     if (s != null) {
-      lblTitleScreen.setText(Constantes.PANEL_PLANTILLA_BOLETA);
+      lblTitleScreen.setText(Constantes.PANEL_SELLO);
       lblTitleProfile.setText(formatRoles(s.getRoles()));
     }
   }
@@ -299,8 +297,6 @@ public class PlantillaBoletaController implements SesionAware {
     if (estadoComboBox != null) estadoComboBox.setDisable(busy);
     if (btnExaminar != null) btnExaminar.setDisable(busy);
     if (btnRegistrar != null) btnRegistrar.setDisable(busy);
-    if (btnRecargar != null) btnRecargar.setDisable(busy);
-    if (btnBuscar != null) btnBuscar.setDisable(busy);
     if (txtRutaHtml != null) txtRutaHtml.setDisable(busy);
     if (tblPlantilla != null) tblPlantilla.setDisable(busy);
     if (txtBuscar != null) txtBuscar.setDisable(busy);

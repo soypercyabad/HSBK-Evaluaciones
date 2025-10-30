@@ -3,15 +3,20 @@ package pe.iep.hsbk.evaluaciones.model;
 public class Firma {
   private Long id;
   private Long usuarioId;
+  private String nombre;
+  private String rol;
   private byte[] imagen;
   private boolean activo;
 
   public Firma() {
+
   }
 
-  public Firma(Long id, Long usuarioId, byte[] imagen, boolean activo) {
+  public Firma(Long id, Long usuarioId, String nombre, String rol, byte[] imagen, boolean activo) {
     this.id = id;
     this.usuarioId = usuarioId;
+    this.nombre = nombre;
+    this.rol = rol;
     this.imagen = imagen;
     this.activo = activo;
   }
@@ -32,6 +37,22 @@ public class Firma {
     this.usuarioId = usuarioId;
   }
 
+  public String getNombre() {
+    return nombre;
+  }
+
+  public void setNombre(String nombre) {
+    this.nombre = nombre;
+  }
+
+  public String getRol() {
+    return rol;
+  }
+
+  public void setRol(String rol) {
+    this.rol = rol;
+  }
+
   public byte[] getImagen() {
     return imagen;
   }
@@ -50,7 +71,7 @@ public class Firma {
 
   @Override
   public String toString() {
-    return "Firma{id=" + id + "}";
+    return nombre;
   }
 
   @Override

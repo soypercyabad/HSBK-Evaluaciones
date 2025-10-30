@@ -142,10 +142,10 @@
                                     <HBox alignment="CENTER_LEFT" spacing="8">
                                         <children>
                                             <TextField fx:id="txtBuscar" promptText="Buscar por nombre o estado" HBox.hgrow="ALWAYS"/>
-                                            <Button onAction="#onBuscar" styleClass="primary-btn" text="Buscar"/>
+                                            <Button onAction="#onBuscar" fx:id="btnBuscar" styleClass="primary-btn" text="Buscar"/>
                                             <Pane HBox.hgrow="ALWAYS"/>
 
-                                            <Button onAction="#onRecargar" styleClass="primary-btn">
+                                            <Button onAction="#onRecargar" fx:id="btnRecargar" styleClass="primary-btn">
                                                 <graphic>
                                                     <!-- Escalamos desde 24x24 a ~18px -->
                                                     <Group scaleX="0.75" scaleY="0.75">

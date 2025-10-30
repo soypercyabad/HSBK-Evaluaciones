@@ -1,14 +1,13 @@
 package pe.iep.hsbk.evaluaciones.dao.impl;
 
 import pe.iep.hsbk.evaluaciones.config.ConexionDB;
-import pe.iep.hsbk.evaluaciones.dao.PlantillaBoletaDAO;
+import pe.iep.hsbk.evaluaciones.dao.PlantillaBoletaDao;
 import pe.iep.hsbk.evaluaciones.model.PlantillaBoleta;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlantillaDaoImpl implements PlantillaBoletaDAO {
+public class PlantillaDaoImpl implements PlantillaBoletaDao {
 
   @Override
   public List<PlantillaBoleta> getPlantillaBoletas() throws Exception {
