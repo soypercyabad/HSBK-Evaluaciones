@@ -12,7 +12,7 @@ public class FirmaDaoImpl implements FirmaDao {
 
   @Override
   public List<Firma> getListFirmas() throws Exception {
-    String sql = "CALL sp_getListFirmas();";
+    String sql = "CALL sp_get_firma();";
 
     try (var con = ConexionDB.getConnection();
          var ps = con.prepareStatement(sql);
@@ -35,7 +35,7 @@ public class FirmaDaoImpl implements FirmaDao {
 
   @Override
   public List<Usuario> getUsuariosFirmas() throws Exception {
-    String sql = "CALL sp_getUsuarioFirma();";
+    String sql = "CALL sp_get_firma_usuario();";
 
     try (var con = ConexionDB.getConnection();
          var ps = con.prepareStatement(sql);
@@ -54,7 +54,7 @@ public class FirmaDaoImpl implements FirmaDao {
 
   @Override
   public void guardarFirma(Firma f) throws Exception {
-    String sql = "INSERT INTO firma (usuario_id, imagen, activo) VALUES (?, ?, ?)";
+    String sql = "CALL sp_ins_firma(?, ?, ?)";
     try (var con = ConexionDB.getConnection();
          var ps  = con.prepareStatement(sql)) {
       ps.setLong(1, f.getUsuarioId());
@@ -66,26 +66,14 @@ public class FirmaDaoImpl implements FirmaDao {
 
   @Override
   public void actualizarFirma(Firma f) throws Exception {
-    String sql = "UPDATE firma SET usuario_id=?, imagen=?, activo=? WHERE id=?";
+    String sql = "CALL sp_upd_firma(?, ?, ?, ?)";
     try (var con = ConexionDB.getConnection();
          var ps  = con.prepareStatement(sql)) {
-      ps.setLong(1, f.getUsuarioId());
-      ps.setBytes(2, f.getImagen());
-      ps.setBoolean(3, f.isActivo());
-      ps.setLong(4, f.getId());
+      ps.setLong(1, f.getId());
+      ps.setLong(2, f.getUsuarioId());
+      ps.setBytes(3, f.getImagen());
+      ps.setBoolean(4, f.isActivo());
       ps.executeUpdate();
     }
   }
-
-  @Override
-  public void actualizarEstadoFirma(Long id, boolean activo) throws Exception {
-    String sql = "UPDATE firma SET activo=? WHERE id=?";
-    try (var con = ConexionDB.getConnection();
-         var ps  = con.prepareStatement(sql)) {
-      ps.setBoolean(1, activo);
-      ps.setLong(2, id);
-      ps.executeUpdate();
-    }
-  }
-
 }

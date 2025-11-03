@@ -9,6 +9,7 @@ import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
@@ -20,15 +21,10 @@ import pe.iep.hsbk.evaluaciones.enums.Constantes;
 import pe.iep.hsbk.evaluaciones.model.Firma;
 import pe.iep.hsbk.evaluaciones.model.Usuario;
 import pe.iep.hsbk.evaluaciones.service.AuthService.UserSession;
-import pe.iep.hsbk.evaluaciones.util.Dialogs;
-import pe.iep.hsbk.evaluaciones.util.IconButtons;
-import pe.iep.hsbk.evaluaciones.util.SesionAware;
-import pe.iep.hsbk.evaluaciones.util.FXAsync; // <- usa tu helper asíncrono
+import pe.iep.hsbk.evaluaciones.util.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Locale;
 
 import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
@@ -38,6 +34,10 @@ public class FirmaController implements SesionAware {
   // Top labels
   @FXML private Label lblTitleScreen;
   @FXML private Label lblTitleProfile;
+
+  // Paneles
+  @FXML private AnchorPane left_pane;
+  @FXML private AnchorPane right_pane;
 
   // Formulario
   @FXML private ComboBox<Usuario> usuarioComboBox;
@@ -105,7 +105,7 @@ public class FirmaController implements SesionAware {
     }
 
     // Mensaje inicial de preview
-    engine.loadContent(Constantes.HTML_PREVIEW, "text/html");
+    engine.loadContent(Constantes.IMG_PREVIEW, "text/html");
   }
 
   // ===================== Tabla =====================
@@ -166,7 +166,7 @@ public class FirmaController implements SesionAware {
             throw new RuntimeException(e);
           }
         },  // background
-        data -> {                         // UI
+        data -> {
           master.setAll(data);
           refiltrar();
           setBusy(false);
@@ -195,7 +195,7 @@ public class FirmaController implements SesionAware {
       }
     });
     usuarioComboBox.setPromptText("Seleccionar usuario");
-    usuarioComboBox.setEditable(false); // obliga a escoger de la lista
+    usuarioComboBox.setEditable(false);
   }
 
   private void cargarUsuarios() {
@@ -270,22 +270,21 @@ public class FirmaController implements SesionAware {
           final Firma f = isNew ? new Firma() : editing;
           f.setUsuarioId(sel.getId());
           f.setActivo(Constantes.ESTADO_ACTIVO.equalsIgnoreCase(estado));
-          f.setImagen(bytesPng);                         // <- guardamos bytes
+          f.setImagen(bytesPng);
 
           try {
             if (isNew) dao.guardarFirma(f);
-            else       dao.actualizarFirma(f);
+            else dao.actualizarFirma(f);
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
           return f;
         },
         ok -> {
-          // UI
           limpiarForm();
           cargarLista();     // recarga la tabla
           setBusy(false);
-          Dialogs.info(null, "OK", "Firma guardada correctamente.");
+          Dialogs.info(null, "Firma registrada", "La firma se guardo correctamente.");
         },
         ex -> {
           setBusy(false);
@@ -304,7 +303,7 @@ public class FirmaController implements SesionAware {
 
   private void previsualizarFirma(Firma f) {
     if (f == null || f.getImagen() == null || f.getImagen().length == 0) {
-      engine.loadContent("<html><body style='font-family:sans-serif;padding:16px;color:#555'>Sin imagen</body></html>", "text/html");
+      engine.loadContent(Constantes.IMG_NOT_FOUND, "text/html");
       return;
     }
     String b64 = java.util.Base64.getEncoder().encodeToString(f.getImagen());
@@ -324,12 +323,8 @@ public class FirmaController implements SesionAware {
 
   // ===================== Busy / Overlay =====================
   private void setBusy(boolean busy) {
-    if (estadoComboBox != null) estadoComboBox.setDisable(busy);
-    if (btnExaminar != null) btnExaminar.setDisable(busy);
-    if (btnRegistrar != null) btnRegistrar.setDisable(busy);
-    if (txtRutaPng != null) txtRutaPng.setDisable(busy);
-    if (tblFirma != null) tblFirma.setDisable(busy);
-    if (txtBuscar != null) txtBuscar.setDisable(busy);
+    if (left_pane != null) { left_pane.setDisable(busy); }
+    if (right_pane != null) { right_pane.setDisable(busy); }
 
     if (overlay != null) {
       overlay.setVisible(busy);

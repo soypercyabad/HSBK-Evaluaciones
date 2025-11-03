@@ -22,10 +22,7 @@ public class LoginController {
 
     @FXML
     private void initialize() {
-        // Click del botón
         btnIngresar.setOnAction(e -> doLogin());
-
-        // “Enter” en los campos
         txtUsuario.setOnAction(e -> doLogin());
         txtPassword.setOnAction(e -> doLogin());
     }

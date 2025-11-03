@@ -10,5 +10,4 @@ public interface FirmaDao {
   List<Usuario> getUsuariosFirmas() throws Exception;
   void guardarFirma(Firma f) throws Exception;
   void actualizarFirma(Firma f) throws Exception;           // si editas imagen
-  void actualizarEstadoFirma(Long firmaId, boolean activo) throws Exception; // opcional
 }

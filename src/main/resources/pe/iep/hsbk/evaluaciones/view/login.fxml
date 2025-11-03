@@ -79,7 +79,7 @@
             </image>
         </ImageView>
 
-        <!-- Logo (opcional) arriba-centrado -->
+        <!-- Logo arriba-centrado -->
         <ImageView
                 fx:id="logoImage"
                 fitHeight="120"

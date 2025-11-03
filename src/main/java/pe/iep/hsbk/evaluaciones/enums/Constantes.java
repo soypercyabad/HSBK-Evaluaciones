@@ -5,6 +5,10 @@ public class Constantes {
   public static final String HTML_PREVIEW = "<html><body style='font-family: sans-serif;margin: 5%; height: 100%; width: 100%;'><div style='border: 1px solid #9EEAF9; padding: 12px; color: #055160; background-color: #CFF4FC; border-radius: 10px;'><strong>Aviso:</strong><br><br>✅ Selecciona el <strong>ojito</strong> para previsualizar el contenido HTML.</div></body></html>";
   public static final String HTML_NOT_FOUND = "<html><body style='font-family: sans-serif;margin: 5%; height: 100%; width: 100%;'><div style='border: 1px solid #F1AEB5; padding: 12px; color: #58151C; background-color: #F8D7DA; border-radius: 10px;'><strong>Aviso:</strong><br><br>❌ Esta plantilla no tiene contenido HTML.</div></body></html>";
 
+  // IMG Preview Messages
+  public static final String IMG_PREVIEW = "<html><body style='font-family: sans-serif;margin: 5%; height: 100%; width: 100%;'><div style='border: 1px solid #9EEAF9; padding: 12px; color: #055160; background-color: #CFF4FC; border-radius: 10px;'><strong>Aviso:</strong><br><br>✅ Selecciona el <strong>ojito</strong> para previsualizar el contenido de la imagen.</div></body></html>";
+  public static final String IMG_NOT_FOUND = "<html><body style='font-family: sans-serif;margin: 5%; height: 100%; width: 100%;'><div style='border: 1px solid #F1AEB5; padding: 12px; color: #58151C; background-color: #F8D7DA; border-radius: 10px;'><strong>Aviso:</strong><br><br>❌ Esta imagen no tiene contenido.</div></body></html>";
+
   // Estados
   public static final String ESTADO_ACTIVO = "Activo";
   public static final String ESTADO_INACTIVO = "Desactivo";

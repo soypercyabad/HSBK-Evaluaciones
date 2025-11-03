@@ -1,0 +1,132 @@
+/* contenedor principal */
+.dialog-pane.sw {
+    -fx-background-color: white;
+    /*-fx-background-radius: 16;*/
+    -fx-padding: 18 18 12 18;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.2, 0, 4);
+    /*-fx-border-radius: 16;*/
+    -fx-border-width: 0 0 0 8; /* banda a la izquierda */
+}
+
+/* variante por tipo (colores) */
+.dialog-pane.sw.sw-success {
+    -fx-border-color: #2ecc71;
+}
+
+.dialog-pane.sw.sw-error {
+    -fx-border-color: #e74c3c;
+}
+
+.dialog-pane.sw.sw-warning {
+    -fx-border-color: #f1c40f;
+}
+
+.dialog-pane.sw.sw-info {
+    -fx-border-color: #3498db;
+}
+
+.dialog-pane.sw.sw-confirm {
+    -fx-border-color: #6c5ce7;
+}
+
+/* contenido */
+.sw-content {
+    -fx-alignment: center-left;
+}
+
+/* icono circular */
+.sw-icon {
+    -fx-min-width: 54;
+    -fx-min-height: 54;
+    -fx-max-width: 54;
+    -fx-max-height: 54;
+    -fx-background-radius: 100;
+    -fx-alignment: center;
+}
+
+.sw-info .sw-icon {
+    -fx-background-color: #eaf5ff;
+}
+
+.sw-success .sw-icon {
+    -fx-background-color: #ecf9f1;
+}
+
+.sw-error .sw-icon {
+    -fx-background-color: #fdecea;
+}
+
+.sw-warning .sw-icon {
+    -fx-background-color: #fff7e0;
+}
+
+.sw-confirm .sw-icon {
+    -fx-background-color: #efeaff;
+}
+
+/* glifo dentro del círculo */
+.sw-glyph {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #3498db;
+}
+
+.sw-success .sw-glyph {
+    -fx-text-fill: #2ecc71;
+}
+
+.sw-error .sw-glyph {
+    -fx-text-fill: #e74c3c;
+}
+
+.sw-warning .sw-glyph {
+    -fx-text-fill: #f1c40f;
+}
+
+.sw-confirm .sw-glyph {
+    -fx-text-fill: #6c5ce7;
+}
+
+/* textos */
+.sw-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222;
+}
+
+.sw-message {
+    -fx-font-size: 13px;
+    -fx-text-fill: #2d2d2d;
+}
+
+/* botones */
+.dialog-pane.sw .button-bar .button {
+    -fx-background-radius: 8;
+    -fx-padding: 8 14 8 14;
+}
+
+.dialog-pane.sw .button {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+}
+
+.dialog-pane.sw.sw-success .button {
+    -fx-background-color: #2ecc71;
+}
+
+.dialog-pane.sw.sw-error .button {
+    -fx-background-color: #e74c3c;
+}
+
+.dialog-pane.sw.sw-warning .button {
+    -fx-background-color: #f1c40f;
+    -fx-text-fill: #333;
+}
+
+.dialog-pane.sw.sw-confirm .button {
+    -fx-background-color: #6c5ce7;
+}
+
+.dialog-pane.sw .button:hover {
+    -fx-opacity: .90;
+}
