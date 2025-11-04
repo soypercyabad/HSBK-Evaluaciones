@@ -64,7 +64,7 @@
                           AnchorPane.rightAnchor="16" AnchorPane.topAnchor="16">
                         <children>
 
-                            <Label styleClass="block-title" text="Registrar nueva firma"/>
+                            <Label styleClass="block-title" text="Registrar nuevo sello"/>
 
                             <!-- Fila: Nombre + Estado -->
                             <GridPane hgap="15.0">
@@ -78,8 +78,8 @@
                                 <children>
                                     <VBox prefWidth="100.0" spacing="6.0" GridPane.columnIndex="0">
                                         <children>
-                                            <Label text="Usuario"/>
-                                            <ComboBox fx:id="usuarioComboBox" prefWidth="Infinity" promptText="Seleccionar usuario" VBox.vgrow="ALWAYS" />
+                                            <Label text="Nombre de sello"/>
+                                            <TextField fx:id="txtNombrePlantilla" promptText="Ej. Sello 2025"/>
                                         </children>
                                     </VBox>
 
@@ -130,7 +130,7 @@
                                             <Insets top="10.0"/>
                                         </VBox.margin>
                                     </Separator>
-                                    <Label styleClass="block-title" text="Lista de firmas"/>
+                                    <Label styleClass="block-title" text="Lista de sellos"/>
                                     <HBox alignment="CENTER_LEFT" spacing="8">
                                         <children>
                                             <TextField fx:id="txtBuscar" promptText="Buscar por nombre o estado" HBox.hgrow="ALWAYS"/>

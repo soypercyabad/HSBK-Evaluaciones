@@ -79,7 +79,7 @@ public class SelloController implements SesionAware {
   public void setSession(UserSession s) {
     this.userSession = s;
     if (s != null) {
-      lblTitleScreen.setText(Constantes.PANEL_FIRMA);
+      lblTitleScreen.setText(Constantes.PANEL_SELLO);
       lblTitleProfile.setText(formatRoles(s.getRoles()));
     }
   }
@@ -95,8 +95,6 @@ public class SelloController implements SesionAware {
       estadoComboBox.setValue(Constantes.ESTADO_ACTIVO);
     }
 
-    configurarComboUsuarios();
-    cargarUsuarios();
     configurarTabla();
     cargarLista();
 
@@ -179,44 +177,7 @@ public class SelloController implements SesionAware {
     );
   }
 
-  private void configurarComboUsuarios() {
-    // pinta “nombre” en la lista
-    usuarioComboBox.setCellFactory(cb -> new ListCell<>() {
-      @Override protected void updateItem(Usuario u, boolean empty) {
-        super.updateItem(u, empty);
-        setText(empty || u == null ? null : u.getNombre());
-      }
-    });
-    // pinta “nombre” cuando está colapsado (botón del combo)
-    usuarioComboBox.setButtonCell(new ListCell<>() {
-      @Override protected void updateItem(Usuario u, boolean empty) {
-        super.updateItem(u, empty);
-        setText(empty || u == null ? null : u.getNombre());
-      }
-    });
-    usuarioComboBox.setPromptText("Seleccionar usuario");
-    usuarioComboBox.setEditable(false);
-  }
 
-  private void cargarUsuarios() {
-    FXAsync.run(
-        () -> {
-          try {
-            return dao.getUsuariosFirmas();
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        },
-        (java.util.List<Usuario> data) -> {
-          usuarioComboBox.setItems(FXCollections.observableArrayList(data));
-          usuarioComboBox.getSelectionModel().clearSelection();
-        },
-        ex -> {
-          ex.printStackTrace();
-          Dialogs.error(null, "Error", "No se pudieron cargar los usuarios.");
-        }
-    );
-  }
 
   private void refiltrar() {
     final String q = (txtBuscar == null) ? "" : txtBuscar.getText().trim().toLowerCase(Locale.ROOT);
