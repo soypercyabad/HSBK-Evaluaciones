@@ -25,6 +25,9 @@ import pe.iep.hsbk.evaluaciones.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Base64;
+import java.util.List;
 import java.util.Locale;
 
 import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
@@ -42,9 +45,7 @@ public class FirmaController implements SesionAware {
   // Formulario
   @FXML private ComboBox<Usuario> usuarioComboBox;
   @FXML private ComboBox<String> estadoComboBox;
-  @FXML private Button btnExaminar;
   @FXML private TextField txtRutaPng;
-  @FXML private Button btnRegistrar;
 
   // Búsqueda
   @FXML private TextField txtBuscar;
@@ -62,7 +63,6 @@ public class FirmaController implements SesionAware {
 
   // Overlay
   @FXML private StackPane overlay;
-  @FXML private ProgressIndicator piMain;
 
   // Datos
   private final ObservableList<Firma> master = FXCollections.observableArrayList();
@@ -207,7 +207,7 @@ public class FirmaController implements SesionAware {
             throw new RuntimeException(e);
           }
         },
-        (java.util.List<Usuario> data) -> {
+        (List<Usuario> data) -> {
           usuarioComboBox.setItems(FXCollections.observableArrayList(data));
           usuarioComboBox.getSelectionModel().clearSelection();
         },
@@ -253,21 +253,23 @@ public class FirmaController implements SesionAware {
     final boolean isNew = (editing == null || editing.getId() == null);
 
     if (sel == null) { Dialogs.warn(null, "Validación", "Selecciona un usuario."); return; }
-    if (ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona la imagen .png de la firma."); return; }
+    if (isNew && ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona la imagen .png de la firma."); return; }
 
     setBusy(true);
 
     FXAsync.run(
         () -> {
           // BACKGROUND
-          byte[] bytesPng;
-          try {
-            bytesPng = java.nio.file.Files.readAllBytes(new java.io.File(ruta).toPath());
-          } catch (IOException e) {
-            throw new RuntimeException("No se pudo leer el archivo PNG", e);
+          byte[] bytesPng = null;
+          if (!ruta.isEmpty()) {
+            try {
+              bytesPng = Files.readAllBytes(new File(ruta).toPath());
+            } catch (IOException e) {
+              throw new RuntimeException("No se pudo leer el archivo PNG", e);
+            }
           }
 
-          final Firma f = isNew ? new Firma() : editing;
+          final Firma f = (isNew ? new Firma() : editing);
           f.setUsuarioId(sel.getId());
           f.setActivo(Constantes.ESTADO_ACTIVO.equalsIgnoreCase(estado));
           f.setImagen(bytesPng);
@@ -297,6 +299,12 @@ public class FirmaController implements SesionAware {
   private void cargarEnFormulario(Firma f) {
     if (f == null) return;
     editing = f;
+    usuarioComboBox.setValue(
+        usuarioComboBox.getItems().stream()
+            .filter(u -> u.getId().equals(f.getUsuarioId()))
+            .findFirst()
+            .orElse(null)
+    );
     estadoComboBox.setValue(f.isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO);
     txtRutaPng.clear();
   }
@@ -306,17 +314,18 @@ public class FirmaController implements SesionAware {
       engine.loadContent(Constantes.IMG_NOT_FOUND, "text/html");
       return;
     }
-    String b64 = java.util.Base64.getEncoder().encodeToString(f.getImagen());
+    String b64 = Base64.getEncoder().encodeToString(f.getImagen());
     String html =
         "<html><head><meta charset='UTF-8'></head>" +
             "<body style='margin:0;display:flex;align-items:center;justify-content:center;background:#f6f7f9;height:100vh'>" +
-            "<img style='max-width:100%;max-height:100%;image-rendering:crisp-edges' src='data:image/png;base64," + b64 + "'/>" +
+            "<img style='max-width:100%;max-height:100%;margin-top:50px;image-rendering:crisp-edges' src='data:image/png;base64," + b64 + "'/>" +
             "</body></html>";
     engine.loadContent(html, "text/html");
   }
 
   private void limpiarForm() {
     editing = null;
+    usuarioComboBox.getSelectionModel().clearSelection();
     estadoComboBox.setValue(Constantes.ESTADO_ACTIVO);
     txtRutaPng.clear();
   }
@@ -335,9 +344,9 @@ public class FirmaController implements SesionAware {
   // ===================== AUTO-FIT / ESCALA DINÁMICA =====================
   /** Ajuste automático con escala y sin scroll horizontal. */
   private void instalarAutoFit() {
-    final double EXTRA_SHRINK = 0.90;
-    final double FIT_SAFETY   = 0.98;
-    final int    FIT_PADDING  = 8;
+    final double EXTRA_SHRINK = 0.90; // escala extra para evitar scroll
+    final double FIT_SAFETY   = 0.98; // escala de seguridad para evitar scroll
+    final int    FIT_PADDING  = 8; // padding para evitar scroll
 
     engine.getLoadWorker().stateProperty().addListener((obs, old, st) -> {
       if (st == Worker.State.SUCCEEDED) {

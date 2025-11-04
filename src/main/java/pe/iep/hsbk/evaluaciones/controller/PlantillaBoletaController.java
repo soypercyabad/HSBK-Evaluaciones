@@ -9,6 +9,7 @@ import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
@@ -38,6 +39,10 @@ public class PlantillaBoletaController implements SesionAware {
   @FXML private Label lblTitleScreen;
   @FXML private Label lblTitleProfile;
 
+  // Paneles
+  @FXML private AnchorPane left_pane;
+  @FXML private AnchorPane right_pane;
+
   // Formulario
   @FXML private TextField txtNombrePlantilla;
   @FXML private ComboBox<String> estadoComboBox;
@@ -62,7 +67,6 @@ public class PlantillaBoletaController implements SesionAware {
 
   // Overlay
   @FXML private StackPane overlay;
-  @FXML private ProgressIndicator piMain;
 
   // Datos
   private final ObservableList<PlantillaBoleta> master = FXCollections.observableArrayList();
@@ -295,15 +299,8 @@ public class PlantillaBoletaController implements SesionAware {
 
   // ===================== Busy / Overlay =====================
   private void setBusy(boolean busy) {
-    if (txtNombrePlantilla != null) txtNombrePlantilla.setDisable(busy);
-    if (estadoComboBox != null) estadoComboBox.setDisable(busy);
-    if (btnExaminar != null) btnExaminar.setDisable(busy);
-    if (btnRegistrar != null) btnRegistrar.setDisable(busy);
-    if (btnRecargar != null) btnRecargar.setDisable(busy);
-    if (btnBuscar != null) btnBuscar.setDisable(busy);
-    if (txtRutaHtml != null) txtRutaHtml.setDisable(busy);
-    if (tblPlantilla != null) tblPlantilla.setDisable(busy);
-    if (txtBuscar != null) txtBuscar.setDisable(busy);
+    if (left_pane != null) { left_pane.setDisable(busy); }
+    if (right_pane != null) { right_pane.setDisable(busy); }
 
     if (overlay != null) {
       overlay.setVisible(busy);
