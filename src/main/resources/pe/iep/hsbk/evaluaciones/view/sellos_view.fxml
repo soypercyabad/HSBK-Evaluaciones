@@ -79,7 +79,7 @@
                                     <VBox prefWidth="100.0" spacing="6.0" GridPane.columnIndex="0">
                                         <children>
                                             <Label text="Nombre de sello"/>
-                                            <TextField fx:id="txtNombrePlantilla" promptText="Ej. Sello 2025"/>
+                                            <TextField fx:id="txtNombreSello" promptText="Ej. Sello 2025"/>
                                         </children>
                                     </VBox>
 
@@ -163,10 +163,9 @@
                                         </children>
                                     </HBox>
 
-                                    <TableView fx:id="tblFirma" styleClass="table-card" VBox.vgrow="ALWAYS">
+                                    <TableView fx:id="tblSello" styleClass="table-card" VBox.vgrow="ALWAYS">
                                         <columns>
                                             <TableColumn fx:id="colNombres" prefWidth="180" text="Nombre"/>
-                                            <TableColumn fx:id="colRol" prefWidth="90" text="Rol"/>
                                             <TableColumn fx:id="colEstado" prefWidth="90" text="Estado"/>
                                             <TableColumn fx:id="colAcciones" text="Acciones"/>
                                         </columns>

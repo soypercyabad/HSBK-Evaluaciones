@@ -15,12 +15,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
-import pe.iep.hsbk.evaluaciones.dao.FirmaDao;
-import pe.iep.hsbk.evaluaciones.dao.impl.FirmaDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.SelloDao;
+import pe.iep.hsbk.evaluaciones.dao.impl.SelloDaoImpl;
 import pe.iep.hsbk.evaluaciones.enums.Constantes;
-import pe.iep.hsbk.evaluaciones.model.Firma;
-import pe.iep.hsbk.evaluaciones.model.Usuario;
-import pe.iep.hsbk.evaluaciones.service.AuthService.UserSession;
+import pe.iep.hsbk.evaluaciones.model.Sello;
+import pe.iep.hsbk.evaluaciones.service.AuthService;
 import pe.iep.hsbk.evaluaciones.util.*;
 
 import java.io.File;
@@ -40,9 +39,8 @@ public class SelloController implements SesionAware {
   @FXML private AnchorPane right_pane;
 
   // Formulario
-  @FXML private ComboBox<Usuario> usuarioComboBox;
+  @FXML private TextField txtNombreSello;
   @FXML private ComboBox<String> estadoComboBox;
-  @FXML private Button btnExaminar;
   @FXML private TextField txtRutaPng;
   @FXML private Button btnRegistrar;
 
@@ -50,11 +48,10 @@ public class SelloController implements SesionAware {
   @FXML private TextField txtBuscar;
 
   // Tabla
-  @FXML private TableView<Firma> tblFirma;
-  @FXML private TableColumn<Firma, String> colNombres;
-  @FXML private TableColumn<Firma, String> colRol;
-  @FXML private TableColumn<Firma, String> colEstado;
-  @FXML private TableColumn<Firma, Void>   colAcciones;
+  @FXML private TableView<Sello> tblSello;
+  @FXML private TableColumn<Sello, String> colNombres;
+  @FXML private TableColumn<Sello, String> colEstado;
+  @FXML private TableColumn<Sello, Void>   colAcciones;
 
   // Preview
   @FXML private WebView webView;
@@ -65,24 +62,25 @@ public class SelloController implements SesionAware {
   @FXML private ProgressIndicator piMain;
 
   // Datos
-  private final ObservableList<Firma> master = FXCollections.observableArrayList();
-  private FilteredList<Firma> filtered;
+  private final ObservableList<Sello> master = FXCollections.observableArrayList();
+  private FilteredList<Sello> filtered;
 
   // DAO
-  private final FirmaDao dao = new FirmaDaoImpl();
+  private final SelloDao dao = new SelloDaoImpl();
 
   // Edición
-  private Firma editing = null;
-  private UserSession userSession;
+  private Sello editing = null;
+  private AuthService.UserSession userSession;
 
   @Override
-  public void setSession(UserSession s) {
+  public void setSession(AuthService.UserSession s) {
     this.userSession = s;
     if (s != null) {
-      lblTitleScreen.setText(Constantes.PANEL_SELLO);
+      lblTitleScreen.setText(Constantes.PANEL_PLANTILLA_BOLETA);
       lblTitleProfile.setText(formatRoles(s.getRoles()));
     }
   }
+
 
   @FXML
   public void initialize() {
@@ -109,20 +107,18 @@ public class SelloController implements SesionAware {
   // ===================== Tabla =====================
   private void configurarTabla() {
     colNombres.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombre()));
-    colRol.setCellValueFactory(d -> new SimpleStringProperty((d.getValue().getRol())));
     colEstado.setCellValueFactory(d -> new SimpleStringProperty(
         d.getValue().isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO));
 
     colNombres.setStyle("-fx-alignment: CENTER-LEFT;");
     colEstado.setStyle("-fx-alignment: CENTER;");
-    colRol.setStyle("-fx-alignment: CENTER;");
 
     colAcciones.setCellFactory(col -> new TableCell<>() {
 
       private final Button btnVer = IconButtons.iconButtonForCell(
           this,
           28, 28, 0.45,
-          f -> previsualizarFirma(f),
+          s -> previsualizarSello(s),
           new IconButtons.PathSpec(Constantes.view,         "-fx-fill: #F06292; -fx-stroke: transparent;"),
           new IconButtons.PathSpec(Constantes.view_pupila,  "-fx-fill: white;    -fx-stroke: transparent;")
       );
@@ -150,7 +146,7 @@ public class SelloController implements SesionAware {
     colAcciones.setSortable(false);
 
     filtered = new FilteredList<>(master, a -> true);
-    tblFirma.setItems(filtered);
+    tblSello.setItems(filtered);
   }
 
   // ===================== Datos =====================
@@ -159,7 +155,7 @@ public class SelloController implements SesionAware {
     FXAsync.run(
         () -> {
           try {
-            return dao.getListFirmas();
+            return dao.getSellos();
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -184,7 +180,6 @@ public class SelloController implements SesionAware {
     filtered.setPredicate(p ->
         q.isEmpty()
             || (p.getNombre()!=null && p.getNombre().toLowerCase().contains(q))
-            || (p.getRol()!=null && p.getRol().toLowerCase().contains(q))
             || (p.isActivo() ? "activo" : "desactivo").contains(q)
     );
   }
@@ -208,12 +203,12 @@ public class SelloController implements SesionAware {
 
   @FXML
   private void onGuardar() {
-    final Usuario sel = usuarioComboBox.getValue();
+    final String nombre = txtNombreSello.getText() == null ? "" : txtNombreSello.getText().trim();
     final String estado = estadoComboBox.getValue();
     final String ruta   = txtRutaPng.getText() == null ? "" : txtRutaPng.getText().trim();
     final boolean isNew = (editing == null || editing.getId() == null);
 
-    if (sel == null) { Dialogs.warn(null, "Validación", "Selecciona un usuario."); return; }
+    if (nombre.isEmpty()) { Dialogs.warn(null, "Validación", "El nombre es obligatorio."); return; }
     if (ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona la imagen .png de la firma."); return; }
 
     setBusy(true);
@@ -228,18 +223,18 @@ public class SelloController implements SesionAware {
             throw new RuntimeException("No se pudo leer el archivo PNG", e);
           }
 
-          final Firma f = isNew ? new Firma() : editing;
-          f.setUsuarioId(sel.getId());
-          f.setActivo(Constantes.ESTADO_ACTIVO.equalsIgnoreCase(estado));
-          f.setImagen(bytesPng);
+          final Sello s = isNew ? new Sello() : editing;
+          s.setNombre(nombre);
+          s.setActivo(Constantes.ESTADO_ACTIVO.equalsIgnoreCase(estado));
+          s.setImagen(bytesPng);
 
           try {
-            if (isNew) dao.guardarFirma(f);
-            else dao.actualizarFirma(f);
+            if (isNew) dao.guardarSello(s);
+            else dao.actualizarSello(s);
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
-          return f;
+          return s;
         },
         ok -> {
           limpiarForm();
@@ -255,19 +250,19 @@ public class SelloController implements SesionAware {
     );
   }
 
-  private void cargarEnFormulario(Firma f) {
-    if (f == null) return;
-    editing = f;
-    estadoComboBox.setValue(f.isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO);
+  private void cargarEnFormulario(Sello s) {
+    if (s == null) return;
+    editing = s;
+    estadoComboBox.setValue(s.isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO);
     txtRutaPng.clear();
   }
 
-  private void previsualizarFirma(Firma f) {
-    if (f == null || f.getImagen() == null || f.getImagen().length == 0) {
+  private void previsualizarSello(Sello s) {
+    if (s == null || s.getImagen() == null || s.getImagen().length == 0) {
       engine.loadContent(Constantes.IMG_NOT_FOUND, "text/html");
       return;
     }
-    String b64 = java.util.Base64.getEncoder().encodeToString(f.getImagen());
+    String b64 = java.util.Base64.getEncoder().encodeToString(s.getImagen());
     String html =
         "<html><head><meta charset='UTF-8'></head>" +
             "<body style='margin:0;display:flex;align-items:center;justify-content:center;background:#f6f7f9;height:100vh'>" +

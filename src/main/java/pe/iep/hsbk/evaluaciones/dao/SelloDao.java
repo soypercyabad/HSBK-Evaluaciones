@@ -1,11 +1,12 @@
 package pe.iep.hsbk.evaluaciones.dao;
 
-import pe.iep.hsbk.evaluaciones.model.Firma;
 import pe.iep.hsbk.evaluaciones.model.Sello;
-import pe.iep.hsbk.evaluaciones.model.Usuario;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public interface SelloDao {
+    List<Sello> getSellos() throws Exception;
     void guardarSello(Sello s) throws Exception;
+    void actualizarSello(Sello s) throws Exception;
 }
