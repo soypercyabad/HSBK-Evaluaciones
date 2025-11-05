@@ -64,7 +64,7 @@
                           AnchorPane.rightAnchor="16" AnchorPane.topAnchor="16">
                         <children>
 
-                            <Label styleClass="block-title" text="Registrar nueva firma"/>
+                            <Label styleClass="block-title" text="Registrar nuevo sello"/>
 
                             <!-- Fila: Nombre + Estado -->
                             <GridPane hgap="15.0">
@@ -78,8 +78,8 @@
                                 <children>
                                     <VBox prefWidth="100.0" spacing="6.0" GridPane.columnIndex="0">
                                         <children>
-                                            <Label text="Usuario"/>
-                                            <ComboBox fx:id="usuarioComboBox" prefWidth="Infinity" promptText="Seleccionar usuario" VBox.vgrow="ALWAYS" />
+                                            <Label text="Nombre de sello"/>
+                                            <TextField fx:id="txtNombreSello" promptText="Ej. Sello 2025"/>
                                         </children>
                                     </VBox>
 
@@ -103,13 +103,13 @@
                                 <children>
                                     <VBox spacing="6.0">
                                         <children>
-                                            <Label text="Archivo .png de la firma"/>
+                                            <Label text="Archivo .png del sello"/>
                                             <HBox>
                                                 <children>
                                                     <Button fx:id="btnExaminar" onAction="#onExaminar"
                                                             styleClass="examinar-btn" text="Examinar"/>
                                                     <TextField fx:id="txtRutaPng" editable="false" prefWidth="280.0"
-                                                               promptText="Subir la imagen de la firma (.png)"
+                                                               promptText="Subir la imagen del sello (.png)"
                                                                styleClass="text-field-examinar"/>
                                                     <Pane HBox.hgrow="ALWAYS"/>
                                                     <Button fx:id="btnRegistrar" onAction="#onGuardar"
@@ -130,7 +130,7 @@
                                             <Insets top="10.0"/>
                                         </VBox.margin>
                                     </Separator>
-                                    <Label styleClass="block-title" text="Lista de firmas"/>
+                                    <Label styleClass="block-title" text="Lista de sellos"/>
                                     <HBox alignment="CENTER_LEFT" spacing="8">
                                         <children>
                                             <TextField fx:id="txtBuscar" promptText="Buscar por nombre o estado" HBox.hgrow="ALWAYS"/>
@@ -163,10 +163,9 @@
                                         </children>
                                     </HBox>
 
-                                    <TableView fx:id="tblFirma" styleClass="table-card" VBox.vgrow="ALWAYS">
+                                    <TableView fx:id="tblSello" styleClass="table-card" VBox.vgrow="ALWAYS">
                                         <columns>
                                             <TableColumn fx:id="colNombres" prefWidth="180" text="Nombre"/>
-                                            <TableColumn fx:id="colRol" prefWidth="90" text="Rol"/>
                                             <TableColumn fx:id="colEstado" prefWidth="90" text="Estado"/>
                                             <TableColumn fx:id="colAcciones" text="Acciones"/>
                                         </columns>
