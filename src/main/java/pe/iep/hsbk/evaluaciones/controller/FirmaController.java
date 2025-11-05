@@ -191,10 +191,9 @@ public class FirmaController implements SesionAware {
     usuarioComboBox.setButtonCell(new ListCell<>() {
       @Override protected void updateItem(Usuario u, boolean empty) {
         super.updateItem(u, empty);
-        setText(empty || u == null ? null : u.getNombre());
+        setText(empty || u == null ? "Seleccionar usuario" : u.getNombre());
       }
     });
-    usuarioComboBox.setPromptText("Seleccionar usuario");
     usuarioComboBox.setEditable(false);
   }
 
@@ -325,7 +324,7 @@ public class FirmaController implements SesionAware {
 
   private void limpiarForm() {
     editing = null;
-    usuarioComboBox.getSelectionModel().clearSelection();
+    usuarioComboBox.setValue(null);
     estadoComboBox.setValue(Constantes.ESTADO_ACTIVO);
     txtRutaPng.clear();
   }
