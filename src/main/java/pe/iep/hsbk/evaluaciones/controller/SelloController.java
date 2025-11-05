@@ -226,7 +226,7 @@ public class SelloController implements SesionAware {
           final Sello s = isNew ? new Sello() : editing;
           s.setNombre(nombre);
           s.setActivo(Constantes.ESTADO_ACTIVO.equalsIgnoreCase(estado));
-          s.setImagen(bytesPng);
+          s.setSello(bytesPng);
 
           try {
             if (isNew) dao.guardarSello(s);
@@ -258,11 +258,11 @@ public class SelloController implements SesionAware {
   }
 
   private void previsualizarSello(Sello s) {
-    if (s == null || s.getImagen() == null || s.getImagen().length == 0) {
+    if (s == null || s.getSello() == null || s.getSello().length == 0) {
       engine.loadContent(Constantes.IMG_NOT_FOUND, "text/html");
       return;
     }
-    String b64 = java.util.Base64.getEncoder().encodeToString(s.getImagen());
+    String b64 = java.util.Base64.getEncoder().encodeToString(s.getSello());
     String html =
         "<html><head><meta charset='UTF-8'></head>" +
             "<body style='margin:0;display:flex;align-items:center;justify-content:center;background:#f6f7f9;height:100vh'>" +

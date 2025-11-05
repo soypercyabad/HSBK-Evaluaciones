@@ -21,7 +21,7 @@ public class SelloDaoImpl implements SelloDao {
                 Sello sello = new Sello();
                 sello.setId(rs.getLong("id"));
                 sello.setNombre(rs.getString("nombre"));
-                sello.setImagen(rs.getBytes("imagen"));
+                sello.setSello(rs.getBytes("sello"));
                 sello.setActivo(rs.getBoolean("activo"));
                 lista.add(sello);
             }
@@ -35,7 +35,7 @@ public class SelloDaoImpl implements SelloDao {
         try (var con = ConexionDB.getConnection();
              var ps  = con.prepareStatement(sql)) {
             ps.setString(1, s.getNombre());
-            ps.setBytes(2, s.getImagen());             // <- bytes del PNG
+            ps.setBytes(2, s.getSello());             // <- bytes del PNG
             ps.setBoolean(3, s.isActivo());
             ps.executeUpdate();
         }
@@ -47,7 +47,7 @@ public class SelloDaoImpl implements SelloDao {
         try (var con = ConexionDB.getConnection();
              var ps  = con.prepareStatement(sql)) {
             ps.setString(1, s.getNombre());
-            ps.setBytes(2, s.getImagen());             // <- bytes del PNG
+            ps.setBytes(2, s.getSello());             // <- bytes del PNG
             ps.setBoolean(3, s.isActivo());
             ps.executeUpdate();
         }

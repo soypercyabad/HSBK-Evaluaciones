@@ -3,15 +3,15 @@ package pe.iep.hsbk.evaluaciones.model;
 public class Sello {
     private Long id;
     private String nombre;
-    private byte[] imagen;
+    private byte[] sello;
     private boolean activo;
 
     public Sello() {}
 
-    public Sello(Long id, String nombre, byte[] imagen, boolean activo) {
+    public Sello(Long id, String nombre, byte[] sello, boolean activo) {
         this.id = id;
         this.nombre = nombre;
-        this.imagen = imagen;
+        this.sello = sello;
         this.activo = activo;
     }
 
@@ -31,12 +31,12 @@ public class Sello {
         this.nombre = nombre;
     }
 
-    public byte[] getImagen() {
-        return imagen;
+    public byte[] getSello() {
+        return sello;
     }
 
-    public void setImagen(byte[] imagen) {
-        this.imagen = imagen;
+    public void setSello(byte[] sello) {
+        this.sello = sello;
     }
 
     public boolean isActivo() {
