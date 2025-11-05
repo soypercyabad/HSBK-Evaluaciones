@@ -103,13 +103,13 @@
                                 <children>
                                     <VBox spacing="6.0">
                                         <children>
-                                            <Label text="Archivo .png de la firma"/>
+                                            <Label text="Archivo .png del sello"/>
                                             <HBox>
                                                 <children>
                                                     <Button fx:id="btnExaminar" onAction="#onExaminar"
                                                             styleClass="examinar-btn" text="Examinar"/>
                                                     <TextField fx:id="txtRutaPng" editable="false" prefWidth="280.0"
-                                                               promptText="Subir la imagen de la firma (.png)"
+                                                               promptText="Subir la imagen del sello (.png)"
                                                                styleClass="text-field-examinar"/>
                                                     <Pane HBox.hgrow="ALWAYS"/>
                                                     <Button fx:id="btnRegistrar" onAction="#onGuardar"
