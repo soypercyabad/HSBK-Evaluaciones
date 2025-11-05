@@ -188,7 +188,7 @@
                           AnchorPane.rightAnchor="16" AnchorPane.topAnchor="16">
                         <children>
                             <Label style="-fx-font-size: 16px; -fx-font-weight: bold;"
-                                   text="Previsualización de plantilla"/>
+                                   text="Previsualización de imagen"/>
                             <WebView fx:id="webView" prefHeight="600.0" prefWidth="600.0"/>
                         </children>
                     </VBox>
