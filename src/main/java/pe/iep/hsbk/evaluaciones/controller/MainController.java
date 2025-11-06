@@ -83,7 +83,8 @@ public class MainController {
 
   @FXML private void onPlantillasBoletas() {
     marcarActivo(btnPlantillasBoleta);
-    loadContent("/pe/iep/hsbk/evaluaciones/view/plantilla_boleta_view.fxml");
+    //loadContent("/pe/iep/hsbk/evaluaciones/view/plantilla_boleta_view.fxml");
+    loadContent("/pe/iep/hsbk/evaluaciones/view/alumno_notas_view.fxml");
   }
 
   @FXML private void onFirmas() {

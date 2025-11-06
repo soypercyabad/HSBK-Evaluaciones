@@ -4,7 +4,9 @@ import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.HBox;
@@ -58,7 +60,6 @@ public class StudentsListController implements SesionAware {
 
   // Overlay de carga (debe existir en el FXML)
   @FXML private StackPane overlay;
-  @FXML private ProgressIndicator piMain;
 
   // ToggleGroups
   private final ToggleGroup grpGrados = new ToggleGroup();
@@ -307,6 +308,9 @@ public class StudentsListController implements SesionAware {
           28, 28, 0.55,
           pb -> {
             System.out.println("Editar: " + pb);
+            // abrir nueva ventana de edición
+
+            Dialogs.info(null, "Editar Alumno", "Se esta editando al alumno: " + pb.getNombres() + " " + pb.getApellidos() + ". - Código: " + pb.getId());
           },
           new IconButtons.PathSpec(Constantes.edit, "-fx-fill: transparent; -fx-stroke: #003B65; -fx-stroke-width: 2;")
       );
@@ -367,5 +371,4 @@ public class StudentsListController implements SesionAware {
       cargarGradosAsync();
     }
   }
-
 }

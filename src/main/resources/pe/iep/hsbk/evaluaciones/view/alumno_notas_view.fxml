@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="pe.iep.hsbk.evaluaciones.controller.AlumnoNotasController">
+
+    <!-- CONTENIDO REAL -->
+    <VBox spacing="16" styleClass="page">
+        <padding>
+            <Insets bottom="24" left="24" right="24" top="16"/>
+        </padding>
+
+        <!-- TOP BAR -->
+        <HBox alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12">
+            <Button styleClass="outline-btn">
+                <graphic>
+                    <SVGPath content="M15 18L9 12L15 6"
+                             style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2;                             -fx-stroke-linecap: round; -fx-stroke-linejoin: round;"/>
+                </graphic>
+            </Button>
+
+            <!-- Título/Usuario a la izquierda -->
+            <Label fx:id="lblTitleUsuario" graphicTextGap="8" styleClass="top-title" text="Alumno: Alejos, Mirko"
+                   HBox.hgrow="NEVER">
+                <graphic>
+                    <Group scaleX="0.82" scaleY="0.82">
+                        <SVGPath
+                                content="M12 2C9.38 2 7.25 4.13 7.25 6.75C7.25 9.32 9.26 11.4 11.88 11.49C11.96 11.48 12.04 11.48 12.1 11.49C12.12 11.49 12.13 11.49 12.15 11.49C12.16 11.49 12.16 11.49 12.17 11.49C14.73 11.4 16.74 9.32 16.75 6.75C16.75 4.13 14.62 2 12 2Z"
+                                style="-fx-fill: #A5A7AB; -fx-stroke-width: 2; -fx-stroke-line-cap: round; -fx-stroke-line-join: round;"/>
+                        <SVGPath
+                                content="M17.0809 14.1499C14.2909 12.2899 9.74094 12.2899 6.93094 14.1499C5.66094 14.9999 4.96094 16.1499 4.96094 17.3799C4.96094 18.6099 5.66094 19.7499 6.92094 20.5899C8.32094 21.5299 10.1609 21.9999 12.0009 21.9999C13.8409 21.9999 15.6809 21.5299 17.0809 20.5899C18.3409 19.7399 19.0409 18.5999 19.0409 17.3599C19.0309 16.1299 18.3409 14.9899 17.0809 14.1499Z"
+                                style="-fx-fill: #292D32; -fx-stroke-width: 2;-fx-stroke-line-cap: round; -fx-stroke-line-join: round;"/>
+                    </Group>
+                </graphic>
+            </Label>
+
+            <!-- Spacer que empuja el siguiente nodo a la derecha -->
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Periodo a la derecha con ícono a la izquierda -->
+            <Label fx:id="lblTitlePeriodo" graphicTextGap="8" styleClass="top-title" text="Grado: 3º primaria"
+                   HBox.hgrow="NEVER">
+                <graphic>
+                    <Group scaleX="0.9" scaleY="0.9">
+                        <!-- path 1 -->
+                        <SVGPath
+                                content="M6.94028 2C7.35614 2 7.69326 2.32421 7.69326 2.72414V4.18487C8.36117 4.17241 9.10983 4.17241 9.95219 4.17241H13.9681C14.8104 4.17241 15.5591 4.17241 16.227 4.18487V2.72414C16.227 2.32421 16.5641 2 16.98 2C17.3958 2 17.733 2.32421 17.733 2.72414V4.24894C19.178 4.36022 20.1267 4.63333 20.8236 5.30359C21.5206 5.97385 21.8046 6.88616 21.9203 8.27586L22 9H2.92456H2V8.27586C2.11571 6.88616 2.3997 5.97385 3.09665 5.30359C3.79361 4.63333 4.74226 4.36022 6.1873 4.24894V2.72414C6.1873 2.32421 6.52442 2 6.94028 2Z"
+                                style="-fx-fill: #1C274C;"/>
+                        <!-- path 2 -->
+                        <SVGPath
+                                content="M21.9995 14.0001V12.0001C21.9995 11.161 21.9963 9.66527 21.9834 9H2.00917C1.99626 9.66527 1.99953 11.161 1.99953 12.0001V14.0001C1.99953 17.7713 1.99953 19.6569 3.1711 20.8285C4.34267 22.0001 6.22829 22.0001 9.99953 22.0001H13.9995C17.7708 22.0001 19.6564 22.0001 20.828 20.8285C21.9995 19.6569 21.9995 17.7713 21.9995 14.0001Z"
+                                style="-fx-fill: #A5A7AB"/>
+                        <!-- path 3 -->
+                        <SVGPath
+                                content="M18 17C18 17.5523 17.5523 18 17 18C16.4477 18 16 17.5523 16 17C16 16.4477 16.4477 16 17 16C17.5523 16 18 16.4477 18 17Z"
+                                style="-fx-fill: #1C274C;"/>
+                        <!-- path 4 -->
+                        <SVGPath
+                                content="M18 13C18 13.5523 17.5523 14 17 14C16.4477 14 16 13.5523 16 13C16 12.4477 16.4477 12 17 12C17.5523 12 18 12.4477 18 13Z"
+                                style="-fx-fill: #1C274C;"/>
+                        <!-- path 5 -->
+                        <SVGPath
+                                content="M13 17C13 17.5523 12.5523 18 12 18C11.4477 18 11 17.5523 11 17C11 16.4477 11.4477 16 12 16C12.5523 16 13 16.4477 13 17Z"
+                                style="-fx-fill: #1C274C;"/>
+                        <!-- path 6 -->
+                        <SVGPath
+                                content="M13 13C13 13.5523 12.5523 14 12 14C11.4477 14 11 13.5523 11 13C11 12.4477 11.4477 12 12 12C12.5523 12 13 12.4477 13 13Z"
+                                style="-fx-fill: #1C274C;"/>
+                        <!-- path 7 -->
+                        <SVGPath
+                                content="M8 17C8 17.5523 7.55228 18 7 18C6.44772 18 6 17.5523 6 17C6 16.4477 6.44772 16 7 16C7.55228 16 8 16.4477 8 17Z"
+                                style="-fx-fill: #1C274C;"/>
+                        <!-- path 8 -->
+                        <SVGPath
+                                content="M8 13C8 13.5523 7.55228 14 7 14C6.44772 14 6 13.5523 6 13C6 12.4477 6.44772 12 7 12C7.55228 12 8 12.4477 8 13Z"
+                                style="-fx-fill: #1C274C;"/>
+                    </Group>
+                </graphic>
+            </Label>
+
+            <!-- Spacer que empuja el siguiente nodo a la derecha -->
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Periodo a la derecha con ícono a la izquierda -->
+            <Label fx:id="lblTitleRol" graphicTextGap="8" styleClass="top-title" text="Sección: A" HBox.hgrow="NEVER">
+                <graphic>
+                    <StackPane maxHeight="24" maxWidth="24" minHeight="24" minWidth="24" prefHeight="24" prefWidth="24">
+                        <Group scaleX="0.046875" scaleY="0.046875">
+                            <SVGPath
+                                    content="M505.837,180.418L279.265,76.124c-7.349-3.385-15.177-5.093-23.265-5.093c-8.088,0-15.914,1.708-23.265,5.093 L6.163,180.418C2.418,182.149,0,185.922,0,190.045s2.418,7.896,6.163,9.627l226.572,104.294c7.349,3.385,15.177,5.101,23.265,5.101 c8.088,0,15.916-1.716,23.267-5.101l178.812-82.306v82.881c-7.096,0.8-12.63,6.84-12.63,14.138c0,6.359,4.208,11.864,10.206,13.618 l-12.092,79.791h55.676l-12.09-79.791c5.996-1.754,10.204-7.259,10.204-13.618c0-7.298-5.534-13.338-12.63-14.138v-95.148 l21.116-9.721c3.744-1.731,6.163-5.504,6.163-9.627S509.582,182.149,505.837,180.418z"
+                                    style="-fx-fill: #A5A7AB; -fx-stroke-width: 2; -fx-stroke-line-cap: round; -fx-stroke-line-join: round;"/>
+                            <SVGPath
+                                    content="M256,346.831c-11.246,0-22.143-2.391-32.386-7.104L112.793,288.71v101.638 c0,22.314,67.426,50.621,143.207,50.621c75.782,0,143.209-28.308,143.209-50.621V288.71l-110.827,51.017 C278.145,344.44,267.25,346.831,256,346.831z"
+                                    style="-fx-fill: #292D32; -fx-stroke-width: 2;-fx-stroke-line-cap: round; -fx-stroke-line-join: round;"/>
+                        </Group>
+                    </StackPane>
+                </graphic>
+            </Label>
+        </HBox>
+
+        <!-- BIMESTRE -->
+        <ScrollPane fitToHeight="true" minHeight="54" pannable="true" styleClass="tabs-scroll" vbarPolicy="NEVER">
+            <content>
+                <HBox fx:id="paneBimestres" alignment="CENTER_LEFT" spacing="8.0" styleClass="tabs-row"/>
+            </content>
+        </ScrollPane>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <HBox spacing="24">
+            <!-- SECCIONES -->
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="sections-scroll">
+                <content>
+                    <VBox fx:id="paneSecciones" spacing="8"/>
+                </content>
+            </ScrollPane>
+
+            <!-- Formulario de notas -->
+            <VBox spacing="6.0">
+                <!--Practicas-->
+                <Label styleClass="block-title" text="Practicas"/>
+                <GridPane vgap="5.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="120"/>
+                    </columnConstraints>
+
+                    <!-- Encabezados -->
+                    <Label text="Pract. 1" GridPane.columnIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Pract. 2" GridPane.columnIndex="2">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Pract. 3" GridPane.columnIndex="3">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Pract. 4" GridPane.columnIndex="4">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Promedio" GridPane.columnIndex="5"/>
+
+                    <!-- Inputs -->
+                    <TextField fx:id="pract1Field" alignment="CENTER" promptText="" GridPane.columnIndex="1"
+                               GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="pract2Field" alignment="CENTER" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="pract3Field" alignment="CENTER" GridPane.columnIndex="3" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="pract4Field" alignment="CENTER" GridPane.columnIndex="4" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="practPromField" alignment="CENTER" editable="false"
+                               styleClass="text-field-disabled" GridPane.columnIndex="5" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <rowConstraints>
+                        <RowConstraints/>
+                        <RowConstraints/>
+                    </rowConstraints>
+                    <padding>
+                        <Insets right="16.0"/>
+                    </padding>
+                </GridPane>
+
+                <!--Tareas-->
+                <Label styleClass="block-title" text="Tareas"/>
+                <GridPane vgap="5.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="120"/>
+                    </columnConstraints>
+
+                    <!-- Encabezados -->
+                    <Label text="Libro" GridPane.columnIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Cuaderno" GridPane.columnIndex="2">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Promedio" GridPane.columnIndex="3"/>
+
+                    <!-- Inputs -->
+                    <TextField fx:id="libroField" alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="cuadernoField" alignment="CENTER" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="tareaPromField" alignment="CENTER" editable="false"
+                               styleClass="text-field-disabled"
+                               GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                    <rowConstraints>
+                        <RowConstraints/>
+                        <RowConstraints/>
+                    </rowConstraints>
+                    <padding>
+                        <Insets right="16.0"/>
+                    </padding>
+                </GridPane>
+
+                <!--Examenes-->
+                <Label styleClass="block-title" text="Exámenes"/>
+                <GridPane vgap="5.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="90"/>
+                    </columnConstraints>
+
+                    <!-- Encabezados -->
+                    <Label text="Exa. Mensual" GridPane.columnIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Exa. Bimestral" GridPane.columnIndex="2"/>
+
+                    <!-- Inputs -->
+                    <TextField fx:id="exMenField" alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="exBimField" alignment="CENTER" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                    <rowConstraints>
+                        <RowConstraints/>
+                        <RowConstraints/>
+                    </rowConstraints>
+                    <padding>
+                        <Insets right="16.0"/>
+                    </padding>
+                </GridPane>
+
+                <!--Promedio Bimestral-->
+                <Label styleClass="block-title" text="Promedio Bimestral"/>
+                <GridPane vgap="5.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="90"/>
+                        <ColumnConstraints prefWidth="120"/>
+                    </columnConstraints>
+
+                    <!-- Encabezados -->
+                    <Label text="Practicas" GridPane.columnIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Tareas" GridPane.columnIndex="2">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Ex. Mensual" GridPane.columnIndex="3">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Ex. Bimestral" GridPane.columnIndex="4">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </Label>
+                    <Label text="Promedio Final" GridPane.columnIndex="5"/>
+
+                    <!-- Inputs -->
+                    <TextField fx:id="pbPracticasField" alignment="CENTER" editable="false"
+                               styleClass="text-field-disabled"
+                               GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="pbTareasField" alignment="CENTER" editable="false"
+                               styleClass="text-field-disabled"
+                               GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="pbExMensualField" alignment="CENTER" editable="false"
+                               styleClass="text-field-disabled"
+                               GridPane.columnIndex="3" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="pbExBimestralField" alignment="CENTER" editable="false"
+                               styleClass="text-field-disabled"
+                               GridPane.columnIndex="4" GridPane.rowIndex="1">
+                        <GridPane.margin>
+                            <Insets right="16.0"/>
+                        </GridPane.margin>
+                    </TextField>
+                    <TextField fx:id="pbFinalField" alignment="CENTER" editable="false"
+                               style="-fx-background-color:#d7f6f5; -fx-border-color:#3fb5b0; -fx-border-radius:6; -fx-background-radius:6;"
+                               GridPane.columnIndex="5" GridPane.rowIndex="1"/>
+                    <rowConstraints>
+                        <RowConstraints/>
+                        <RowConstraints/>
+                    </rowConstraints>
+                    <padding>
+                        <Insets right="16.0"/>
+                    </padding>
+                </GridPane>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <!-- OVERLAY DE CARGA -->
+    <StackPane fx:id="overlay" managed="false" styleClass="overlay" visible="false">
+        <ProgressIndicator fx:id="piMain" prefHeight="64" prefWidth="64"/>
+    </StackPane>
+</StackPane>

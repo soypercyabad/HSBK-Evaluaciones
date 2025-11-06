@@ -206,6 +206,12 @@
 }
 
 /* Inputs y botones: pequeños ajustes de padding para verse más sólidos */
+.text-field-disabled {
+    -fx-background-color: #f1f3f4;
+    -fx-border-color: #C9C9C9;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
 .text-field, .combo-box, .button {
     -fx-background-radius: 8;
 }

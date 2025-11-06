@@ -46,11 +46,8 @@ public class PlantillaBoletaController implements SesionAware {
   // Formulario
   @FXML private TextField txtNombrePlantilla;
   @FXML private ComboBox<String> estadoComboBox;
-  @FXML private Button btnExaminar;
   @FXML private TextField txtRutaHtml;
-  @FXML private Button btnRegistrar;
   @FXML public Button btnBuscar;
-  @FXML public Button btnRecargar;
 
   // Búsqueda
   @FXML private TextField txtBuscar;

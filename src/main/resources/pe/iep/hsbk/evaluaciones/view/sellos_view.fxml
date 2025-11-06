@@ -137,25 +137,25 @@
                                             <Button onAction="#onBuscar" styleClass="primary-btn" text="Buscar"/>
                                             <Pane HBox.hgrow="ALWAYS"/>
 
-                                            <Button onAction="#onRecargar" styleClass="primary-btn">
+                                            <Button onAction="#onRecargar" styleClass="outline-btn">
                                                 <graphic>
                                                     <!-- Escalamos desde 24x24 a ~18px -->
                                                     <Group scaleX="0.75" scaleY="0.75">
                                                         <!-- Arco superior -->
                                                         <SVGPath content="M4,12 A8,8 0 0 1 18.93,8"
-                                                                 style="-fx-fill: transparent; -fx-stroke: white; -fx-stroke-width: 2;
+                                                                 style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2;
                                                                  -fx-stroke-line-cap: round; -fx-stroke-line-join: round;"/>
                                                         <!-- Arco inferior -->
                                                         <SVGPath content="M20,12 A8,8 0 0 1 5.07,16"
-                                                                 style="-fx-fill: transparent; -fx-stroke: white; -fx-stroke-width: 2;
+                                                                 style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2;
                                                                  -fx-stroke-line-cap: round; -fx-stroke-line-join: round;"/>
                                                         <!-- Flecha superior derecha -->
                                                         <SVGPath content="M14 8 L19 8 L19 3"
-                                                                 style="-fx-fill: transparent; -fx-stroke: white; -fx-stroke-width: 2;
+                                                                 style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2;
                                                                  -fx-stroke-line-cap: round; -fx-stroke-line-join: round;"/>
                                                         <!-- Flecha inferior izquierda -->
                                                         <SVGPath content="M10 16 L5 16 L5 21"
-                                                                 style="-fx-fill: transparent; -fx-stroke: white; -fx-stroke-width: 2;
+                                                                 style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2;
                                                                  -fx-stroke-line-cap: round; -fx-stroke-line-join: round;"/>
                                                     </Group>
                                                 </graphic>

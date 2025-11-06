@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public class Bimestre {
   private Long id;
   private Long periodoId;
-  private byte numero; // 1..4
+  private int numero; // 1..4
   private LocalDate fechaInicio;
   private LocalDate fechaFin;
   private boolean abierto;
@@ -13,7 +13,7 @@ public class Bimestre {
   public Bimestre() {
   }
 
-  public Bimestre(Long id, Long periodoId, byte numero, LocalDate fechaInicio, LocalDate fechaFin, boolean abierto) {
+  public Bimestre(Long id, Long periodoId, int numero, LocalDate fechaInicio, LocalDate fechaFin, boolean abierto) {
     this.id = id;
     this.periodoId = periodoId;
     this.numero = numero;
@@ -38,11 +38,11 @@ public class Bimestre {
     this.periodoId = periodoId;
   }
 
-  public byte getNumero() {
+  public int getNumero() {
     return numero;
   }
 
-  public void setNumero(byte numero) {
+  public void setNumero(int numero) {
     this.numero = numero;
   }
 
