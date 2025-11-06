@@ -267,7 +267,7 @@ public class SelloController implements SesionAware {
     String html =
         "<html><head><meta charset='UTF-8'></head>" +
             "<body style='margin:0;display:flex;align-items:center;justify-content:center;background:#f6f7f9;height:100vh'>" +
-            "<img style='max-width:100%;max-height:100%;image-rendering:crisp-edges' src='data:image/png;base64," + b64 + "'/>" +
+            "<img style='max-width:100%;max-height:100%;margin-top:50px;image-rendering:crisp-edges' src='data:image/png;base64," + b64 + "'/>" +
             "</body></html>";
     engine.loadContent(html, "text/html");
   }
