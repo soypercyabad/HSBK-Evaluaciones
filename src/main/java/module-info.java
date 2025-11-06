@@ -13,4 +13,5 @@ module pe.iep.hsbk.evaluaciones {
   opens pe.iep.hsbk.evaluaciones.dao;
   opens pe.iep.hsbk.evaluaciones.service;
   opens pe.iep.hsbk.evaluaciones.util;
+  opens pe.iep.hsbk.evaluaciones.dao.impl;
 }

@@ -110,11 +110,11 @@
         </ScrollPane>
 
         <!-- CONTENIDO PRINCIPAL -->
-        <HBox spacing="24">
-            <!-- SECCIONES -->
+        <HBox spacing="12">
+            <!-- CURSOS -->
             <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="sections-scroll">
                 <content>
-                    <VBox fx:id="paneSecciones" spacing="8"/>
+                    <VBox fx:id="paneCurso" spacing="8"/>
                 </content>
             </ScrollPane>
 

@@ -12,14 +12,14 @@ import javafx.scene.layout.VBox;
 import pe.iep.hsbk.evaluaciones.dao.AlumnoDao;
 import pe.iep.hsbk.evaluaciones.dao.BimestreDao;
 import pe.iep.hsbk.evaluaciones.dao.PeriodoDao;
-import pe.iep.hsbk.evaluaciones.dao.SeccionDao;
+import pe.iep.hsbk.evaluaciones.dao.CursoDao;
 import pe.iep.hsbk.evaluaciones.dao.impl.AlumnoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.BimestreDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.PeriodoDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.SeccionDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.impl.CursoDaoImpl;
 import pe.iep.hsbk.evaluaciones.model.Alumno;
 import pe.iep.hsbk.evaluaciones.model.Bimestre;
-import pe.iep.hsbk.evaluaciones.model.Seccion;
+import pe.iep.hsbk.evaluaciones.model.Curso;
 import pe.iep.hsbk.evaluaciones.service.AuthService;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
 import pe.iep.hsbk.evaluaciones.util.FXAsync;
@@ -38,14 +38,14 @@ public class AlumnoNotasController implements SesionAware {
 
   // Contenedores para toggles
   @FXML private HBox paneBimestres;
-  @FXML private VBox paneSecciones;
+  @FXML private VBox paneCurso;
 
   // Overlay de carga (debe existir en el FXML)
   @FXML private StackPane overlay;
 
   // ToggleGroups
   private final ToggleGroup grpBimestres = new ToggleGroup();
-  private final ToggleGroup grpSecciones = new ToggleGroup();
+  private final ToggleGroup grpCurso = new ToggleGroup();
 
   // Sesión / contexto
   private AuthService.UserSession userSession;
@@ -54,7 +54,7 @@ public class AlumnoNotasController implements SesionAware {
 
   // Selección actual
   private Long bimestreSelId;
-  private Long seccionSelId = 1L;
+  private Long cursoSelId = 1L;
 
   // Datos tabla
   private final ObservableList<Alumno> master = FXCollections.observableArrayList();
@@ -64,13 +64,13 @@ public class AlumnoNotasController implements SesionAware {
   // DAOs
   private final PeriodoDao periodoDao = new PeriodoDaoImpl();
   private final BimestreDao bimestreDao     = new BimestreDaoImpl();
-  private final SeccionDao seccionDao = new SeccionDaoImpl();
+  private final CursoDao cursoDao = new CursoDaoImpl();
   private final AlumnoDao alumnoDao   = new AlumnoDaoImpl();
 
   // Caches
   private final Map<String, List<Bimestre>>   cacheBimestresPorPeriodoNivel    = new HashMap<>();
-  private final Map<Long,   List<Seccion>> cacheSeccionesPorBimestre        = new HashMap<>();
-  private final Map<String, List<Alumno>>  cacheAlumnosPorSeccionPeriodo = new HashMap<>();
+  private final Map<Long,   List<Curso>> cacheCursoPorBimestre        = new HashMap<>();
+  private final Map<String, List<Alumno>>  cacheAlumnosPorCursoPeriodo = new HashMap<>();
 
   // ===================== Ciclo de vida =====================
 
@@ -99,7 +99,7 @@ public class AlumnoNotasController implements SesionAware {
       }
     } catch (Exception e) {
       e.printStackTrace();
-      Dialogs.error(null, "Error", "No se pudo inicializar bimestres/secciones.");
+      Dialogs.error(null, "Error", "No se pudo inicializar bimestres/cursoes.");
     }
   }
 
@@ -131,7 +131,7 @@ public class AlumnoNotasController implements SesionAware {
           grpBimestres.getToggles().clear();
 
           for (var g : bimestres) {
-            ToggleButton tb = new ToggleButton(g.getNumero() + "° Bim");
+            ToggleButton tb = new ToggleButton(g.getNumero() + "° Bimestre");
             tb.getStyleClass().add("tab");
             tb.setUserData(g);
             tb.setToggleGroup(grpBimestres);
@@ -141,10 +141,10 @@ public class AlumnoNotasController implements SesionAware {
 
           if (!bimestres.isEmpty() && !grpBimestres.getToggles().isEmpty()) {
             grpBimestres.selectToggle(grpBimestres.getToggles().get(0));
-            onChangeBimestreDynamic(); // dispara carga de secciones
+            onChangeBimestreDynamic(); // dispara carga de cursoes
           } else {
-            paneSecciones.getChildren().clear();
-            grpSecciones.getToggles().clear();
+            paneCurso.getChildren().clear();
+            grpCurso.getToggles().clear();
             master.clear();
             setBusy(false);
           }
@@ -156,29 +156,31 @@ public class AlumnoNotasController implements SesionAware {
     );
   }
 
-  private void cargarSeccionesAsync(Long bimestreId) {
+  private void cargarCursoAsync(Long bimestreId) {
     setBusy(true);
     FXAsync.run(
-        () -> cacheSeccionesPorBimestre.computeIfAbsent(bimestreId, gid -> {
-          try { return seccionDao.listarSeccionesActivas(periodoId, gid); }
+        () -> cacheCursoPorBimestre.computeIfAbsent(bimestreId, gid -> {
+          try { return cursoDao.listarCursosActivos(gid); }
           catch (Exception e) { throw new RuntimeException(e); }
         }),
-        secciones -> {
-          paneSecciones.getChildren().clear();
-          grpSecciones.getToggles().clear();
+        cursoes -> {
+          paneCurso.getChildren().clear();
+          grpCurso.getToggles().clear();
 
-          for (var s : secciones) {
-            ToggleButton tb = new ToggleButton("Sección " + s.getNombre());
+          for (var s : cursoes) {
+            ToggleButton tb = new ToggleButton(s.getNombre());
             tb.getStyleClass().add("section-btn");
             tb.setUserData(s);
-            tb.setToggleGroup(grpSecciones);
-            tb.setOnAction(e -> onChangeSeccionDynamic());
-            paneSecciones.getChildren().add(tb);
+            tb.setToggleGroup(grpCurso);
+            tb.setMaxWidth(Double.MAX_VALUE);
+            tb.setOnAction(e -> onChangeCursoDynamic());
+            paneCurso.getChildren().add(tb);
+
           }
 
-          if (!secciones.isEmpty() && !grpSecciones.getToggles().isEmpty()) {
-            grpSecciones.selectToggle(grpSecciones.getToggles().get(0));
-            onChangeSeccionDynamic(); // dispara carga de alumnos
+          if (!cursoes.isEmpty() && !grpCurso.getToggles().isEmpty()) {
+            grpCurso.selectToggle(grpCurso.getToggles().get(0));
+            onChangeCursoDynamic(); // dispara carga de alumnos
           } else {
             master.clear();
             setBusy(false);
@@ -186,7 +188,7 @@ public class AlumnoNotasController implements SesionAware {
         },
         ex -> {
           setBusy(false);
-          Dialogs.errorConStacktrace(null, "Error", "Falló la carga de secciones", ex.getMessage(), ex);
+          Dialogs.errorConStacktrace(null, "Error", "Falló la carga de cursoes", ex.getMessage(), ex);
         }
     );
   }
@@ -198,14 +200,14 @@ public class AlumnoNotasController implements SesionAware {
     if (sel == null) return;
     var g = (Bimestre) ((ToggleButton) sel).getUserData();
     this.bimestreSelId = g.getId();
-    cargarSeccionesAsync(bimestreSelId);
+    cargarCursoAsync(bimestreSelId);
   }
 
-  private void onChangeSeccionDynamic() {
-    Toggle sel = grpSecciones.getSelectedToggle();
+  private void onChangeCursoDynamic() {
+    Toggle sel = grpCurso.getSelectedToggle();
     if (sel == null) return;
-    var s = (Seccion) ((ToggleButton) sel).getUserData();
-    this.seccionSelId = s.getId();
+    var s = (Curso) ((ToggleButton) sel).getUserData();
+    this.cursoSelId = s.getId();
     System.out.println("Sección seleccionada: " + s.getNombre());
     setBusy(false);
     //cargarAlumnosAsync();
@@ -220,8 +222,8 @@ public class AlumnoNotasController implements SesionAware {
     this.nivelId = nivelId;
 
     cacheBimestresPorPeriodoNivel.clear();
-    cacheSeccionesPorBimestre.clear();
-    cacheAlumnosPorSeccionPeriodo.clear();
+    cacheCursoPorBimestre.clear();
+    cacheAlumnosPorCursoPeriodo.clear();
 
     if (this.periodoId != null) {
       cargarBimestresAsync();
