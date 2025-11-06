@@ -24,6 +24,7 @@ import pe.iep.hsbk.evaluaciones.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Locale;
 
 import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
@@ -76,7 +77,7 @@ public class SelloController implements SesionAware {
   public void setSession(AuthService.UserSession s) {
     this.userSession = s;
     if (s != null) {
-      lblTitleScreen.setText(Constantes.PANEL_PLANTILLA_BOLETA);
+      lblTitleScreen.setText(Constantes.PANEL_SELLO);
       lblTitleProfile.setText(formatRoles(s.getRoles()));
     }
   }
@@ -209,21 +210,23 @@ public class SelloController implements SesionAware {
     final boolean isNew = (editing == null || editing.getId() == null);
 
     if (nombre.isEmpty()) { Dialogs.warn(null, "Validación", "El nombre es obligatorio."); return; }
-    if (ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona la imagen .png del sello."); return; }
+    if (isNew && ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona la imagen .png del sello."); return; }
 
     setBusy(true);
 
     FXAsync.run(
         () -> {
           // BACKGROUND
-          byte[] bytesPng;
-          try {
-            bytesPng = java.nio.file.Files.readAllBytes(new java.io.File(ruta).toPath());
-          } catch (IOException e) {
-            throw new RuntimeException("No se pudo leer el archivo PNG", e);
+          byte[] bytesPng = null;
+          if (!ruta.isEmpty()) {
+            try {
+              bytesPng = Files.readAllBytes(new File(ruta).toPath());
+            } catch (IOException e) {
+              throw new RuntimeException("No se pudo leer el archivo PNG", e);
+            }
           }
 
-          final Sello s = isNew ? new Sello() : editing;
+          final Sello s = (isNew ? new Sello() : editing);
           s.setNombre(nombre);
           s.setActivo(Constantes.ESTADO_ACTIVO.equalsIgnoreCase(estado));
           s.setSello(bytesPng);

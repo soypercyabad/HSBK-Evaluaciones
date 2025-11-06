@@ -43,7 +43,7 @@ public class SelloDaoImpl implements SelloDao {
 
     @Override
     public void actualizarSello(Sello s) throws Exception {
-        String sql = "CALL sp_upd_sello(?, ?, ?)";
+        String sql = "CALL sp_upd_sello(?, ?, ?, ?)";
         try (var con = ConexionDB.getConnection();
              var ps  = con.prepareStatement(sql)) {
             ps.setLong(1, s.getId());
