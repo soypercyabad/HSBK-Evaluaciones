@@ -168,7 +168,7 @@ public class SelloController implements SesionAware {
         ex -> {
           setBusy(false);
           ex.printStackTrace();
-          Dialogs.error(null, "Error", "No se pudo cargar la lista de Firmas.");
+          Dialogs.error(null, "Error", "No se pudo cargar la lista de Sellos.");
         }
     );
   }
@@ -193,7 +193,7 @@ public class SelloController implements SesionAware {
   private void onExaminar() {
     var w = txtRutaPng.getScene().getWindow();
     FileChooser fc = new FileChooser();
-    fc.setTitle("Selecciona imagen de firma (.png)");
+    fc.setTitle("Selecciona imagen del sello (.png)");
     fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG", "*.png"));
     File f = fc.showOpenDialog(w);
     if (f != null) {
@@ -209,7 +209,7 @@ public class SelloController implements SesionAware {
     final boolean isNew = (editing == null || editing.getId() == null);
 
     if (nombre.isEmpty()) { Dialogs.warn(null, "Validación", "El nombre es obligatorio."); return; }
-    if (ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona la imagen .png de la firma."); return; }
+    if (ruta.isEmpty()) { Dialogs.warn(null, "Validación", "Selecciona la imagen .png del sello."); return; }
 
     setBusy(true);
 
@@ -240,12 +240,12 @@ public class SelloController implements SesionAware {
           limpiarForm();
           cargarLista();     // recarga la tabla
           setBusy(false);
-          Dialogs.info(null, "Firma registrada", "La firma se guardo correctamente.");
+          Dialogs.info(null, "Sello registrada", "El sello se guardo correctamente.");
         },
         ex -> {
           setBusy(false);
           ex.printStackTrace();
-          Dialogs.error(null, "Error", "No se pudo guardar la firma.");
+          Dialogs.error(null, "Error", "No se pudo guardar el sello.");
         }
     );
   }
@@ -253,6 +253,7 @@ public class SelloController implements SesionAware {
   private void cargarEnFormulario(Sello s) {
     if (s == null) return;
     editing = s;
+    txtNombreSello.setText(s.getNombre());
     estadoComboBox.setValue(s.isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO);
     txtRutaPng.clear();
   }
