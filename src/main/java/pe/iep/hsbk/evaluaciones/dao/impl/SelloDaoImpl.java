@@ -46,9 +46,10 @@ public class SelloDaoImpl implements SelloDao {
         String sql = "CALL sp_upd_sello(?, ?, ?)";
         try (var con = ConexionDB.getConnection();
              var ps  = con.prepareStatement(sql)) {
-            ps.setString(1, s.getNombre());
-            ps.setBytes(2, s.getSello());             // <- bytes del PNG
-            ps.setBoolean(3, s.isActivo());
+            ps.setLong(1, s.getId());
+            ps.setString(2, s.getNombre());
+            ps.setBytes(3, s.getSello());             // <- bytes del PNG
+            ps.setBoolean(4, s.isActivo());
             ps.executeUpdate();
         }
     }
