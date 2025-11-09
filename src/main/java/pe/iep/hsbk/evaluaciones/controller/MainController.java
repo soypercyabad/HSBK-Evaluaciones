@@ -1,26 +1,30 @@
 package pe.iep.hsbk.evaluaciones.controller;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import pe.iep.hsbk.evaluaciones.App;
+import pe.iep.hsbk.evaluaciones.enums.Constantes;
 import pe.iep.hsbk.evaluaciones.service.AuthService;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
-import pe.iep.hsbk.evaluaciones.util.SesionAware;
+import pe.iep.hsbk.evaluaciones.util.Navigator;
 
 public class MainController {
 
   @FXML private StackPane contentContainer;
   @FXML private Button btnPrimaria, btnSecundaria, btnPlantillasBoleta, btnFirmas, btnSellos;
 
+  // Navegador de vistas
+  private Navigator nav;
   private AuthService.UserSession userSession;
 
   public void initSession(AuthService.UserSession session) {
+    // Guardar sesión
     this.userSession = session;
-
+    // Inicializar navegador
+    this.nav = new Navigator(contentContainer, userSession);
     // Habilitar/deshabilitar navegación según roles
     boolean puedeDocente = hasRole("Docente") || hasRole("Tutor");
     boolean puedePlantillaBoletas = hasRole("Administrador") || hasRole("Director");
@@ -41,8 +45,7 @@ public class MainController {
       onSecundaria();
     } else if (btnPlantillasBoleta.isVisible()) {
       onPlantillasBoletas();
-    }
-    else if (btnFirmas.isVisible()) {
+    } else if (btnFirmas.isVisible()) {
       onFirmas();
     } else if (btnSellos.isVisible()) {
       onSellos();
@@ -73,28 +76,57 @@ public class MainController {
 
   @FXML private void onPrimaria() {
     marcarActivo(btnPrimaria);
-    loadStudentsViewWithNivel(1L);
+    // Navegar a lista de estudiantes de primaria
+    nav.go(Constantes.Route.STUDENTS, c -> {
+      // Pasar nivelId al controller
+      if (c instanceof StudentsListController) {
+        StudentsListController sc = (StudentsListController) c;
+        sc.setNivelId(1L);
+        // Configurar navegación interna del controller
+        sc.setGoTo((route, afterLoad) -> {
+          // Navegar usando el mismo navigator
+          nav.go(route, ctrl -> {
+            // Pasar sesión si aplica
+            if (afterLoad != null) afterLoad.accept(ctrl);
+          });
+        });
+      }
+    });
   }
 
   @FXML private void onSecundaria() {
     marcarActivo(btnSecundaria);
-    loadStudentsViewWithNivel(2L);
+    // Navegar a lista de estudiantes de primaria
+    nav.go(Constantes.Route.STUDENTS, c -> {
+      // Pasar nivelId al controller
+      if (c instanceof StudentsListController) {
+        StudentsListController sc = (StudentsListController) c;
+        sc.setNivelId(2L);
+        // Configurar navegación interna del controller
+        sc.setGoTo((route, afterLoad) -> {
+          // Navegar usando el mismo navigator
+          nav.go(route, ctrl -> {
+            // Pasar sesión si aplica
+            if (afterLoad != null) afterLoad.accept(ctrl);
+          });
+        });
+      }
+    });
   }
 
   @FXML private void onPlantillasBoletas() {
     marcarActivo(btnPlantillasBoleta);
-    //loadContent("/pe/iep/hsbk/evaluaciones/view/plantilla_boleta_view.fxml");
-    loadContent("/pe/iep/hsbk/evaluaciones/view/alumno_notas_view.fxml");
+    nav.go(Constantes.Route.PLANTILLAS, null);
   }
 
   @FXML private void onFirmas() {
     marcarActivo(btnFirmas);
-    loadContent("/pe/iep/hsbk/evaluaciones/view/firmas_view.fxml");
+    nav.go(Constantes.Route.FIRMAS, null);
   }
 
   @FXML private void onSellos() {
     marcarActivo(btnSellos);
-    loadContent("/pe/iep/hsbk/evaluaciones/view/sellos_view.fxml");
+    nav.go(Constantes.Route.SELLOS, null);
   }
 
   @FXML
@@ -113,40 +145,5 @@ public class MainController {
   private void onOcultar() {
     Stage stage = (Stage) contentContainer.getScene().getWindow();
     App.minimizar(stage);
-  }
-
-  /** Carga FXML y, si implementa SesionAware, le pasa la sesión. */
-  private void loadContent(String fxmlPath) {
-    try {
-      FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-      Node node = loader.load();
-
-      Object child = loader.getController();
-      if (child instanceof SesionAware) {
-        ((SesionAware) child).setSession(userSession);
-      }
-      contentContainer.getChildren().setAll(node);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  private void loadStudentsViewWithNivel(long nivelId) {
-    try {
-      FXMLLoader loader = new FXMLLoader(getClass().getResource(
-          "/pe/iep/hsbk/evaluaciones/view/students_list_view.fxml"));
-      Node node = loader.load();
-
-      Object child = loader.getController();
-      if (child instanceof SesionAware) {
-        ((SesionAware) child).setSession(userSession);
-      }
-      if (child instanceof StudentsListController) {
-        ((StudentsListController) child).setNivelId(nivelId);
-      }
-      contentContainer.getChildren().setAll(node);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
   }
 }

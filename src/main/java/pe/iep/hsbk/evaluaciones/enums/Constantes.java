@@ -34,4 +34,16 @@ public class Constantes {
       "-4.256 1.76-4.256-1.76-1.728-4.256zM12 16q0 1.664 1.184 2.848t2.816 1.152 " +
       "2.816-1.152 1.184-2.848-1.184-2.816-2.816-1.184-2.816 1.184l2.816 2.816h-4z";
 
+  // Rutas FXML
+  public enum Route {
+    STUDENTS("/pe/iep/hsbk/evaluaciones/view/students_list_view.fxml"),
+    STUDENT_NOTAS("/pe/iep/hsbk/evaluaciones/view/alumno_notas_view.fxml"),
+    STUDENT_CONDUCTA("/pe/iep/hsbk/evaluaciones/view/alumno_conducta_view.fxml"),
+    PLANTILLAS("/pe/iep/hsbk/evaluaciones/view/plantilla_boleta_view.fxml"),
+    FIRMAS("/pe/iep/hsbk/evaluaciones/view/firmas_view.fxml"),
+    SELLOS("/pe/iep/hsbk/evaluaciones/view/sellos_view.fxml");
+
+    public final String fxml;
+    Route(String fxml) { this.fxml = fxml; }
+  }
 }

@@ -27,14 +27,14 @@ import pe.iep.hsbk.evaluaciones.util.SesionAware;
 
 import java.util.*;
 
-import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
-
 public class AlumnoNotasController implements SesionAware {
   // UI
-  @FXML
-  private Label lblTitleUsuario;
-  @FXML private Label lblTitlePeriodo;
-  @FXML private Label lblTitleRol;
+  @FXML private Label lblTitleAlumno;
+  @FXML private Label lblTitleGrado;
+  @FXML private Label lblTitleSeccion;
+
+  @FXML private Label lblCursoSel;
+  @FXML private Label lblBimestreSel;
 
   // Contenedores para toggles
   @FXML private HBox paneBimestres;
@@ -77,11 +77,37 @@ public class AlumnoNotasController implements SesionAware {
   @Override
   public void setSession(AuthService.UserSession s) {
     this.userSession = s;
-    if (s != null) {
-      lblTitleUsuario.setText("Bienvenido " + s.getNombre() + "!");
-      lblTitlePeriodo.setText("Periodo " + s.getPeriodoNombre());
-      lblTitleRol.setText(formatRoles(s.getRoles()));
+  }
+
+  public void setAlumno(Alumno a, Long nivelId) {
+    this.nivelId = nivelId;
+
+    if (a != null) {
+      cargarAlumnoAsync(a, nivelId);
     }
+  }
+
+  private void cargarAlumnoAsync(Alumno a, Long nivelId) {
+    setBusy(true);
+    FXAsync.run(
+        () -> {
+          try {
+            return alumnoDao.obtenerPorId(Math.toIntExact(a.getId()), Math.toIntExact(nivelId));
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        },
+        alumno -> {
+          lblTitleAlumno.setText(alumno.getNombres() + " " + alumno.getApellidos());
+          lblTitleGrado.setText("Grado: " + alumno.getGrado() + ' ' + alumno.getNivel());
+          lblTitleSeccion.setText("Sección: " + alumno.getSeccion());
+          setBusy(false);
+        },
+        ex -> {
+          setBusy(false);
+          Dialogs.errorConStacktrace(null, "Error", "Falló la carga del alumno", ex.getMessage(), ex);
+        }
+    );
   }
 
   @FXML
@@ -94,6 +120,7 @@ public class AlumnoNotasController implements SesionAware {
       periodoId = periodoDao.getPeriodoIdPorNombre(perNombre);
 
       // Solo cargamos cuando también tengamos nivel (lo setea MainController vía setNivelId)
+      System.out.println("Inicializando AlumnoNotasController con periodoId=" + periodoId + " y nivelId=" + nivelId);
       if (periodoId != null && nivelId != null) {
         cargarBimestresAsync();
       }
@@ -188,7 +215,7 @@ public class AlumnoNotasController implements SesionAware {
         },
         ex -> {
           setBusy(false);
-          Dialogs.errorConStacktrace(null, "Error", "Falló la carga de cursoes", ex.getMessage(), ex);
+          Dialogs.errorConStacktrace(null, "Error", "Falló la carga de cursos", ex.getMessage(), ex);
         }
     );
   }
@@ -199,7 +226,8 @@ public class AlumnoNotasController implements SesionAware {
     Toggle sel = grpBimestres.getSelectedToggle();
     if (sel == null) return;
     var g = (Bimestre) ((ToggleButton) sel).getUserData();
-    this.bimestreSelId = g.getId();
+    this.bimestreSelId = nivelId;
+    lblBimestreSel.setText(g.getNumero() + "° Bimestre");
     cargarCursoAsync(bimestreSelId);
   }
 
@@ -208,6 +236,7 @@ public class AlumnoNotasController implements SesionAware {
     if (sel == null) return;
     var s = (Curso) ((ToggleButton) sel).getUserData();
     this.cursoSelId = s.getId();
+    lblCursoSel.setText("Curso: " + s.getNombre());
     System.out.println("Sección seleccionada: " + s.getNombre());
     setBusy(false);
     //cargarAlumnosAsync();

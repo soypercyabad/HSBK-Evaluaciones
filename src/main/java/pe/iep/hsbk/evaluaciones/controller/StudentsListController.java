@@ -4,9 +4,7 @@ import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.HBox;
@@ -69,6 +67,8 @@ public class StudentsListController implements SesionAware {
   private UserSession userSession;
   private Long periodoId; // ej. 2025
   private Long nivelId;   // 1=Primaria, 2=Secundaria
+  private java.util.function.BiConsumer<Constantes.Route,java.util.function.Consumer<Object>> goTo;
+
 
   // Selección actual
   private Long gradoSelId;
@@ -307,10 +307,9 @@ public class StudentsListController implements SesionAware {
           this,
           28, 28, 0.55,
           pb -> {
+            if (pb == null) return;
+            abrirDetalleAlumno(pb, nivelId);
             System.out.println("Editar: " + pb);
-            // abrir nueva ventana de edición
-
-            Dialogs.info(null, "Editar Alumno", "Se esta editando al alumno: " + pb.getNombres() + " " + pb.getApellidos() + ". - Código: " + pb.getId());
           },
           new IconButtons.PathSpec(Constantes.edit, "-fx-fill: transparent; -fx-stroke: #003B65; -fx-stroke-width: 2;")
       );
@@ -337,6 +336,50 @@ public class StudentsListController implements SesionAware {
             || (a.getCodigo()!=null    && a.getCodigo().toLowerCase().contains(q))
     );
   }
+
+  public void setGoTo(java.util.function.BiConsumer<Constantes.Route, java.util.function.Consumer<Object>> goTo) {
+    this.goTo = goTo;
+  }
+
+  private void abrirDetalleAlumno(Alumno alumno, Long nivelId) {
+    if (goTo == null) {
+      Dialogs.error(null, "Error", "Navegación no disponible.");
+      return;
+    }
+
+    goTo.accept(Constantes.Route.STUDENT_NOTAS, ctrlObj -> {
+      // Asegurarse que el controller es del tipo esperado
+      if (ctrlObj instanceof AlumnoNotasController) {
+        AlumnoNotasController ctrl = (AlumnoNotasController) ctrlObj;
+
+        // Inyectar sesión si aplica
+        if (ctrl instanceof SesionAware) {
+          ((SesionAware) ctrl).setSession(userSession);
+        }
+        // Pasar el alumno seleccionado a la vista de notas
+        ctrl.setAlumno(alumno, nivelId);
+      } else {
+        Dialogs.error(null, "Error", "El controlador no es del tipo esperado.");
+      }
+    });
+  }
+
+
+  /*
+  private void abrirConductaAlumno(long alumnoId) {
+    try {
+      FXMLLoader fx = new FXMLLoader(getClass().getResource("/pe/iep/hsbk/evaluaciones/view/conduta_view.fxml"));
+      Node root = fx.load();
+      var ctrl = fx.getController();
+      ctrl.setAlumnoId(alumnoId);
+      ctrl.setSession(userSession);
+
+      Dialogs.showInContent(root, "Conducta del Alumno"); // <-- reemplaza por tu mecanismo
+    } catch (Exception ex) {
+      Dialogs.errorConStacktrace(null, "Error", "No se pudo abrir la vista de conducta", ex.getMessage(), ex);
+    }
+  }
+*/
 
   // ===================== Handlers =====================
 

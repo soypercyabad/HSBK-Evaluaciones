@@ -41,5 +41,32 @@ public class AlumnoDaoImpl implements AlumnoDao {
       }
     }
   }
+
+  @Override
+  public Alumno obtenerPorId(int alumnoId, int nivelId) throws Exception {
+    String sql = "CALL sp_get_alumno_info (?, ?)";
+
+    try (var con = ConexionDB.getConnection();
+         var ps = con.prepareStatement(sql)) {
+
+      ps.setInt(1, alumnoId);
+      ps.setInt(2, nivelId);
+
+      try (var rs = ps.executeQuery()) {
+
+        if (rs.next()) {
+          Alumno a = new Alumno();
+          a.setNombres(rs.getString("nombres"));
+          a.setApellidos(rs.getString("apellidos"));
+          a.setGrado(rs.getString("grado"));
+          a.setNivel(rs.getString("nivel"));
+          a.setSeccion(rs.getString("seccion"));
+          return a;
+        } else {
+          return null;
+        }
+      }
+    }
+  }
 }
 
