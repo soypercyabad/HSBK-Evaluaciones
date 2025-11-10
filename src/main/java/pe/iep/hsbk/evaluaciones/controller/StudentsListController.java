@@ -308,7 +308,7 @@ public class StudentsListController implements SesionAware {
           28, 28, 0.55,
           pb -> {
             if (pb == null) return;
-            abrirDetalleAlumno(pb, nivelId);
+            abrirConductaAlumno(pb, nivelId);
             System.out.println("Editar: " + pb);
           },
           new IconButtons.PathSpec(Constantes.edit, "-fx-fill: transparent; -fx-stroke: #003B65; -fx-stroke-width: 2;")
@@ -364,22 +364,28 @@ public class StudentsListController implements SesionAware {
     });
   }
 
-
-  /*
-  private void abrirConductaAlumno(long alumnoId) {
-    try {
-      FXMLLoader fx = new FXMLLoader(getClass().getResource("/pe/iep/hsbk/evaluaciones/view/conduta_view.fxml"));
-      Node root = fx.load();
-      var ctrl = fx.getController();
-      ctrl.setAlumnoId(alumnoId);
-      ctrl.setSession(userSession);
-
-      Dialogs.showInContent(root, "Conducta del Alumno"); // <-- reemplaza por tu mecanismo
-    } catch (Exception ex) {
-      Dialogs.errorConStacktrace(null, "Error", "No se pudo abrir la vista de conducta", ex.getMessage(), ex);
+  private void abrirConductaAlumno(Alumno alumno, Long nivelId) {
+    if (goTo == null) {
+      Dialogs.error(null, "Error", "Navegación no disponible.");
+      return;
     }
+
+    goTo.accept(Constantes.Route.STUDENT_CONDUCTA, ctrlObj -> {
+      // Asegurarse que el controller es del tipo esperado
+      if (ctrlObj instanceof AlumnoConductaController) {
+        AlumnoConductaController ctrl = (AlumnoConductaController) ctrlObj;
+
+        // Inyectar sesión si aplica
+        if (ctrl instanceof SesionAware) {
+          ((SesionAware) ctrl).setSession(userSession);
+        }
+        // Pasar el alumno seleccionado a la vista de notas
+        ctrl.setAlumno(alumno, nivelId);
+      } else {
+        Dialogs.error(null, "Error", "El controlador no es del tipo esperado.");
+      }
+    });
   }
-*/
 
   // ===================== Handlers =====================
 

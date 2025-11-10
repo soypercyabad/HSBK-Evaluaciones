@@ -62,6 +62,7 @@
 /* ======================= */
 .page { -fx-background-color: -bg; }
 .top-title { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: -txt; }
+.top-title-panel { -fx-font-weight: bold; -fx-text-fill: -txt; }
 
 /* ======================= */
 /* Tabs (grados)           */
@@ -116,9 +117,12 @@
 /* ======================= */
 .primary-btn {
     -fx-background-color: -primary;
+    -fx-border-color: -primary;
+    -fx-border-width: 2;
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-radius: 8;
+    -fx-border-radius: 8;
     -fx-background-insets: 0;
 }
 .primary-btn:hover { -fx-opacity: .96; -fx-cursor: hand; }
@@ -126,6 +130,7 @@
     -fx-background-color: transparent;
     -fx-border-color: -primary;
     -fx-text-fill: -primary;
+    -fx-font-weight: bold;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
 }
@@ -201,6 +206,26 @@
     -fx-border-insets: 0;
 }
 
+/* GridPanel para contener varios elementos con padding consistente */
+.grid-panel {
+    -fx-background-color: -card;
+    -fx-background-radius: 8;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 8;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+    -fx-padding: 10;
+}
+.grid-panel-simple {
+    -fx-background-color: -card;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+    -fx-padding: 10;
+}
+
 /* WebView con borde sutil para separar */
 .web-view, .web-view:focused {
     -fx-background-color: transparent;
@@ -217,6 +242,12 @@
 }
 
 /* Inputs y botones: pequeños ajustes de padding para verse más sólidos */
+.text-field-promedio {
+    -fx-background-color:#d7f6f5;
+    -fx-border-color:#3fb5b0;
+    -fx-border-radius:6;
+    -fx-background-radius:6;
+}
 .text-field-disabled {
     -fx-background-color: #f1f3f4;
     -fx-border-color: #C9C9C9;

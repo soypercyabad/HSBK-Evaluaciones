@@ -19,8 +19,9 @@
         <HBox alignment="CENTER_LEFT" maxWidth="Infinity" spacing="12">
             <Button fx:id="btnBack" styleClass="outline-btn">
                 <graphic>
-                    <SVGPath content="M15 18L9 12L15 6"
-                             style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2; -fx-stroke-linecap: round; -fx-stroke-linejoin: round;"/>
+                    <Group scaleX="0.80" scaleY="0.80">
+                        <SVGPath content="M15 7L10 12L15 17" style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2;                              -fx-stroke-linecap: round; -fx-stroke-linejoin: round;" />
+                    </Group>
                 </graphic>
             </Button>
 
@@ -300,7 +301,7 @@
                                     </GridPane.margin>
                                 </TextField>
                                 <TextField fx:id="pbFinalField" alignment="CENTER" editable="false"
-                                           style="-fx-background-color:#d7f6f5; -fx-border-color:#3fb5b0; -fx-border-radius:6; -fx-background-radius:6;"
+                                           styleClass="text-field-promedio"
                                            GridPane.columnIndex="5" GridPane.rowIndex="1"/>
                                 <rowConstraints>
                                     <RowConstraints/>
