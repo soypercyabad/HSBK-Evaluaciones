@@ -1,15 +1,20 @@
 package pe.iep.hsbk.evaluaciones.controller;
 
-import javafx.beans.property.*;
-import javafx.collections.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.geometry.Side;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import pe.iep.hsbk.evaluaciones.dao.AlumnoDao;
 import pe.iep.hsbk.evaluaciones.dao.GradoDao;
 import pe.iep.hsbk.evaluaciones.dao.PeriodoDao;
@@ -24,40 +29,52 @@ import pe.iep.hsbk.evaluaciones.model.Grado;
 import pe.iep.hsbk.evaluaciones.model.Seccion;
 import pe.iep.hsbk.evaluaciones.service.AuthService.UserSession;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
+import pe.iep.hsbk.evaluaciones.util.FXAsync;
 import pe.iep.hsbk.evaluaciones.util.IconButtons;
 import pe.iep.hsbk.evaluaciones.util.SesionAware;
-import pe.iep.hsbk.evaluaciones.util.FXAsync;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
-import java.util.Locale;
 
 import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
 
 public class StudentsListController implements SesionAware {
 
   // UI
-  @FXML private Label lblTitleUsuario;
-  @FXML private Label lblTitlePeriodo;
-  @FXML private Label lblTitleRol;
-  @FXML private TextField txtBuscar;
+  @FXML
+  private Label lblTitleUsuario;
+  @FXML
+  private Label lblTitlePeriodo;
+  @FXML
+  private Label lblTitleRol;
+  @FXML
+  private TextField txtBuscar;
 
   // Tabla
-  @FXML private TableView<Alumno> tblAlumnos;
-  @FXML private TableColumn<Alumno, Boolean> colSel;
-  @FXML private TableColumn<Alumno, String> colApellidos;
-  @FXML private TableColumn<Alumno, String> colNombres;
-  @FXML private TableColumn<Alumno, String> colCodigo;
-  @FXML private TableColumn<Alumno, Void> colAcciones;
+  @FXML
+  private TableView<Alumno> tblAlumnos;
+  @FXML
+  private TableColumn<Alumno, Boolean> colSel;
+  @FXML
+  private TableColumn<Alumno, String> colApellidos;
+  @FXML
+  private TableColumn<Alumno, String> colNombres;
+  @FXML
+  private TableColumn<Alumno, String> colCodigo;
+  @FXML
+  private TableColumn<Alumno, Void> colAcciones;
 
   // Contenedores para toggles
-  @FXML private HBox paneGrados;
-  @FXML private VBox paneSecciones;
+  @FXML
+  private HBox paneGrados;
+  @FXML
+  private VBox paneSecciones;
 
   // Overlay de carga (debe existir en el FXML)
-  @FXML private StackPane overlay;
+  @FXML
+  private StackPane overlay;
 
   // ToggleGroups
   private final ToggleGroup grpGrados = new ToggleGroup();
@@ -67,7 +84,7 @@ public class StudentsListController implements SesionAware {
   private UserSession userSession;
   private Long periodoId; // ej. 2025
   private Long nivelId;   // 1=Primaria, 2=Secundaria
-  private java.util.function.BiConsumer<Constantes.Route,java.util.function.Consumer<Object>> goTo;
+  private java.util.function.BiConsumer<Constantes.Route, java.util.function.Consumer<Object>> goTo;
 
 
   // Selección actual
@@ -81,14 +98,14 @@ public class StudentsListController implements SesionAware {
 
   // DAOs
   private final PeriodoDao periodoDao = new PeriodoDaoImpl();
-  private final GradoDao gradoDao     = new GradoDaoImpl();
+  private final GradoDao gradoDao = new GradoDaoImpl();
   private final SeccionDao seccionDao = new SeccionDaoImpl();
-  private final AlumnoDao alumnoDao   = new AlumnoDaoImpl();
+  private final AlumnoDao alumnoDao = new AlumnoDaoImpl();
 
   // Caches
-  private final Map<String, List<Grado>>   cacheGradosPorPeriodoNivel    = new HashMap<>();
-  private final Map<Long,   List<Seccion>> cacheSeccionesPorGrado        = new HashMap<>();
-  private final Map<String, List<Alumno>>  cacheAlumnosPorSeccionPeriodo = new HashMap<>();
+  private final Map<String, List<Grado>> cacheGradosPorPeriodoNivel = new HashMap<>();
+  private final Map<Long, List<Seccion>> cacheSeccionesPorGrado = new HashMap<>();
+  private final Map<String, List<Alumno>> cacheAlumnosPorSeccionPeriodo = new HashMap<>();
 
   // ===================== Ciclo de vida =====================
 
@@ -148,8 +165,11 @@ public class StudentsListController implements SesionAware {
 
     FXAsync.run(
         () -> cacheGradosPorPeriodoNivel.computeIfAbsent(key, k -> {
-          try { return gradoDao.listarGradosActivos(periodoId, nivelId); }
-          catch (Exception e) { throw new RuntimeException(e); }
+          try {
+            return gradoDao.listarGradosActivos(periodoId, nivelId);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }),
         grados -> {
           paneGrados.getChildren().clear();
@@ -185,8 +205,11 @@ public class StudentsListController implements SesionAware {
     setBusy(true);
     FXAsync.run(
         () -> cacheSeccionesPorGrado.computeIfAbsent(gradoId, gid -> {
-          try { return seccionDao.listarSeccionesActivas(periodoId, gid); }
-          catch (Exception e) { throw new RuntimeException(e); }
+          try {
+            return seccionDao.listarSeccionesActivas(periodoId, gid);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }),
         secciones -> {
           paneSecciones.getChildren().clear();
@@ -296,11 +319,11 @@ public class StudentsListController implements SesionAware {
     colSel.setGraphic(chkAll);
 
     colApellidos.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getApellidos()));
-    colNombres  .setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombres()));
-    colCodigo   .setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCodigo()));
+    colNombres.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombres()));
+    colCodigo.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCodigo()));
     colApellidos.setStyle("-fx-alignment: CENTER-LEFT;");
-    colNombres  .setStyle("-fx-alignment: CENTER-LEFT;");
-    colCodigo   .setStyle("-fx-alignment: CENTER-LEFT;");
+    colNombres.setStyle("-fx-alignment: CENTER-LEFT;");
+    colCodigo.setStyle("-fx-alignment: CENTER-LEFT;");
 
     colAcciones.setCellFactory(col -> new TableCell<>() {
       private final Button btnEdit = IconButtons.iconButtonForCell(
@@ -308,8 +331,8 @@ public class StudentsListController implements SesionAware {
           28, 28, 0.55,
           pb -> {
             if (pb == null) return;
-            abrirConductaAlumno(pb, nivelId);
-            System.out.println("Editar: " + pb);
+            Node graphic = getGraphic();
+            abrirSegunRol(pb, (Button)  graphic);
           },
           new IconButtons.PathSpec(Constantes.edit, "-fx-fill: transparent; -fx-stroke: #003B65; -fx-stroke-width: 2;")
       );
@@ -327,13 +350,48 @@ public class StudentsListController implements SesionAware {
     tblAlumnos.setItems(filtered);
   }
 
+  private void abrirSegunRol(Alumno pb, Button btnEdit) {
+    // Validar navegación
+    if (goTo == null) {
+      Dialogs.error(null, "Error", "Navegación no disponible.");
+      return;
+    }
+    // Validar sesión
+    if (userSession == null) {
+      Dialogs.error(null, "Error", "Sesión no disponible.");
+      return;
+    }
+    // Validar roles
+    if (isSoloDocente()) {
+      abrirDetalleAlumno(pb, nivelId);
+    } else if (isSoloTutor()) {
+      abrirConductaAlumno(pb, nivelId);
+    } else if (isDocenteYTutor()) {
+      // Mostrar menú de selección
+      ContextMenu menu = new ContextMenu();
+
+      MenuItem miNotas = new MenuItem("Ver Notas");
+      miNotas.setOnAction(e -> abrirDetalleAlumno(pb, nivelId));
+
+      MenuItem miConducta = new MenuItem("Ver Conducta");
+      miConducta.setOnAction(e -> abrirConductaAlumno(pb, nivelId));
+
+      menu.getItems().addAll(miNotas, miConducta);
+      menu.getStyleClass().add("role-menu");
+      menu.show(btnEdit, Side.BOTTOM, 0, 0);
+    } else {
+      Dialogs.warn(null, "Sin permisos", "No cuentas con roles para acceder a esta opción.");
+    }
+
+  }
+
   private void refiltrar() {
     final String q = (txtBuscar == null) ? "" : txtBuscar.getText().trim().toLowerCase(Locale.ROOT);
     filtered.setPredicate(a ->
         q.isEmpty()
-            || (a.getApellidos()!=null && a.getApellidos().toLowerCase().contains(q))
-            || (a.getNombres()!=null   && a.getNombres().toLowerCase().contains(q))
-            || (a.getCodigo()!=null    && a.getCodigo().toLowerCase().contains(q))
+            || (a.getApellidos() != null && a.getApellidos().toLowerCase().contains(q))
+            || (a.getNombres() != null && a.getNombres().toLowerCase().contains(q))
+            || (a.getCodigo() != null && a.getCodigo().toLowerCase().contains(q))
     );
   }
 
@@ -388,8 +446,32 @@ public class StudentsListController implements SesionAware {
   }
 
   // ===================== Handlers =====================
+  private boolean hasRole(String roleKey) {
+    if (userSession == null || userSession.getRoles() == null) return false;
 
-  @FXML private void onBuscar() { refiltrar(); }
+    return userSession.getRoles().stream()
+        .map(Object::toString)
+        .map(String::toUpperCase)
+        .anyMatch(r -> r.equals(roleKey.toUpperCase()));
+  }
+
+  private boolean isSoloDocente() {
+    return hasRole("Docente") && !hasRole("Tutor");
+  }
+
+  private boolean isSoloTutor() {
+    return hasRole("Tutor") && !hasRole("Docente");
+  }
+
+  private boolean isDocenteYTutor() {
+    return hasRole("Tutor") && hasRole("Tutor");
+  }
+
+
+  @FXML
+  private void onBuscar() {
+    refiltrar();
+  }
 
   @FXML
   private void onDescargar() {
@@ -404,7 +486,9 @@ public class StudentsListController implements SesionAware {
         }
       }
       Dialogs.info(null, "Descarga Completada", "El archivo se ha generado en:\n" + out.getAbsolutePath());
-    } catch (Exception e) { e.printStackTrace(); }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   // Llamado por el menú

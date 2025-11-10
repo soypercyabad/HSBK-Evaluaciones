@@ -299,3 +299,33 @@
 .toast-info    { -fx-background-color: #eaf5ff; -fx-border-color: #3498db; }
 
 .toast-text { -fx-text-fill: #2d2d2d; -fx-font-size: 13px; }
+
+/* Estilo para el menu flotante */
+.context-menu.role-menu {
+    -fx-background-color: white;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 8;
+    -fx-padding: 6 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0.15, 0, 2);
+    -fx-border-color: #E6EEF5;
+    -fx-border-radius: 8;
+}
+
+/* Items */
+.context-menu.role-menu .menu-item {
+    -fx-padding: 8 14;
+}
+.context-menu.role-menu .menu-item:focused {
+    -fx-background-color: #E9F3FF;        /* hover/focus */
+}
+.context-menu.role-menu .menu-item:armed {
+    -fx-background-color: #D7EAFE;        /* click */
+}
+
+/* Texto del item */
+.context-menu.role-menu .label {
+    -fx-text-fill: #003B65;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
