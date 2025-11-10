@@ -36,7 +36,7 @@ public class Constantes {
 
   // Rutas FXML
   public enum Route {
-    STUDENTS("/pe/iep/hsbk/evaluaciones/view/students_list_view.fxml"),
+    STUDENTS_LIST("/pe/iep/hsbk/evaluaciones/view/students_list_view.fxml"),
     STUDENT_NOTAS("/pe/iep/hsbk/evaluaciones/view/alumno_notas_view.fxml"),
     STUDENT_CONDUCTA("/pe/iep/hsbk/evaluaciones/view/alumno_conducta_view.fxml"),
     PLANTILLAS("/pe/iep/hsbk/evaluaciones/view/plantilla_boleta_view.fxml"),

@@ -1,5 +1,6 @@
 package pe.iep.hsbk.evaluaciones.controller;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,12 +12,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import pe.iep.hsbk.evaluaciones.dao.AlumnoDao;
 import pe.iep.hsbk.evaluaciones.dao.BimestreDao;
-import pe.iep.hsbk.evaluaciones.dao.PeriodoDao;
 import pe.iep.hsbk.evaluaciones.dao.CursoDao;
+import pe.iep.hsbk.evaluaciones.dao.PeriodoDao;
 import pe.iep.hsbk.evaluaciones.dao.impl.AlumnoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.BimestreDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.PeriodoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.CursoDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.impl.PeriodoDaoImpl;
 import pe.iep.hsbk.evaluaciones.model.Alumno;
 import pe.iep.hsbk.evaluaciones.model.Bimestre;
 import pe.iep.hsbk.evaluaciones.model.Curso;
@@ -28,65 +29,128 @@ import pe.iep.hsbk.evaluaciones.util.SesionAware;
 import java.util.*;
 
 public class AlumnoNotasController implements SesionAware {
-  // UI
+
+  // ===================== UI (FXML) =====================
+  @FXML private Button btnBack;
   @FXML private Label lblTitleAlumno;
   @FXML private Label lblTitleGrado;
   @FXML private Label lblTitleSeccion;
-
   @FXML private Label lblCursoSel;
   @FXML private Label lblBimestreSel;
-
-  // Contenedores para toggles
   @FXML private HBox paneBimestres;
   @FXML private VBox paneCurso;
-
-  // Overlay de carga (debe existir en el FXML)
   @FXML private StackPane overlay;
 
-  // ToggleGroups
+  // ===================== ToggleGroups =====================
   private final ToggleGroup grpBimestres = new ToggleGroup();
-  private final ToggleGroup grpCurso = new ToggleGroup();
+  private final ToggleGroup grpCurso     = new ToggleGroup();
 
-  // Sesión / contexto
-  private AuthService.UserSession userSession;
-  private Long periodoId; // ej. 2025
-  private Long nivelId = 1L;   // 1=Primaria, 2=Secundaria
+  // ===================== Sesión / Contexto =====================
+  private Runnable onBack;                       // acción de volver
+  private AuthService.UserSession userSession;   // sesión de usuario
+  private Long periodoId;                        // ej. 2025
+  private Long nivelId = 1L;                     // 1=Primaria, 2=Secundaria
 
-  // Selección actual
-  private Long bimestreSelId;
-  private Long cursoSelId = 1L;
+  // ===================== Selección actual =====================
+  private Long bimestreSelId;                    // bimestre seleccionado
+  private Long cursoSelId = 1L;                  // curso seleccionado
 
-  // Datos tabla
+  // ===================== Datos =====================
   private final ObservableList<Alumno> master = FXCollections.observableArrayList();
-  private FilteredList<Alumno> filtered;
-  private final Map<Alumno, BooleanProperty> selectedMap = new IdentityHashMap<>();
 
-  // DAOs
-  private final PeriodoDao periodoDao = new PeriodoDaoImpl();
-  private final BimestreDao bimestreDao     = new BimestreDaoImpl();
-  private final CursoDao cursoDao = new CursoDaoImpl();
-  private final AlumnoDao alumnoDao   = new AlumnoDaoImpl();
+  // ===================== DAOs =====================
+  private final PeriodoDao periodoDao   = new PeriodoDaoImpl();
+  private final BimestreDao bimestreDao = new BimestreDaoImpl();
+  private final CursoDao cursoDao       = new CursoDaoImpl();
+  private final AlumnoDao alumnoDao     = new AlumnoDaoImpl();
 
-  // Caches
-  private final Map<String, List<Bimestre>>   cacheBimestresPorPeriodoNivel    = new HashMap<>();
-  private final Map<Long,   List<Curso>> cacheCursoPorBimestre        = new HashMap<>();
-  private final Map<String, List<Alumno>>  cacheAlumnosPorCursoPeriodo = new HashMap<>();
+  // ===================== Cachés =====================
+  private final Map<String, List<Bimestre>> cacheBimestresPorPeriodoNivel = new HashMap<>();
+  private final Map<Long,   List<Curso>>    cacheCursoPorBimestre         = new HashMap<>();
+  private final Map<String, List<Alumno>>   cacheAlumnosPorCursoPeriodo   = new HashMap<>();
 
-  // ===================== Ciclo de vida =====================
-
+  // ===================== Setters =====================
   @Override
   public void setSession(AuthService.UserSession s) {
     this.userSession = s;
   }
 
+  /** Inyecta alumno + nivel y carga cabeceras. */
   public void setAlumno(Alumno a, Long nivelId) {
     this.nivelId = nivelId;
+    if (a != null) cargarAlumnoAsync(a, nivelId);
+  }
 
-    if (a != null) {
-      cargarAlumnoAsync(a, nivelId);
+  /** Inyecta la acción de volver. */
+  public void setOnBack(Runnable onBack) {
+    this.onBack = onBack;
+    wireBackButton(); // asegúrate que el botón queda conectado aunque llegue después de initialize()
+  }
+
+  /** Llamado por el menú para cambiar nivel y recargar. */
+  public void setNivelId(long nivelId) {
+    if (Objects.equals(this.nivelId, nivelId)) return;
+    this.nivelId = nivelId;
+
+    cacheBimestresPorPeriodoNivel.clear();
+    cacheCursoPorBimestre.clear();
+    cacheAlumnosPorCursoPeriodo.clear();
+
+    if (this.periodoId != null) {
+      cargarBimestresAsync();
     }
   }
 
+  // ===================== Ciclo de vida =====================
+  @FXML
+  public void initialize() {
+    // botón Back
+    wireBackButton();
+
+    // ESC para volver
+    Platform.runLater(() -> {
+      if (btnBack != null && btnBack.getScene() != null) {
+        btnBack.getScene().setOnKeyPressed(k -> {
+          if (k.getCode() == javafx.scene.input.KeyCode.ESCAPE && onBack != null) onBack.run();
+        });
+      }
+    });
+
+    // Inicialización de periodo y carga de bimestres
+    try {
+      String perNombre = (userSession != null && userSession.getPeriodoNombre() != null)
+          ? userSession.getPeriodoNombre()
+          : "2025";
+      periodoId = periodoDao.getPeriodoIdPorNombre(perNombre);
+
+      if (periodoId != null && nivelId != null) {
+        cargarBimestresAsync();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      Dialogs.error(null, "Error", "No se pudo inicializar bimestres/cursos.");
+    }
+  }
+
+  // ===================== Atajos de botones =====================
+  private void wireBackButton() {
+    if (btnBack == null) return;
+    btnBack.setOnAction(e -> {
+      if (onBack != null) onBack.run();
+      else System.out.println("No hay acción de retorno configurada.");
+    });
+    btnBack.setCancelButton(true);
+  }
+
+  // ===================== Busy / Overlay =====================
+  private void setBusy(boolean busy) {
+    if (overlay != null) {
+      overlay.setVisible(busy);
+      overlay.setManaged(busy);
+    }
+  }
+
+  // ===================== Cargas asíncronas =====================
   private void cargarAlumnoAsync(Alumno a, Long nivelId) {
     setBusy(true);
     FXAsync.run(
@@ -110,43 +174,9 @@ public class AlumnoNotasController implements SesionAware {
     );
   }
 
-  @FXML
-  public void initialize() {
-
-    try {
-      String perNombre = (userSession != null && userSession.getPeriodoNombre() != null)
-          ? userSession.getPeriodoNombre()
-          : "2025";
-      periodoId = periodoDao.getPeriodoIdPorNombre(perNombre);
-
-      // Solo cargamos cuando también tengamos nivel (lo setea MainController vía setNivelId)
-      System.out.println("Inicializando AlumnoNotasController con periodoId=" + periodoId + " y nivelId=" + nivelId);
-      if (periodoId != null && nivelId != null) {
-        cargarBimestresAsync();
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      Dialogs.error(null, "Error", "No se pudo inicializar bimestres/cursoes.");
-    }
-  }
-
-  // ===================== Busy / Overlay =====================
-
-  private void setBusy(boolean busy) {
-    // Deshabilita inputs principales para evitar clics mientras carga
-
-
-    if (overlay != null) {
-      overlay.setVisible(busy);
-      overlay.setManaged(busy);
-    }
-  }
-
-  // ===================== Cargas asíncronas =====================
-
   private void cargarBimestresAsync() {
     setBusy(true);
-    String key = "";
+    final String key = periodoId + ":" + nivelId;
 
     FXAsync.run(
         () -> cacheBimestresPorPeriodoNivel.computeIfAbsent(key, k -> {
@@ -157,10 +187,10 @@ public class AlumnoNotasController implements SesionAware {
           paneBimestres.getChildren().clear();
           grpBimestres.getToggles().clear();
 
-          for (var g : bimestres) {
-            ToggleButton tb = new ToggleButton(g.getNumero() + "° Bimestre");
+          for (var b : bimestres) {
+            ToggleButton tb = new ToggleButton(b.getNumero() + "° Bimestre");
             tb.getStyleClass().add("tab");
-            tb.setUserData(g);
+            tb.setUserData(b);
             tb.setToggleGroup(grpBimestres);
             tb.setOnAction(e -> onChangeBimestreDynamic());
             paneBimestres.getChildren().add(tb);
@@ -168,7 +198,7 @@ public class AlumnoNotasController implements SesionAware {
 
           if (!bimestres.isEmpty() && !grpBimestres.getToggles().isEmpty()) {
             grpBimestres.selectToggle(grpBimestres.getToggles().get(0));
-            onChangeBimestreDynamic(); // dispara carga de cursoes
+            onChangeBimestreDynamic(); // dispara carga de cursos
           } else {
             paneCurso.getChildren().clear();
             grpCurso.getToggles().clear();
@@ -184,30 +214,30 @@ public class AlumnoNotasController implements SesionAware {
   }
 
   private void cargarCursoAsync(Long bimestreId) {
+    if (bimestreId == null) return;
     setBusy(true);
     FXAsync.run(
-        () -> cacheCursoPorBimestre.computeIfAbsent(bimestreId, gid -> {
-          try { return cursoDao.listarCursosActivos(gid); }
+        () -> cacheCursoPorBimestre.computeIfAbsent(bimestreId, bid -> {
+          try { return cursoDao.listarCursosActivos(bid); }
           catch (Exception e) { throw new RuntimeException(e); }
         }),
-        cursoes -> {
+        cursos -> {
           paneCurso.getChildren().clear();
           grpCurso.getToggles().clear();
 
-          for (var s : cursoes) {
-            ToggleButton tb = new ToggleButton(s.getNombre());
+          for (var c : cursos) {
+            ToggleButton tb = new ToggleButton(c.getNombre());
             tb.getStyleClass().add("section-btn");
-            tb.setUserData(s);
+            tb.setUserData(c);
             tb.setToggleGroup(grpCurso);
             tb.setMaxWidth(Double.MAX_VALUE);
             tb.setOnAction(e -> onChangeCursoDynamic());
             paneCurso.getChildren().add(tb);
-
           }
 
-          if (!cursoes.isEmpty() && !grpCurso.getToggles().isEmpty()) {
+          if (!cursos.isEmpty() && !grpCurso.getToggles().isEmpty()) {
             grpCurso.selectToggle(grpCurso.getToggles().get(0));
-            onChangeCursoDynamic(); // dispara carga de alumnos
+            onChangeCursoDynamic();
           } else {
             master.clear();
             setBusy(false);
@@ -221,42 +251,32 @@ public class AlumnoNotasController implements SesionAware {
   }
 
   // ===================== Eventos UI =====================
-
   private void onChangeBimestreDynamic() {
     Toggle sel = grpBimestres.getSelectedToggle();
     if (sel == null) return;
-    var g = (Bimestre) ((ToggleButton) sel).getUserData();
-    this.bimestreSelId = nivelId;
-    lblBimestreSel.setText(g.getNumero() + "° Bimestre");
+
+    var b = (Bimestre) ((ToggleButton) sel).getUserData();
+    this.bimestreSelId = (b != null) ? b.getId() : null;
+
+    if (lblBimestreSel != null && b != null) {
+      lblBimestreSel.setText(b.getNumero() + "° Bimestre");
+    }
+
+    // Cargar cursos del bimestre seleccionado
     cargarCursoAsync(bimestreSelId);
   }
 
   private void onChangeCursoDynamic() {
     Toggle sel = grpCurso.getSelectedToggle();
     if (sel == null) return;
-    var s = (Curso) ((ToggleButton) sel).getUserData();
-    this.cursoSelId = s.getId();
-    lblCursoSel.setText("Curso: " + s.getNombre());
-    System.out.println("Sección seleccionada: " + s.getNombre());
-    setBusy(false);
-    //cargarAlumnosAsync();
-  }
 
-  // ===================== Handlers =====================
-
-
-  // Llamado por el menú
-  public void setNivelId(long nivelId) {
-    if (Objects.equals(this.nivelId, nivelId)) return;
-    this.nivelId = nivelId;
-
-    cacheBimestresPorPeriodoNivel.clear();
-    cacheCursoPorBimestre.clear();
-    cacheAlumnosPorCursoPeriodo.clear();
-
-    if (this.periodoId != null) {
-      cargarBimestresAsync();
+    var c = (Curso) ((ToggleButton) sel).getUserData();
+    if (c != null) {
+      this.cursoSelId = c.getId();
+      if (lblCursoSel != null) {
+        lblCursoSel.setText("Curso: " + c.getNombre());
+      }
     }
+    setBusy(false);
   }
 }
-

@@ -6,7 +6,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 
-<StackPane prefHeight="639.0" prefWidth="849.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.iep.hsbk.evaluaciones.controller.AlumnoConductaController">
+<StackPane prefHeight="639.0" prefWidth="849.0"
+           xmlns="http://javafx.com/javafx/17.0.12"
+           xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.iep.hsbk.evaluaciones.controller.AlumnoConductaController">
 
     <!-- CONTENIDO REAL -->
     <VBox spacing="16" styleClass="page">
@@ -19,7 +21,7 @@
             <Button fx:id="btnBack" styleClass="outline-btn">
                 <graphic>
                     <Group scaleX="0.80" scaleY="0.80">
-                        <SVGPath content="M15 7L10 12L15 17" style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2;                              -fx-stroke-linecap: round; -fx-stroke-linejoin: round;" />
+                        <SVGPath content="M15 7L10 12L15 17" style="-fx-fill: none; -fx-stroke: -fx-text-fill; -fx-stroke-width: 2; -fx-stroke-linecap: round; -fx-stroke-linejoin: round;" />
                     </Group>
                 </graphic>
             </Button>
@@ -87,12 +89,12 @@
                                     <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 
                                     <rowConstraints>
-                                        <RowConstraints /> <!-- título -->
-                                        <RowConstraints /> <!-- Raz. Matemático -->
-                                        <RowConstraints /> <!-- Raz. Verbal -->
-                                        <RowConstraints /> <!-- Historia del Perú -->
-                                        <RowConstraints vgrow="ALWAYS" /> <!-- spacer -->
-                                        <RowConstraints /> <!-- promedio -->
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints vgrow="ALWAYS" />
+                                        <RowConstraints />
                                     </rowConstraints>
                                 </GridPane>
 
@@ -121,12 +123,12 @@
                                     <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 
                                     <rowConstraints>
-                                        <RowConstraints /> <!-- título -->
-                                        <RowConstraints /> <!-- Raz. Matemático -->
-                                        <RowConstraints /> <!-- Raz. Verbal -->
-                                        <RowConstraints /> <!-- Historia del Perú -->
-                                        <RowConstraints vgrow="ALWAYS" /> <!-- spacer -->
-                                        <RowConstraints /> <!-- promedio -->
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints vgrow="ALWAYS" />
+                                        <RowConstraints />
                                     </rowConstraints>
                                 </GridPane>
 
@@ -149,10 +151,10 @@
                                     <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="3" />
 
                                     <rowConstraints>
-                                        <RowConstraints />            <!-- título -->
-                                        <RowConstraints />            <!-- Raz. Matemático -->
-                                        <RowConstraints vgrow="ALWAYS" /> <!-- spacer -->
-                                        <RowConstraints />            <!-- promedio -->
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints vgrow="ALWAYS" />
+                                        <RowConstraints />
                                     </rowConstraints>
                                 </GridPane>
 
@@ -213,12 +215,12 @@
                                     <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 
                                     <rowConstraints>
-                                        <RowConstraints /> <!-- título -->
-                                        <RowConstraints /> <!-- Raz. Matemático -->
-                                        <RowConstraints /> <!-- Raz. Verbal -->
-                                        <RowConstraints /> <!-- Historia del Perú -->
-                                        <RowConstraints vgrow="ALWAYS" /> <!-- spacer -->
-                                        <RowConstraints /> <!-- promedio -->
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints vgrow="ALWAYS" />
+                                        <RowConstraints />
                                     </rowConstraints>
                                 </GridPane>
                             </HBox>
@@ -459,6 +461,6 @@
 
     <!-- OVERLAY DE CARGA -->
     <StackPane fx:id="overlay" managed="false" styleClass="overlay" visible="false">
-        <ProgressIndicator fx:id="piMain" prefHeight="64" prefWidth="64" />
+        <ProgressIndicator prefHeight="64" prefWidth="64" />
     </StackPane>
 </StackPane>

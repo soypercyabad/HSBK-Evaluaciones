@@ -77,7 +77,7 @@ public class MainController {
   @FXML private void onPrimaria() {
     marcarActivo(btnPrimaria);
     // Navegar a lista de estudiantes de primaria
-    nav.go(Constantes.Route.STUDENTS, c -> {
+    nav.go(Constantes.Route.STUDENTS_LIST, c -> {
       // Pasar nivelId al controller
       if (c instanceof StudentsListController) {
         StudentsListController sc = (StudentsListController) c;
@@ -97,7 +97,7 @@ public class MainController {
   @FXML private void onSecundaria() {
     marcarActivo(btnSecundaria);
     // Navegar a lista de estudiantes de primaria
-    nav.go(Constantes.Route.STUDENTS, c -> {
+    nav.go(Constantes.Route.STUDENTS_LIST, c -> {
       // Pasar nivelId al controller
       if (c instanceof StudentsListController) {
         StudentsListController sc = (StudentsListController) c;
