@@ -74,7 +74,6 @@ public class AlumnoConductaController implements SesionAware {
   private final AlumnoDao alumnoDao = new AlumnoDaoImpl();
   private final RecomendacionDAO recomendacionDao = new RecomendacionImpl();
   private final ConductaPanelDao conductaPanelDao = new ConductaPanelImpl();
-  private final MatriculaDao matriculaDao = new MatriculaDaoImpl();
 
   private Long currentMatriculaId;
 
