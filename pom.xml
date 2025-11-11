@@ -50,8 +50,8 @@
                 <version>3.11.0</version>
                 <configuration>
                     <release>11</release>
-                    <source>16</source>
-                    <target>16</target>
+                    <source>15</source>
+                    <target>15</target>
                 </configuration>
             </plugin>
 

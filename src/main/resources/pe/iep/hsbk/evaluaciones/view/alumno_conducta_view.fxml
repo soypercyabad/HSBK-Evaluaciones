@@ -306,7 +306,7 @@
                                     </columnConstraints>
 
                                     <Label text="Entrega de útiles escolares" GridPane.columnSpan="2" />
-                                    <TextField alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtutilesEscolares" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -320,7 +320,7 @@
                                     </columnConstraints>
 
                                     <Label text="Participación de actividades" GridPane.columnSpan="2" />
-                                    <TextField alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtactividades" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -334,7 +334,7 @@
                                     </columnConstraints>
 
                                     <Label text="Asistencia a las reuniones" GridPane.columnSpan="2" />
-                                    <TextField alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtreuniones" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -348,7 +348,7 @@
                                     </columnConstraints>
 
                                     <Label text="Escuela para padres" GridPane.columnSpan="2" />
-                                    <TextField alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtescuelaPadres" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -397,7 +397,7 @@
                                         </columnConstraints>
 
                                         <Label text="Mensaje" GridPane.columnSpan="2" />
-                                        <ComboBox prefWidth="Infinity" promptText="Seleccionar mensaje" GridPane.columnSpan="2" GridPane.rowIndex="1" VBox.vgrow="ALWAYS" />
+                                        <ComboBox fx:id="recomendacionComboBox" prefWidth="Infinity" promptText="Seleccionar mensaje" GridPane.columnSpan="2" GridPane.rowIndex="1" VBox.vgrow="ALWAYS" />
                                         <rowConstraints>
                                             <RowConstraints />
                                             <RowConstraints />
