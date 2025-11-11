@@ -41,6 +41,8 @@ public class AlumnoConductaController implements SesionAware {
   @FXML private TextField txtactividades;
   @FXML private TextField txtreuniones;
   @FXML private TextField txtescuelaPadres;
+  @FXML private TextField txtnotaConducta;
+  @FXML private TextField txtconductaLetra;
 
   // Contenedores
   @FXML
@@ -369,6 +371,8 @@ public class AlumnoConductaController implements SesionAware {
               // ========== PINTAR UI ==========
               if (resumen.getConducta() != null) {
                 System.out.println(">> UI: conducta id=" + resumen.getConducta().getId());
+                txtnotaConducta.setText(String.valueOf(resumen.getConducta().getNota()));
+                txtconductaLetra.setText(resumen.getConducta().getLetra());
               } else {
                 System.out.println(">> UI: conducta sin datos");
               }

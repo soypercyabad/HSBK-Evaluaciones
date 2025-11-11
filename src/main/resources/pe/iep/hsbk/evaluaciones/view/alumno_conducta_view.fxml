@@ -374,10 +374,10 @@
                                         </columnConstraints>
 
                                         <Label text="Nota" wrapText="true" />
-                                        <TextField alignment="CENTER" promptText="20" GridPane.rowIndex="1" />
+                                        <TextField fx:id="txtnotaConducta" alignment="CENTER" promptText="20" GridPane.rowIndex="1" />
 
                                         <Label text="Letra" wrapText="true" GridPane.columnIndex="1" />
-                                        <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                        <TextField fx:id="txtconductaLetra" alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
                                         <rowConstraints>
                                             <RowConstraints />
