@@ -11,43 +11,34 @@ public class AlumnoDaoImpl implements AlumnoDao {
 
   @Override
   public List<Alumno> listarPorSeccionPeriodo(int seccionId, int periodoId) throws Exception {
-    String sql = "SELECT a.id, a.dni, a.codigo, a.apellidos, a.nombres, a.numero_orden, a.activo\n" +
-        "FROM matricula m\n" +
-        "JOIN alumno a ON a.id = m.alumno_id\n" +
-        "WHERE m.seccion_id = ? AND m.periodo_id = ?\n" +
-        "ORDER BY a.apellidos, a.nombres;";
-
+    String call = "{ call sp_alumnos_por_seccion_periodo(?,?) }";
+    List<Alumno> out = new ArrayList<>();
     try (var con = ConexionDB.getConnection();
-         var ps = con.prepareStatement(sql)) {
+         var cs = con.prepareCall(call)) {
 
-      ps.setInt(1, seccionId);
-      ps.setInt(2, periodoId);
+      cs.setInt(1, seccionId);
+      cs.setInt(2, periodoId);
 
-      try (var rs = ps.executeQuery()) {
-
-        List<Alumno> alumnos = new ArrayList<>();
-
+      try (var rs = cs.executeQuery()) {
         while (rs.next()) {
           Alumno a = new Alumno();
           a.setId(rs.getLong("id"));
-          a.setDni(rs.getString("dni"));
-          a.setCodigo(rs.getString("codigo"));
           a.setApellidos(rs.getString("apellidos"));
           a.setNombres(rs.getString("nombres"));
-          a.setActivo(rs.getBoolean("activo"));
-          alumnos.add(a);
+          a.setCodigo(rs.getString("codigo"));
+          out.add(a);
         }
-        return alumnos;
       }
     }
+    return out;
   }
 
   @Override
   public Alumno obtenerPorId(int alumnoId, int nivelId) throws Exception {
-    String sql = "CALL sp_get_alumno_info (?, ?)";
+    String call = "{ CALL sp_get_alumno_info (?, ?) }";
 
     try (var con = ConexionDB.getConnection();
-         var ps = con.prepareStatement(sql)) {
+         var ps = con.prepareCall(call)) {
 
       ps.setInt(1, alumnoId);
       ps.setInt(2, nivelId);
@@ -68,5 +59,6 @@ public class AlumnoDaoImpl implements AlumnoDao {
       }
     }
   }
+
 }
 

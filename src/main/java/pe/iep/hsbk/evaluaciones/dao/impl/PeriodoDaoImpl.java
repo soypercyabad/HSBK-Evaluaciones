@@ -4,47 +4,38 @@ import pe.iep.hsbk.evaluaciones.config.ConexionDB;
 import pe.iep.hsbk.evaluaciones.dao.PeriodoDao;
 import pe.iep.hsbk.evaluaciones.model.Periodo;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.Optional;
 
 public class PeriodoDaoImpl implements PeriodoDao {
 
   @Override
-  public Optional<Periodo> getPeriodoActual() {
-    String sql = "SELECT * FROM periodo WHERE activo = 1 ORDER BY id DESC LIMIT 1;";
+  public Optional<Periodo> getPeriodoActual() throws Exception {
+    String call = "{ call sp_periodo_actual() }";
     try (Connection con = ConexionDB.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-      if (!rs.next()) return Optional.empty();
-      Periodo p = new Periodo();
-      p.setId(rs.getLong("id"));
-      p.setNombre(rs.getString("nombre"));
-      p.setActivo(rs.getBoolean("activo"));
-      return Optional.of(p);
-    } catch (Exception e) {
-      e.printStackTrace();
-      return Optional.empty();
+         CallableStatement cs = con.prepareCall(call);
+         ResultSet rs = cs.executeQuery()) {
+      if (rs.next()) {
+        Periodo p = new Periodo();
+        p.setId(rs.getLong("id"));
+        p.setNombre(rs.getString("nombre"));
+        p.setActivo(rs.getBoolean("activo"));
+        return Optional.of(p);
+      }
     }
+    return Optional.empty();
   }
 
   @Override
-  public Long getPeriodoIdPorNombre(String perNombre) {
-    String sql = "SELECT id FROM periodo WHERE nombre = ?;";
+  public Long getPeriodoIdPorNombre(String nombre) throws Exception {
+    String call = "{ call sp_periodo_id_por_nombre(?) }";
     try (Connection con = ConexionDB.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-      ps.setString(1, perNombre);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return rs.getLong("id");
-        } else {
-          return null;
-        }
+         CallableStatement cs = con.prepareCall(call)) {
+      cs.setString(1, nombre);
+      try (ResultSet rs = cs.executeQuery()) {
+        if (rs.next()) return rs.getLong("id");
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-      return null;
     }
+    return null;
   }
 }

@@ -2,6 +2,7 @@ package pe.iep.hsbk.evaluaciones.model;
 
 public class Alumno {
   private Long id;
+  private Long matriculaId;
   private String dni;
   private String codigo;      // ALU{dni}
   private String apellidos;
@@ -16,8 +17,9 @@ public class Alumno {
   public Alumno() {
   }
 
-  public Alumno(Long id, String dni, String codigo, String apellidos, String nombres, Integer numeroOrden, String grado, String nivel, String seccion, boolean activo) {
+  public Alumno(Long id, Long matriculaId ,String dni, String codigo, String apellidos, String nombres, Integer numeroOrden, String grado, String nivel, String seccion, boolean activo) {
     this.id = id;
+    this.matriculaId = matriculaId;
     this.dni = dni;
     this.codigo = codigo;
     this.apellidos = apellidos;
@@ -34,6 +36,14 @@ public class Alumno {
   }
 
   public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getMatriculaId() {
+    return id;
+  }
+
+  public void setMatriculaId(Long matriculaId) {
     this.id = id;
   }
 

@@ -30,39 +30,20 @@ public class AuthService {
       this.periodoNombre = periodoNombre;
     }
 
-    public long getUserId() {
-      return userId;
-    }
-
-    public String getUsername() {
-      return username;
-    }
-
-    public String getNombre() {
-      return nombre;
-    }
-
-    public List<String> getRoles() {
-      return roles;
-    }
-
-    public boolean hasRole(String r) {
-      return roles.stream().anyMatch(x -> x.equalsIgnoreCase(r));
-    }
-
-    public long getPeriodoId() {
-      return periodoId;
-    }
-
-    public String getPeriodoNombre() {
-      return periodoNombre;
-    }
+    public long getUserId() { return userId; }
+    public String getUsername() { return username; }
+    public String getNombre() { return nombre; }
+    public List<String> getRoles() { return roles; }
+    public boolean hasRole(String r) { return roles.stream().anyMatch(x -> x.equalsIgnoreCase(r)); }
+    public long getPeriodoId() { return periodoId; }
+    public String getPeriodoNombre() { return periodoNombre; }
   }
 
   private final UsuarioDao usuarioDao = new UsuarioDaoImpl();
   private final PeriodoDao periodoDao = new PeriodoDaoImpl();
 
   public UserSession login(String username, String plainPassword) throws Exception {
+    // Usuario por SP
     Optional<Usuario> opt = usuarioDao.findByUsername(username);
     if (opt.isEmpty()) return null;
 
@@ -73,10 +54,10 @@ public class AuthService {
     boolean ok = BCrypt.checkpw(plainPassword, u.getPasswordHash());
     if (!ok) return null;
 
-    // Carga roles
+    // Roles por SP
     List<String> roles = usuarioDao.findRolesByUserId(u.getId());
 
-    // Obtener el perido actual
+    // Periodo actual por SP
     Optional<Periodo> optPeriodo = periodoDao.getPeriodoActual();
     if (optPeriodo.isEmpty()) return null;
     Periodo p = optPeriodo.get();

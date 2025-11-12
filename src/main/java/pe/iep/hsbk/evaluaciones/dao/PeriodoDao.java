@@ -5,7 +5,6 @@ import pe.iep.hsbk.evaluaciones.model.Periodo;
 import java.util.Optional;
 
 public interface PeriodoDao {
-  Optional<Periodo> getPeriodoActual();
-
-  Long getPeriodoIdPorNombre(String perNombre);
+  Optional<Periodo> getPeriodoActual() throws Exception;
+  Long getPeriodoIdPorNombre(String perNombre) throws Exception;
 }

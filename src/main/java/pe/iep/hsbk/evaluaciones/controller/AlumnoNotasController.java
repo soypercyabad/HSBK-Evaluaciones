@@ -10,14 +10,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import pe.iep.hsbk.evaluaciones.dao.AlumnoDao;
-import pe.iep.hsbk.evaluaciones.dao.BimestreDao;
-import pe.iep.hsbk.evaluaciones.dao.CursoDao;
-import pe.iep.hsbk.evaluaciones.dao.PeriodoDao;
-import pe.iep.hsbk.evaluaciones.dao.impl.AlumnoDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.BimestreDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.CursoDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.PeriodoDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.*;
+import pe.iep.hsbk.evaluaciones.dao.impl.*;
+import pe.iep.hsbk.evaluaciones.dto.ExamenesDto;
+import pe.iep.hsbk.evaluaciones.dto.PracticasDto;
+import pe.iep.hsbk.evaluaciones.dto.PromedioDto;
+import pe.iep.hsbk.evaluaciones.dto.TareasDto;
 import pe.iep.hsbk.evaluaciones.model.Alumno;
 import pe.iep.hsbk.evaluaciones.model.Bimestre;
 import pe.iep.hsbk.evaluaciones.model.Curso;
@@ -40,6 +38,26 @@ public class AlumnoNotasController implements SesionAware {
   @FXML private HBox paneBimestres;
   @FXML private VBox paneCurso;
   @FXML private StackPane overlay;
+  
+  // ===================== Campos de formulario =====================
+  @FXML private TextField pract1Field;
+  @FXML private TextField pract2Field;
+  @FXML private TextField pract3Field;
+  @FXML private TextField pract4Field;
+  @FXML private TextField practPromField;
+
+  @FXML private TextField libroField;
+  @FXML private TextField cuadernoField;
+  @FXML private TextField tareaPromField;
+
+  @FXML private TextField exMenField;
+  @FXML private TextField exBimField;
+
+  @FXML private TextField pbPracticasField;
+  @FXML private TextField pbTareasField;
+  @FXML private TextField pbExMensualField;
+  @FXML private TextField pbExBimestralField;
+  @FXML private TextField pbFinalField;
 
   // ===================== ToggleGroups =====================
   private final ToggleGroup grpBimestres = new ToggleGroup();
@@ -53,7 +71,8 @@ public class AlumnoNotasController implements SesionAware {
 
   // ===================== Selección actual =====================
   private Long bimestreSelId;                    // bimestre seleccionado
-  private Long cursoSelId = 1L;                  // curso seleccionado
+  private Long cursoSelId;                       // curso seleccionado
+  private Long matriculaId;                      // matrícula del alumno
 
   // ===================== Datos =====================
   private final ObservableList<Alumno> master = FXCollections.observableArrayList();
@@ -63,11 +82,11 @@ public class AlumnoNotasController implements SesionAware {
   private final BimestreDao bimestreDao = new BimestreDaoImpl();
   private final CursoDao cursoDao       = new CursoDaoImpl();
   private final AlumnoDao alumnoDao     = new AlumnoDaoImpl();
+  private final NotasDao notasDao     = new NotasDaoImpl();
 
   // ===================== Cachés =====================
   private final Map<String, List<Bimestre>> cacheBimestresPorPeriodoNivel = new HashMap<>();
   private final Map<Long,   List<Curso>>    cacheCursoPorBimestre         = new HashMap<>();
-  private final Map<String, List<Alumno>>   cacheAlumnosPorCursoPeriodo   = new HashMap<>();
 
   // ===================== Setters =====================
   @Override
@@ -78,27 +97,19 @@ public class AlumnoNotasController implements SesionAware {
   /** Inyecta alumno + nivel y carga cabeceras. */
   public void setAlumno(Alumno a, Long nivelId) {
     this.nivelId = nivelId;
-    if (a != null) cargarAlumnoAsync(a, nivelId);
+    if (a != null) {
+      this.matriculaId = a.getMatriculaId();
+      cargarAlumnoAsync(a, nivelId);
+    }else {
+      this.matriculaId = null;
+      limpiarNotas();
+    }
   }
 
   /** Inyecta la acción de volver. */
   public void setOnBack(Runnable onBack) {
     this.onBack = onBack;
     wireBackButton(); // asegúrate que el botón queda conectado aunque llegue después de initialize()
-  }
-
-  /** Llamado por el menú para cambiar nivel y recargar. */
-  public void setNivelId(long nivelId) {
-    if (Objects.equals(this.nivelId, nivelId)) return;
-    this.nivelId = nivelId;
-
-    cacheBimestresPorPeriodoNivel.clear();
-    cacheCursoPorBimestre.clear();
-    cacheAlumnosPorCursoPeriodo.clear();
-
-    if (this.periodoId != null) {
-      cargarBimestresAsync();
-    }
   }
 
   // ===================== Ciclo de vida =====================
@@ -218,7 +229,7 @@ public class AlumnoNotasController implements SesionAware {
     setBusy(true);
     FXAsync.run(
         () -> cacheCursoPorBimestre.computeIfAbsent(bimestreId, bid -> {
-          try { return cursoDao.listarCursosActivos(bid); }
+          try { return cursoDao.listarCursosActivos(bimestreId); }
           catch (Exception e) { throw new RuntimeException(e); }
         }),
         cursos -> {
@@ -250,6 +261,64 @@ public class AlumnoNotasController implements SesionAware {
     );
   }
 
+  private void cargarNotasAsync(Long matriculaId, Long cursoId, Long bimestreId) {
+    if (matriculaId == null || cursoId == null || bimestreId == null) {
+      limpiarNotas();
+      return;
+    }
+
+    setBusy(true);
+    FXAsync.run(
+        () -> { // background
+          try {
+            var pract = notasDao.getPracticas(matriculaId, cursoId, bimestreId);
+            var tareas = notasDao.getTareas(matriculaId, cursoId, bimestreId);
+            var exam  = notasDao.getExamenes(matriculaId, cursoId, bimestreId);
+            var prom  = notasDao.getPromedio(matriculaId, cursoId, bimestreId);
+            return new Object[]{pract, tareas, exam, prom};
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        },
+        data -> { // UI thread
+          var pract = (PracticasDto) data[0];
+          var tareas = (TareasDto) data[1];
+          var exam = (ExamenesDto) data[2];
+          var prom = (PromedioDto) data[3];
+
+          // Practicas
+          setText(pract1Field, pract != null ? pract.getP1() : null);
+          setText(pract2Field, pract != null ? pract.getP2() : null);
+          setText(pract3Field, pract != null ? pract.getP3() : null);
+          setText(pract4Field, pract != null ? pract.getP4() : null);
+          setText(practPromField, pract != null ? pract.getProm() : null);
+
+          // Tareas
+          setText(libroField, tareas != null ? tareas.getLibro() : null);
+          setText(cuadernoField, tareas != null ? tareas.getCuaderno() : null);
+          setText(tareaPromField, tareas != null ? tareas.getProm() : null);
+
+          // Exámenes
+          setText(exMenField, exam != null ? exam.getMensual() : null);
+          setText(exBimField, exam != null ? exam.getBimestral() : null);
+
+          // Promedio Bimestral
+          setText(pbPracticasField, prom != null ? prom.getPromPracticas() : null);
+          setText(pbTareasField, prom != null ? prom.getPromTareas() : null);
+          setText(pbExMensualField, prom != null ? prom.getExMensual() : null);
+          setText(pbExBimestralField,prom != null ? prom.getExBimestral() : null);
+          setText(pbFinalField, prom != null ? prom.getPromedioCurso() : null);
+
+          setBusy(false);
+        },
+        ex -> {
+          setBusy(false);
+          limpiarNotas();
+          Dialogs.errorConStacktrace(null, "Error", "No se pudieron cargar las notas.", ex.getMessage(), ex);
+        }
+    );
+  }
+
   // ===================== Eventos UI =====================
   private void onChangeBimestreDynamic() {
     Toggle sel = grpBimestres.getSelectedToggle();
@@ -264,6 +333,12 @@ public class AlumnoNotasController implements SesionAware {
 
     // Cargar cursos del bimestre seleccionado
     cargarCursoAsync(bimestreSelId);
+
+    if (matriculaId != null && cursoSelId != null && bimestreSelId != null) {
+      cargarNotasAsync(matriculaId, cursoSelId, bimestreSelId);
+    } else {
+      limpiarNotas();
+    }
   }
 
   private void onChangeCursoDynamic() {
@@ -277,6 +352,30 @@ public class AlumnoNotasController implements SesionAware {
         lblCursoSel.setText("Curso: " + c.getNombre());
       }
     }
+
+    if (matriculaId != null && cursoSelId != null && bimestreSelId != null) {
+      cargarNotasAsync(matriculaId, cursoSelId, bimestreSelId);
+    } else {
+      limpiarNotas();
+    }
+
     setBusy(false);
+  }
+
+  // ==================== Helpers =====================
+  private void limpiarNotas() {
+    for (var tf : List.of(
+        pract1Field, pract2Field, pract3Field, pract4Field, practPromField,
+        libroField, cuadernoField, tareaPromField,
+        exMenField, exBimField,
+        pbPracticasField, pbTareasField, pbExMensualField, pbExBimestralField, pbFinalField
+    )) {
+      if (tf != null) tf.setText("");
+    }
+  }
+
+  private void setText(TextField tf, java.math.BigDecimal v) {
+    if (tf == null) return;
+    tf.setText(v == null ? "" : v.stripTrailingZeros().toPlainString());
   }
 }

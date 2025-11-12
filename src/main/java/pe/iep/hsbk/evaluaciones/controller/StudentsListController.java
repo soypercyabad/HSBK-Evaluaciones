@@ -43,34 +43,47 @@ import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
 public class StudentsListController implements SesionAware {
 
   // ===================== UI (FXML) =====================
-  @FXML private Label lblTitleUsuario;
-  @FXML private Label lblTitlePeriodo;
-  @FXML private Label lblTitleRol;
-  @FXML private TextField txtBuscar;
+  @FXML
+  private Label lblTitleUsuario;
+  @FXML
+  private Label lblTitlePeriodo;
+  @FXML
+  private Label lblTitleRol;
+  @FXML
+  private TextField txtBuscar;
 
   // ===================== Tabla =====================
-  @FXML private TableView<Alumno> tblAlumnos;
-  @FXML private TableColumn<Alumno, Boolean> colSel;
-  @FXML private TableColumn<Alumno, String> colApellidos;
-  @FXML private TableColumn<Alumno, String> colNombres;
-  @FXML private TableColumn<Alumno, String> colCodigo;
-  @FXML private TableColumn<Alumno, Void> colAcciones;
+  @FXML
+  private TableView<Alumno> tblAlumnos;
+  @FXML
+  private TableColumn<Alumno, Boolean> colSel;
+  @FXML
+  private TableColumn<Alumno, String> colApellidos;
+  @FXML
+  private TableColumn<Alumno, String> colNombres;
+  @FXML
+  private TableColumn<Alumno, String> colCodigo;
+  @FXML
+  private TableColumn<Alumno, Void> colAcciones;
 
   // ===================== Contenedores (toggles) =====================
-  @FXML private HBox paneGrados;
-  @FXML private VBox paneSecciones;
+  @FXML
+  private HBox paneGrados;
+  @FXML
+  private VBox paneSecciones;
 
   // ===================== Overlay busy =====================
-  @FXML private StackPane overlay;
+  @FXML
+  private StackPane overlay;
 
   // ===================== ToggleGroups =====================
-  private final ToggleGroup grpGrados    = new ToggleGroup();
+  private final ToggleGroup grpGrados = new ToggleGroup();
   private final ToggleGroup grpSecciones = new ToggleGroup();
 
   // ===================== Sesión / Contexto =====================
   private UserSession userSession;
-  private Long periodoId; // p.ej. 2025
-  private Long nivelId;   // 1=Primaria, 2=Secundaria
+  private Long periodoId;
+  private Long nivelId;
   private java.util.function.BiConsumer<Constantes.Route, java.util.function.Consumer<Object>> goTo;
 
   // ===================== Selección actual =====================
@@ -84,13 +97,13 @@ public class StudentsListController implements SesionAware {
 
   // ===================== DAOs =====================
   private final PeriodoDao periodoDao = new PeriodoDaoImpl();
-  private final GradoDao   gradoDao   = new GradoDaoImpl();
+  private final GradoDao gradoDao = new GradoDaoImpl();
   private final SeccionDao seccionDao = new SeccionDaoImpl();
-  private final AlumnoDao  alumnoDao  = new AlumnoDaoImpl();
+  private final AlumnoDao alumnoDao = new AlumnoDaoImpl();
 
   // ===================== Caches =====================
-  private final Map<String, List<Grado>>  cacheGradosPorPeriodoNivel    = new HashMap<>();
-  private final Map<Long,   List<Seccion>> cacheSeccionesPorGrado       = new HashMap<>();
+  private final Map<String, List<Grado>> cacheGradosPorPeriodoNivelUsuario = new HashMap<>();
+  private final Map<Long, List<Seccion>> cacheSeccionesPorGradoUsuario = new HashMap<>();
   private final Map<String, List<Alumno>> cacheAlumnosPorSeccionPeriodo = new HashMap<>();
 
   // ===================== Ciclo de vida =====================
@@ -128,8 +141,8 @@ public class StudentsListController implements SesionAware {
 
   // ===================== Busy / Overlay =====================
   private void setBusy(boolean busy) {
-    if (txtBuscar != null)   txtBuscar.setDisable(busy);
-    if (tblAlumnos != null)  tblAlumnos.setDisable(busy);
+    if (txtBuscar != null) txtBuscar.setDisable(busy);
+    if (tblAlumnos != null) tblAlumnos.setDisable(busy);
     if (overlay != null) {
       overlay.setVisible(busy);
       overlay.setManaged(busy);
@@ -139,12 +152,16 @@ public class StudentsListController implements SesionAware {
   // ===================== Cargas asíncronas =====================
   private void cargarGradosAsync() {
     setBusy(true);
-    final String key = periodoId + ":" + nivelId;
+    final String key = userSession.getUserId() + ":" + periodoId + ":" + nivelId;
 
     FXAsync.run(
-        () -> cacheGradosPorPeriodoNivel.computeIfAbsent(key, k -> {
-          try { return gradoDao.listarGradosActivos(periodoId, nivelId); }
-          catch (Exception e) { throw new RuntimeException(e); }
+        () -> cacheGradosPorPeriodoNivelUsuario.computeIfAbsent(key, k -> {
+          try {
+            // SP: grados por periodo, nivel y usuario
+            return gradoDao.listarGradosActivosPorUsuario(periodoId, nivelId, userSession.getUserId());
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }),
         grados -> {
           paneGrados.getChildren().clear();
@@ -179,9 +196,13 @@ public class StudentsListController implements SesionAware {
   private void cargarSeccionesAsync(Long gradoId) {
     setBusy(true);
     FXAsync.run(
-        () -> cacheSeccionesPorGrado.computeIfAbsent(gradoId, gid -> {
-          try { return seccionDao.listarSeccionesActivas(periodoId, gid); }
-          catch (Exception e) { throw new RuntimeException(e); }
+        () -> cacheSeccionesPorGradoUsuario.computeIfAbsent(gradoId, gid -> {
+          try {
+            // SP: secciones por periodo, grado y usuario
+            return seccionDao.listarSeccionesActivasPorUsuario(periodoId, gid, userSession.getUserId());
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }),
         secciones -> {
           paneSecciones.getChildren().clear();
@@ -217,8 +238,11 @@ public class StudentsListController implements SesionAware {
 
     FXAsync.run(
         () -> cacheAlumnosPorSeccionPeriodo.computeIfAbsent(key, k -> {
-          try { return alumnoDao.listarPorSeccionPeriodo(Math.toIntExact(seccionSelId), Math.toIntExact(periodoId)); }
-          catch (Exception e) { throw new RuntimeException(e); }
+          try {
+            return alumnoDao.listarPorSeccionPeriodo(Math.toIntExact(seccionSelId), Math.toIntExact(periodoId));
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }),
         data -> {
           selectedMap.keySet().retainAll(data);
@@ -282,18 +306,19 @@ public class StudentsListController implements SesionAware {
     colSel.setGraphic(chkAll);
 
     colApellidos.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getApellidos()));
-    colNombres  .setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombres()));
-    colCodigo   .setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCodigo()));
+    colNombres.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombres()));
+    colCodigo.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCodigo()));
     colApellidos.setStyle("-fx-alignment: CENTER-LEFT;");
-    colNombres  .setStyle("-fx-alignment: CENTER-LEFT;");
-    colCodigo   .setStyle("-fx-alignment: CENTER-LEFT;");
+    colNombres.setStyle("-fx-alignment: CENTER-LEFT;");
+    colCodigo.setStyle("-fx-alignment: CENTER-LEFT;");
 
     colAcciones.setCellFactory(col -> new TableCell<>() {
       private final Button btnEdit = IconButtons.iconButtonForCell(
           this, 28, 28, 0.55,
-          pb -> { if (pb != null) {
-            Node graphic = getGraphic();
-            abrirSegunRol(pb, (Button) graphic);
+          pb -> {
+            if (pb != null) {
+              Node graphic = getGraphic();
+              abrirSegunRol(pb, (Button) graphic);
             }
           },
           new IconButtons.PathSpec(Constantes.edit, "-fx-fill: transparent; -fx-stroke: #003B65; -fx-stroke-width: 2;")
@@ -315,16 +340,22 @@ public class StudentsListController implements SesionAware {
     final String q = (txtBuscar == null) ? "" : txtBuscar.getText().trim().toLowerCase(Locale.ROOT);
     filtered.setPredicate(a ->
         q.isEmpty()
-            || (a.getApellidos()!=null && a.getApellidos().toLowerCase().contains(q))
-            || (a.getNombres()!=null   && a.getNombres().toLowerCase().contains(q))
-            || (a.getCodigo()!=null    && a.getCodigo().toLowerCase().contains(q))
+            || (a.getApellidos() != null && a.getApellidos().toLowerCase().contains(q))
+            || (a.getNombres() != null && a.getNombres().toLowerCase().contains(q))
+            || (a.getCodigo() != null && a.getCodigo().toLowerCase().contains(q))
     );
   }
 
   // ===================== Navegación (abrir vistas) =====================
   private void abrirSegunRol(Alumno alumno, Button anchor) {
-    if (goTo == null) { Dialogs.error(null, "Error", "Navegación no disponible."); return; }
-    if (userSession == null) { Dialogs.error(null, "Error", "Sesión no disponible."); return; }
+    if (goTo == null) {
+      Dialogs.error(null, "Error", "Navegación no disponible.");
+      return;
+    }
+    if (userSession == null) {
+      Dialogs.error(null, "Error", "Sesión no disponible.");
+      return;
+    }
 
     if (isSoloDocente()) {
       abrirDetalleAlumno(alumno, nivelId);
@@ -332,7 +363,7 @@ public class StudentsListController implements SesionAware {
       abrirConductaAlumno(alumno, nivelId);
     } else if (isDocenteYTutor()) {
       ContextMenu menu = new ContextMenu();
-      MenuItem miNotas    = new MenuItem("Ver Notas");
+      MenuItem miNotas = new MenuItem("Ver Notas");
       MenuItem miConducta = new MenuItem("Ver Conducta");
 
       miNotas.setOnAction(e -> abrirDetalleAlumno(alumno, nivelId));
@@ -347,22 +378,25 @@ public class StudentsListController implements SesionAware {
   }
 
   private void abrirDetalleAlumno(Alumno alumno, Long nivelId) {
-    if (goTo == null) { Dialogs.error(null, "Error", "Navegación no disponible."); return; }
+    if (goTo == null) {
+      Dialogs.error(null, "Error", "Navegación no disponible.");
+      return;
+    }
 
     goTo.accept(Constantes.Route.STUDENT_NOTAS, ctrlObj -> {
       if (ctrlObj instanceof AlumnoNotasController) {
         AlumnoNotasController ctrl = (AlumnoNotasController) ctrlObj;
-        if (ctrl instanceof SesionAware){
+        if (ctrl instanceof SesionAware) {
           SesionAware sa = (SesionAware) ctrl;
           sa.setSession(userSession);
         }
         ctrl.setAlumno(alumno, nivelId);
 
-        final Long gradoIdActual   = this.gradoSelId;
+        final Long gradoIdActual = this.gradoSelId;
         final Long seccionIdActual = this.seccionSelId;
-        final var  goToRef         = this.goTo;
-        final var  sesRef          = this.userSession;
-        final var  nivelRef        = nivelId;
+        final var goToRef = this.goTo;
+        final var sesRef = this.userSession;
+        final var nivelRef = nivelId;
 
         ctrl.setOnBack(() -> {
           goToRef.accept(Constantes.Route.STUDENTS_LIST, backCtrl -> {
@@ -382,7 +416,10 @@ public class StudentsListController implements SesionAware {
   }
 
   private void abrirConductaAlumno(Alumno alumno, Long nivelId) {
-    if (goTo == null) { Dialogs.error(null, "Error", "Navegación no disponible."); return; }
+    if (goTo == null) {
+      Dialogs.error(null, "Error", "Navegación no disponible.");
+      return;
+    }
 
     goTo.accept(Constantes.Route.STUDENT_CONDUCTA, ctrlObj -> {
       if (ctrlObj instanceof AlumnoConductaController) {
@@ -393,11 +430,11 @@ public class StudentsListController implements SesionAware {
         }
         ctrl.setAlumno(alumno, nivelId);
 
-        final Long gradoIdActual   = this.gradoSelId;
+        final Long gradoIdActual = this.gradoSelId;
         final Long seccionIdActual = this.seccionSelId;
-        final var  goToRef         = this.goTo;
-        final var  sesRef          = this.userSession;
-        final var  nivelRef        = nivelId;
+        final var goToRef = this.goTo;
+        final var sesRef = this.userSession;
+        final var nivelRef = nivelId;
 
         ctrl.setOnBack(() -> {
           goToRef.accept(Constantes.Route.STUDENTS_LIST, backCtrl -> {
@@ -425,12 +462,23 @@ public class StudentsListController implements SesionAware {
         .anyMatch(r -> r.equals(roleKey.toUpperCase()));
   }
 
-  private boolean isSoloDocente()    { return hasRole("Docente") && !hasRole("Tutor"); }
-  private boolean isSoloTutor()      { return hasRole("Tutor")   && !hasRole("Docente"); }
-  private boolean isDocenteYTutor()  { return hasRole("Docente") && hasRole("Tutor"); }
+  private boolean isSoloDocente() {
+    return hasRole("Docente") && !hasRole("Tutor");
+  }
+
+  private boolean isSoloTutor() {
+    return hasRole("Tutor") && !hasRole("Docente");
+  }
+
+  private boolean isDocenteYTutor() {
+    return hasRole("Docente") && hasRole("Tutor");
+  }
 
   // ===================== Handlers =====================
-  @FXML private void onBuscar()    { refiltrar(); }
+  @FXML
+  private void onBuscar() {
+    refiltrar();
+  }
 
   @FXML
   private void onDescargar() {
@@ -455,13 +503,15 @@ public class StudentsListController implements SesionAware {
     this.goTo = goTo;
   }
 
-  /** Llamado por el menú para establecer nivel y recargar. */
+  /**
+   * Llamado por el menú para establecer nivel y recargar.
+   */
   public void setNivelId(long nivelId) {
     if (Objects.equals(this.nivelId, nivelId)) return;
     this.nivelId = nivelId;
 
-    cacheGradosPorPeriodoNivel.clear();
-    cacheSeccionesPorGrado.clear();
+    cacheGradosPorPeriodoNivelUsuario.clear();
+    cacheSeccionesPorGradoUsuario.clear();
     cacheAlumnosPorSeccionPeriodo.clear();
 
     if (this.periodoId != null) {
@@ -469,7 +519,9 @@ public class StudentsListController implements SesionAware {
     }
   }
 
-  /** Restaurar la vista al volver desde otra pantalla. */
+  /**
+   * Restaurar la vista al volver desde otra pantalla.
+   */
   public void restaurarVista(Long nivelId, Long gradoId, Long seccionId) {
     setNivelId(nivelId);
 

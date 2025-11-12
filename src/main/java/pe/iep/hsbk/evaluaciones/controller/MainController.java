@@ -7,38 +7,46 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import pe.iep.hsbk.evaluaciones.App;
 import pe.iep.hsbk.evaluaciones.enums.Constantes;
+import pe.iep.hsbk.evaluaciones.service.AsignacionService;
 import pe.iep.hsbk.evaluaciones.service.AuthService;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
 import pe.iep.hsbk.evaluaciones.util.Navigator;
 
 public class MainController {
 
-  @FXML private StackPane contentContainer;
-  @FXML private Button btnPrimaria, btnSecundaria, btnPlantillasBoleta, btnFirmas, btnSellos;
+  @FXML
+  private StackPane contentContainer;
+  @FXML
+  private Button btnPrimaria, btnSecundaria, btnPlantillasBoleta, btnFirmas, btnSellos;
 
-  // Navegador de vistas
   private Navigator nav;
   private AuthService.UserSession userSession;
 
+  private static final long NIVEL_PRIMARIA_ID = 1L;
+  private static final long NIVEL_SECUNDARIA_ID = 2L;
+
   public void initSession(AuthService.UserSession session) {
-    // Guardar sesión
     this.userSession = session;
-    // Inicializar navegador
     this.nav = new Navigator(contentContainer, userSession);
-    // Habilitar/deshabilitar navegación según roles
-    boolean puedeDocente = hasRole("Docente") || hasRole("Tutor");
+
+    boolean rolDocenteOTutor = hasRole("Docente") || hasRole("Tutor");
     boolean puedePlantillaBoletas = hasRole("Administrador") || hasRole("Director");
     boolean puedeFirmas = hasRole("Administrador") || hasRole("Director");
     boolean puedeSellos = hasRole("Administrador") || hasRole("Director");
 
-    // Navegación
-    show(btnPrimaria, puedeDocente);
-    show(btnSecundaria, puedeDocente);
+    // Asignaciones reales por SP: solo mostrar niveles donde SÍ tiene cursos
+    boolean asignadoPrimaria = rolDocenteOTutor && AsignacionService.getInstance()
+        .tieneAsignacionEnNivel(userSession.getUserId(), NIVEL_PRIMARIA_ID, userSession.getPeriodoId());
+
+    boolean asignadoSecundaria = rolDocenteOTutor && AsignacionService.getInstance()
+        .tieneAsignacionEnNivel(userSession.getUserId(), NIVEL_SECUNDARIA_ID, userSession.getPeriodoId());
+
+    show(btnPrimaria, asignadoPrimaria);
+    show(btnSecundaria, asignadoSecundaria);
     show(btnPlantillasBoleta, puedePlantillaBoletas);
     show(btnFirmas, puedeFirmas);
     show(btnSellos, puedeSellos);
 
-    // Vista inicial
     if (btnPrimaria.isVisible()) {
       onPrimaria();
     } else if (btnSecundaria.isVisible()) {
@@ -49,13 +57,14 @@ public class MainController {
       onFirmas();
     } else if (btnSellos.isVisible()) {
       onSellos();
+    } else {
+      Dialogs.info((Stage) contentContainer.getScene().getWindow(),
+          "Sin asignaciones", "No tienes cursos asignados en este período.");
     }
   }
 
   private boolean hasRole(String role) {
-    return userSession != null &&
-        userSession.getRoles() != null &&
-        userSession.getRoles().contains(role);
+    return userSession != null && userSession.getRoles() != null && userSession.getRoles().contains(role);
   }
 
   private void show(Node n, boolean visible) {
@@ -74,57 +83,48 @@ public class MainController {
     scActivo.remove("nav-btn");
   }
 
-  @FXML private void onPrimaria() {
+  @FXML
+  private void onPrimaria() {
     marcarActivo(btnPrimaria);
-    // Navegar a lista de estudiantes de primaria
     nav.go(Constantes.Route.STUDENTS_LIST, c -> {
-      // Pasar nivelId al controller
       if (c instanceof StudentsListController) {
         StudentsListController sc = (StudentsListController) c;
-        sc.setNivelId(1L);
-        // Configurar navegación interna del controller
-        sc.setGoTo((route, afterLoad) -> {
-          // Navegar usando el mismo navigator
-          nav.go(route, ctrl -> {
-            // Pasar sesión si aplica
-            if (afterLoad != null) afterLoad.accept(ctrl);
-          });
-        });
+        sc.setNivelId(NIVEL_PRIMARIA_ID);
+        sc.setGoTo((route, afterLoad) -> nav.go(route, ctrl -> {
+          if (afterLoad != null) afterLoad.accept(ctrl);
+        }));
       }
     });
   }
 
-  @FXML private void onSecundaria() {
+  @FXML
+  private void onSecundaria() {
     marcarActivo(btnSecundaria);
-    // Navegar a lista de estudiantes de primaria
     nav.go(Constantes.Route.STUDENTS_LIST, c -> {
-      // Pasar nivelId al controller
       if (c instanceof StudentsListController) {
         StudentsListController sc = (StudentsListController) c;
-        sc.setNivelId(2L);
-        // Configurar navegación interna del controller
-        sc.setGoTo((route, afterLoad) -> {
-          // Navegar usando el mismo navigator
-          nav.go(route, ctrl -> {
-            // Pasar sesión si aplica
-            if (afterLoad != null) afterLoad.accept(ctrl);
-          });
-        });
+        sc.setNivelId(NIVEL_SECUNDARIA_ID);
+        sc.setGoTo((route, afterLoad) -> nav.go(route, ctrl -> {
+          if (afterLoad != null) afterLoad.accept(ctrl);
+        }));
       }
     });
   }
 
-  @FXML private void onPlantillasBoletas() {
+  @FXML
+  private void onPlantillasBoletas() {
     marcarActivo(btnPlantillasBoleta);
     nav.go(Constantes.Route.PLANTILLAS, null);
   }
 
-  @FXML private void onFirmas() {
+  @FXML
+  private void onFirmas() {
     marcarActivo(btnFirmas);
     nav.go(Constantes.Route.FIRMAS, null);
   }
 
-  @FXML private void onSellos() {
+  @FXML
+  private void onSellos() {
     marcarActivo(btnSellos);
     nav.go(Constantes.Route.SELLOS, null);
   }

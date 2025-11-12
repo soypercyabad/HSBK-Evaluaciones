@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface SeccionDao {
 
-  List<Seccion> listarSeccionesActivas(Long periodoId, Long gradoId) throws Exception;
+  List<Seccion> listarSeccionesActivasPorUsuario(Long periodoId, Long gradoId, Long usuarioId) throws Exception;
 }

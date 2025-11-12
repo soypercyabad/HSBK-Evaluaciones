@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface GradoDao {
 
-  List<Grado> listarGradosActivos(Long periodoId, Long nivelId) throws  Exception;
+  List<Grado> listarGradosActivosPorUsuario(Long periodoId, Long nivelId, Long usuarioId) throws  Exception;
 }

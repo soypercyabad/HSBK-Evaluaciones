@@ -4,9 +4,7 @@ import pe.iep.hsbk.evaluaciones.config.ConexionDB;
 import pe.iep.hsbk.evaluaciones.dao.UsuarioDao;
 import pe.iep.hsbk.evaluaciones.model.Usuario;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -15,11 +13,12 @@ public class UsuarioDaoImpl implements UsuarioDao {
 
   @Override
   public Optional<Usuario> findByUsername(String username) throws Exception {
-    String sql = "SELECT id, username, password_hash, nombre, activo FROM usuario WHERE username = ?";
+    // SP: sp_usuario_find_by_username(p_username)
+    String call = "{ call sp_usuario_find_by_username(?) }";
     try (Connection con = ConexionDB.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-      ps.setString(1, username);
-      try (ResultSet rs = ps.executeQuery()) {
+         CallableStatement cs = con.prepareCall(call)) {
+      cs.setString(1, username);
+      try (ResultSet rs = cs.executeQuery()) {
         if (!rs.next()) return Optional.empty();
         Usuario u = new Usuario();
         u.setId(rs.getLong("id"));
@@ -34,13 +33,14 @@ public class UsuarioDaoImpl implements UsuarioDao {
 
   @Override
   public List<String> findRolesByUserId(long userId) throws Exception {
-    String sql = "SELECT r.nombre FROM usuario_rol ur JOIN rol r ON r.id = ur.rol_id WHERE ur.usuario_id = ?";
+    // SP: sp_usuario_roles_by_user_id(p_user_id)
+    String call = "{ call sp_usuario_roles_by_user_id(?) }";
     List<String> roles = new ArrayList<>();
     try (Connection con = ConexionDB.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-      ps.setLong(1, userId);
-      try (ResultSet rs = ps.executeQuery()) {
-        while (rs.next()) roles.add(rs.getString(1));
+         CallableStatement cs = con.prepareCall(call)) {
+      cs.setLong(1, userId);
+      try (ResultSet rs = cs.executeQuery()) {
+        while (rs.next()) roles.add(rs.getString("nombre"));
       }
     }
     return roles;

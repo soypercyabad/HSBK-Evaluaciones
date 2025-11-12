@@ -63,7 +63,6 @@ public class App extends Application {
     Parent root = loader.load();
 
     MainController main = loader.getController();
-    main.initSession(session); // Enviar sesión al controller
 
     if (scene == null) {
       scene = new Scene(root);
@@ -73,6 +72,7 @@ public class App extends Application {
     }
 
     stage.setTitle("HSBK – Principal");
+    main.initSession(session); // Enviar sesión al controller
 
     // Área visual (respeta barra de tareas)
     Rectangle2D vb = Screen.getPrimary().getVisualBounds();
