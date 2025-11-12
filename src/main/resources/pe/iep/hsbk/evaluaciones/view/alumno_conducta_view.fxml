@@ -306,7 +306,7 @@
                                     </columnConstraints>
 
                                     <Label text="Entrega de útiles escolares" GridPane.columnSpan="2" />
-                                    <TextField alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtutilesEscolares" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -320,7 +320,7 @@
                                     </columnConstraints>
 
                                     <Label text="Participación de actividades" GridPane.columnSpan="2" />
-                                    <TextField alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtactividades" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -334,7 +334,7 @@
                                     </columnConstraints>
 
                                     <Label text="Asistencia a las reuniones" GridPane.columnSpan="2" />
-                                    <TextField alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtreuniones" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -348,7 +348,7 @@
                                     </columnConstraints>
 
                                     <Label text="Escuela para padres" GridPane.columnSpan="2" />
-                                    <TextField alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtescuelaPadres" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -374,10 +374,10 @@
                                         </columnConstraints>
 
                                         <Label text="Nota" wrapText="true" />
-                                        <TextField alignment="CENTER" promptText="20" GridPane.rowIndex="1" />
+                                        <TextField fx:id="txtnotaConducta" alignment="CENTER" promptText="20" GridPane.rowIndex="1" />
 
                                         <Label text="Letra" wrapText="true" GridPane.columnIndex="1" />
-                                        <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                        <TextField fx:id="txtconductaLetra" alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
                                         <rowConstraints>
                                             <RowConstraints />
@@ -397,7 +397,7 @@
                                         </columnConstraints>
 
                                         <Label text="Mensaje" GridPane.columnSpan="2" />
-                                        <ComboBox prefWidth="Infinity" promptText="Seleccionar mensaje" GridPane.columnSpan="2" GridPane.rowIndex="1" VBox.vgrow="ALWAYS" />
+                                        <ComboBox fx:id="recomendacionComboBox" prefWidth="Infinity" promptText="Seleccionar mensaje" GridPane.columnSpan="2" GridPane.rowIndex="1" VBox.vgrow="ALWAYS" />
                                         <rowConstraints>
                                             <RowConstraints />
                                             <RowConstraints />
@@ -427,7 +427,7 @@
                                         </Button>
 
                                         <Label wrapText="true" />
-                                        <Button styleClass="primary-btn" text="Registrar evaluación" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+                                        <Button fx:id="btnGuardar" styleClass="primary-btn" text="Registrar evaluación" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
                                             <graphic>
                                                 <!-- Escalamos desde 24x24 a ~18px -->
                                                 <Group scaleX="0.85" scaleY="0.85">
