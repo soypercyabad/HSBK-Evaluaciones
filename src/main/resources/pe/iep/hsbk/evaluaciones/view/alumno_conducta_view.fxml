@@ -427,7 +427,7 @@
                                         </Button>
 
                                         <Label wrapText="true" />
-                                        <Button styleClass="primary-btn" text="Registrar evaluación" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+                                        <Button fx:id="btnGuardar" styleClass="primary-btn" text="Registrar evaluación" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
                                             <graphic>
                                                 <!-- Escalamos desde 24x24 a ~18px -->
                                                 <Group scaleX="0.85" scaleY="0.85">

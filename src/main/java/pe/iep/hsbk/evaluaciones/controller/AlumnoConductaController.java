@@ -11,12 +11,14 @@ import javafx.scene.layout.StackPane;
 import pe.iep.hsbk.evaluaciones.config.ConexionDB;
 import pe.iep.hsbk.evaluaciones.dao.*;
 import pe.iep.hsbk.evaluaciones.dao.impl.*;
+import pe.iep.hsbk.evaluaciones.dto.ConductaResumen;
 import pe.iep.hsbk.evaluaciones.model.*;
 import pe.iep.hsbk.evaluaciones.service.AuthService;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
 import pe.iep.hsbk.evaluaciones.util.FXAsync;
 import pe.iep.hsbk.evaluaciones.util.SesionAware;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 public class AlumnoConductaController implements SesionAware {
@@ -32,6 +34,9 @@ public class AlumnoConductaController implements SesionAware {
   private Button btnBack;
 
   @FXML
+  private Button btnGuardar;
+
+  @FXML
   private Label lblBimestreSel;
 
   // Formularios
@@ -43,7 +48,7 @@ public class AlumnoConductaController implements SesionAware {
   @FXML private TextField txtescuelaPadres;
   @FXML private TextField txtnotaConducta;
   @FXML private TextField txtconductaLetra;
-
+  @FXML private TextField txtComentarios;
   // Contenedores
   @FXML
   private HBox paneBimestres;
@@ -148,9 +153,9 @@ public class AlumnoConductaController implements SesionAware {
       if (periodoId != null && nivelId != null) {
         cargarBimestresAsync();
       }
-
-      // Cargar recomendaciones SIEMPRE (no dependen de alumno/bimestre)
       cargarRecomendaciones();
+
+      if (btnGuardar != null) btnGuardar.setOnAction(e -> onGuardar());
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -276,7 +281,29 @@ public class AlumnoConductaController implements SesionAware {
     txtescuelaPadres.setText(ef.getEscuelaPadres());
   }
 
+  private boolean recomendacionesCargadas = false;
+
   private void cargarRecomendaciones() {
+    if (recomendacionComboBox == null) return;
+
+    // Configuración visual SOLO UNA VEZ
+    if (!recomendacionesCargadas) {
+      recomendacionComboBox.setCellFactory(list -> new ListCell<RecomendacionCatalogo>() {
+        @Override
+        protected void updateItem(RecomendacionCatalogo r, boolean empty) {
+          super.updateItem(r, empty);
+          setText(empty || r == null ? null : r.getMensaje());
+        }
+      });
+      recomendacionComboBox.setButtonCell(new ListCell<RecomendacionCatalogo>() {
+        @Override
+        protected void updateItem(RecomendacionCatalogo r, boolean empty) {
+          super.updateItem(r, empty);
+          setText(empty || r == null ? "" : r.getMensaje());
+        }
+      });
+    }
+
     FXAsync.run(
             // BACKGROUND
             () -> {
@@ -288,26 +315,11 @@ public class AlumnoConductaController implements SesionAware {
             },
             // UI THREAD
             data -> {
-              ObservableList<RecomendacionCatalogo> items = FXCollections.observableArrayList(data);
-              recomendacionComboBox.setItems(items);
-
-              // Muestra solo el "mensaje" en la lista
-              recomendacionComboBox.setCellFactory(list -> new ListCell<RecomendacionCatalogo>() {
-                @Override
-                protected void updateItem(RecomendacionCatalogo r, boolean empty) {
-                  super.updateItem(r, empty);
-                  setText(empty || r == null ? null : r.getMensaje());
-                }
-              });
-
-              // Muestra solo el "mensaje" en el botón del combo
-              recomendacionComboBox.setButtonCell(new ListCell<RecomendacionCatalogo>() {
-                @Override
-                protected void updateItem(RecomendacionCatalogo r, boolean empty) {
-                  super.updateItem(r, empty);
-                  setText(empty || r == null ? "" : r.getMensaje());
-                }
-              });
+              System.out.println("[UI] Catálogo recomendaciones size=" + (data != null ? data.size() : 0));
+              if (data == null) data = Collections.emptyList();
+              recomendacionComboBox.setItems(FXCollections.observableArrayList(data));
+              recomendacionesCargadas = true;
+              System.out.println(">> Combo de recomendaciones cargado: " + data.size() + " items");
             },
             // ERROR
             ex -> {
@@ -316,6 +328,117 @@ public class AlumnoConductaController implements SesionAware {
             }
     );
   }
+
+  private void seleccionarRecomendacionPorId(Long recId) {
+    if (recomendacionComboBox == null) return;
+    if (recId == null) {
+      recomendacionComboBox.getSelectionModel().clearSelection();
+      return;
+    }
+    var items = recomendacionComboBox.getItems();
+    if (items == null || items.isEmpty()) return;
+
+    RecomendacionCatalogo match = null;
+    for (RecomendacionCatalogo r : items) {
+      if (Objects.equals(r.getId(), recId)) { match = r; break; }
+    }
+    if (match != null) recomendacionComboBox.getSelectionModel().select(match);
+    else recomendacionComboBox.getSelectionModel().clearSelection();
+  }
+
+  private void seleccionarRecomendacionAlumno(ConductaResumen resumen) {
+    if (recomendacionComboBox.getItems() == null || recomendacionComboBox.getItems().isEmpty()) {
+      System.out.println("[UI] Combo recomendaciones aún no cargado");
+      return;
+    }
+    if (resumen == null || resumen.getRecomendacionesAlumno() == null || resumen.getRecomendacionesAlumno().isEmpty()) {
+      System.out.println("[UI] Sin recomendacionesAlumno en resumen");
+      recomendacionComboBox.getSelectionModel().clearSelection();
+      return;
+    }
+
+    var ra = resumen.getRecomendacionesAlumno().get(0); // toma la más reciente o la única
+    Long recId = ra.getRecomendacionId();               // <-- asegúrate que sea este getter
+    System.out.println("[UI] recomendacionAlumno.recomendacionId=" + recId);
+
+    if (recId == null) {
+      recomendacionComboBox.getSelectionModel().clearSelection();
+      return;
+    }
+
+    // Buscar el catálogo con el mismo id
+    RecomendacionCatalogo match = recomendacionComboBox.getItems()
+            .stream()
+            .filter(r -> Objects.equals(r.getId(), recId))
+            .findFirst()
+            .orElse(null);
+
+    if (match != null) {
+      recomendacionComboBox.getSelectionModel().select(match);
+      System.out.println("[UI] Combo seleccionado -> id=" + match.getId());
+    } else {
+      System.out.println("[UI] No se encontró en catálogo el id=" + recId);
+      recomendacionComboBox.getSelectionModel().clearSelection();
+    }
+  }
+
+
+  @FXML
+  private void onGuardar() {
+    System.out.println("[UI] Botón Guardar presionado");
+
+
+
+    if (alumnoActual == null || alumnoActual.getId() == null) {
+      Dialogs.warn(null, "Aviso", "Debe seleccionar un alumno antes de guardar.");
+      return;
+    }
+
+    if (bimestreSelId == null) {
+      Dialogs.warn(null, "Aviso", "Debe seleccionar un bimestre antes de guardar.");
+      return;
+    }
+
+    try {
+      Long usuarioId = (userSession != null) ? userSession.getUserId() : null;
+
+      Long recomendacionId = null;
+      if (recomendacionComboBox.getValue() != null) {
+        recomendacionId = recomendacionComboBox.getValue().getId();
+      }
+
+      System.out.println("[UI] Guardando datos...");
+      System.out.printf("Alumno=%d, Periodo=%d, Nivel=%d, Bimestre=%d%n",
+              alumnoActual.getId(), periodoId, nivelId, bimestreSelId);
+
+      String comentarios = null;
+
+      conductaPanelDao.saveConductaBimestre(
+              alumnoActual.getId(),
+              periodoId,
+              nivelId,
+              bimestreSelId,
+              BigDecimal.valueOf(Double.valueOf(txtnotaConducta.getText())),   // nota
+              txtutilesEscolares.getText(),                // útiles
+              txtactividades.getText(),                    // participación
+              txtreuniones.getText(),                      // reuniones
+              txtescuelaPadres.getText(),                  // escuela de padres
+              comentarios,                                 // comentarios -> mensajePersonal
+              recomendacionId,                             // id del comboBox
+              null,                                        // mensajePersonal (ya no se usa)
+              usuarioId
+      );
+
+      Dialogs.info(null, "Éxito", "Los datos se han guardado correctamente.");
+
+    } catch (NumberFormatException e) {
+      Dialogs.error(null, "Error", "La nota debe ser un número válido.");
+    } catch (Exception e) {
+      e.printStackTrace();
+      Dialogs.errorConStacktrace(null, "Error", "No se pudo guardar la conducta.", e.getMessage(), e);
+    }
+  }
+
 
 
   // ===================== Eventos UI =====================
@@ -400,8 +523,28 @@ public class AlumnoConductaController implements SesionAware {
                 if (txtescuelaPadres != null)   txtescuelaPadres.clear();
               }
 
-              // Poblar campos de texto y combo (ver bloque de arriba)
-              // ...
+              {
+                // === Seleccionar la recomendación del alumno, si existe ===
+                Long recIdAlumno = null;
+                if (resumen.getRecomendacionesAlumno() != null && !resumen.getRecomendacionesAlumno().isEmpty()) {
+                  var ra = resumen.getRecomendacionesAlumno().get(0); // usa la más reciente o la primera según tu SP
+                  recIdAlumno = ra.getRecomendacionId();
+                  System.out.println(">> UI: recomendacionAlumno.recId=" + recIdAlumno);
+                } else {
+                  System.out.println(">> UI: sin recomendacionAlumno registrada");
+                }
+
+                // Si el combo ya tiene el catálogo (initialize), basta con seleccionar por id
+                if (recomendacionesCargadas && recomendacionComboBox.getItems() != null && !recomendacionComboBox.getItems().isEmpty()) {
+                  seleccionarRecomendacionPorId(recIdAlumno);
+                } else {
+                  // Fallback: si por timing aún no cargó, espera al siguiente ciclo del FX thread
+                  System.out.println(">> UI: sin recomendacionAlumno registrada");
+                }
+              }
+              seleccionarRecomendacionAlumno(resumen);
+
+
 
               setBusy(false);
             },
