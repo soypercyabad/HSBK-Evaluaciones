@@ -23,6 +23,7 @@ import pe.iep.hsbk.evaluaciones.dao.impl.AlumnoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.GradoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.PeriodoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.SeccionDaoImpl;
+import pe.iep.hsbk.evaluaciones.dto.RolesEnSeccionDto;
 import pe.iep.hsbk.evaluaciones.enums.Constantes;
 import pe.iep.hsbk.evaluaciones.model.Alumno;
 import pe.iep.hsbk.evaluaciones.model.Grado;
@@ -105,6 +106,7 @@ public class StudentsListController implements SesionAware {
   private final Map<String, List<Grado>> cacheGradosPorPeriodoNivelUsuario = new HashMap<>();
   private final Map<Long, List<Seccion>> cacheSeccionesPorGradoUsuario = new HashMap<>();
   private final Map<String, List<Alumno>> cacheAlumnosPorSeccionPeriodo = new HashMap<>();
+  private final Map<Long, RolesEnSeccionDto> cacheRolesPorSeccion = new HashMap<>();
 
   // ===================== Ciclo de vida =====================
   @Override
@@ -271,6 +273,8 @@ public class StudentsListController implements SesionAware {
     if (sel == null) return;
     var s = (Seccion) ((ToggleButton) sel).getUserData();
     this.seccionSelId = s.getId();
+    // opcional: limpiar cache de roles si quieres que siempre refresque por sección
+    // cacheRolesPorSeccion.remove(this.seccionSelId);
     cargarAlumnosAsync();
   }
 
@@ -356,25 +360,46 @@ public class StudentsListController implements SesionAware {
       Dialogs.error(null, "Error", "Sesión no disponible.");
       return;
     }
-
-    if (isSoloDocente()) {
-      abrirDetalleAlumno(alumno, nivelId);
-    } else if (isSoloTutor()) {
-      abrirConductaAlumno(alumno, nivelId);
-    } else if (isDocenteYTutor()) {
-      ContextMenu menu = new ContextMenu();
-      MenuItem miNotas = new MenuItem("Ver Notas");
-      MenuItem miConducta = new MenuItem("Ver Conducta");
-
-      miNotas.setOnAction(e -> abrirDetalleAlumno(alumno, nivelId));
-      miConducta.setOnAction(e -> abrirConductaAlumno(alumno, nivelId));
-
-      menu.getItems().addAll(miNotas, miConducta);
-      menu.getStyleClass().add("role-menu");
-      menu.show(anchor, Side.BOTTOM, 0, 0);
-    } else {
-      Dialogs.warn(null, "Sin permisos", "No cuentas con roles para acceder a esta opción.");
+    if (seccionSelId == null || periodoId == null) {
+      Dialogs.warn(null, "Falta contexto", "Selecciona una sección.");
+      return;
     }
+
+    FXAsync.run(
+        () -> cacheRolesPorSeccion.computeIfAbsent(seccionSelId, sid -> {
+          try {
+            return seccionDao.getRolesEnSeccion(periodoId, sid, userSession.getUserId());
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }),
+        roles -> {
+          boolean esDoc = roles != null && roles.isDocente();
+          boolean esTut = roles != null && roles.isTutor();
+
+          if (esDoc && !esTut) {
+            abrirDetalleAlumno(alumno, nivelId);
+          } else if (!esDoc && esTut) {
+            abrirConductaAlumno(alumno, nivelId);
+          } else if (esDoc && esTut) {
+            ContextMenu menu = new ContextMenu();
+            MenuItem miNotas = new MenuItem("Ver Notas");
+            MenuItem miConducta = new MenuItem("Ver Conducta");
+
+            miNotas.setOnAction(e -> abrirDetalleAlumno(alumno, nivelId));
+            miConducta.setOnAction(e -> abrirConductaAlumno(alumno, nivelId));
+
+            menu.getItems().addAll(miNotas, miConducta);
+            menu.getStyleClass().add("role-menu");
+            menu.show(anchor, Side.BOTTOM, 0, 0);
+          } else {
+            Dialogs.warn(null, "Sin permisos", "No tienes permisos en esta sección.");
+          }
+        },
+        ex -> {
+          Dialogs.errorConStacktrace(null, "Error", "No se pudo obtener tus permisos en esta sección.", ex.getMessage(), ex);
+        }
+    );
   }
 
   private void abrirDetalleAlumno(Alumno alumno, Long nivelId) {
@@ -453,27 +478,6 @@ public class StudentsListController implements SesionAware {
     });
   }
 
-  // ===================== Roles / Permisos =====================
-  private boolean hasRole(String roleKey) {
-    if (userSession == null || userSession.getRoles() == null) return false;
-    return userSession.getRoles().stream()
-        .map(Object::toString)
-        .map(String::toUpperCase)
-        .anyMatch(r -> r.equals(roleKey.toUpperCase()));
-  }
-
-  private boolean isSoloDocente() {
-    return hasRole("Docente") && !hasRole("Tutor");
-  }
-
-  private boolean isSoloTutor() {
-    return hasRole("Tutor") && !hasRole("Docente");
-  }
-
-  private boolean isDocenteYTutor() {
-    return hasRole("Docente") && hasRole("Tutor");
-  }
-
   // ===================== Handlers =====================
   @FXML
   private void onBuscar() {
@@ -513,6 +517,7 @@ public class StudentsListController implements SesionAware {
     cacheGradosPorPeriodoNivelUsuario.clear();
     cacheSeccionesPorGradoUsuario.clear();
     cacheAlumnosPorSeccionPeriodo.clear();
+    cacheRolesPorSeccion.clear();
 
     if (this.periodoId != null) {
       cargarGradosAsync();

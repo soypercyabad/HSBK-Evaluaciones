@@ -2,13 +2,11 @@ package pe.iep.hsbk.evaluaciones.dao.impl;
 
 import pe.iep.hsbk.evaluaciones.config.ConexionDB;
 import pe.iep.hsbk.evaluaciones.dao.ConductaPanelDao;
-import pe.iep.hsbk.evaluaciones.dto.ConductaResumen;
+import pe.iep.hsbk.evaluaciones.dto.ConductaResumenDto;
 import pe.iep.hsbk.evaluaciones.dto.RecomendacionAlumnoDto;
 import pe.iep.hsbk.evaluaciones.model.Conducta;
 import pe.iep.hsbk.evaluaciones.model.EvaluacionFamiliar;
-import pe.iep.hsbk.evaluaciones.model.RecomendacionCatalogo;
 
-import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -20,9 +18,9 @@ import java.util.List;
 public class ConductaPanelImpl implements ConductaPanelDao {
 
     @Override
-    public ConductaResumen getResumenByAlumno(Long alumnoId, Long periodoId, Long nivelId, Long bimestreId) throws Exception {
+    public ConductaResumenDto getResumenByAlumno(Long alumnoId, Long periodoId, Long nivelId, Long bimestreId) throws Exception {
         String sql = "{ call sp_get_conducta_resumen_full(?, ?, ?, ?) }";
-        ConductaResumen out = new ConductaResumen();
+        ConductaResumenDto out = new ConductaResumenDto();
 
         try (Connection cn = ConexionDB.getConnection();
              CallableStatement cs = cn.prepareCall(sql)) {
