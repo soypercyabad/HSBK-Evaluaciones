@@ -44,38 +44,26 @@ import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
 public class StudentsListController implements SesionAware {
 
   // ===================== UI (FXML) =====================
-  @FXML
-  private Label lblTitleUsuario;
-  @FXML
-  private Label lblTitlePeriodo;
-  @FXML
-  private Label lblTitleRol;
-  @FXML
-  private TextField txtBuscar;
+  @FXML private Label lblTitleUsuario;
+  @FXML private Label lblTitlePeriodo;
+  @FXML private Label lblTitleRol;
+  @FXML private TextField txtBuscar;
+  @FXML private Button btnDescargarBoleta;
 
   // ===================== Tabla =====================
-  @FXML
-  private TableView<Alumno> tblAlumnos;
-  @FXML
-  private TableColumn<Alumno, Boolean> colSel;
-  @FXML
-  private TableColumn<Alumno, String> colApellidos;
-  @FXML
-  private TableColumn<Alumno, String> colNombres;
-  @FXML
-  private TableColumn<Alumno, String> colCodigo;
-  @FXML
-  private TableColumn<Alumno, Void> colAcciones;
+  @FXML private TableView<Alumno> tblAlumnos;
+  @FXML private TableColumn<Alumno, Boolean> colSel;
+  @FXML private TableColumn<Alumno, String> colApellidos;
+  @FXML private TableColumn<Alumno, String> colNombres;
+  @FXML private TableColumn<Alumno, String> colCodigo;
+  @FXML private TableColumn<Alumno, Void> colAcciones;
 
   // ===================== Contenedores (toggles) =====================
-  @FXML
-  private HBox paneGrados;
-  @FXML
-  private VBox paneSecciones;
+  @FXML private HBox paneGrados;
+  @FXML private VBox paneSecciones;
 
   // ===================== Overlay busy =====================
-  @FXML
-  private StackPane overlay;
+  @FXML private StackPane overlay;
 
   // ===================== ToggleGroups =====================
   private final ToggleGroup grpGrados = new ToggleGroup();
@@ -86,6 +74,8 @@ public class StudentsListController implements SesionAware {
   private Long periodoId;
   private Long nivelId;
   private java.util.function.BiConsumer<Constantes.Route, java.util.function.Consumer<Object>> goTo;
+
+  private boolean contextInitialized = false;
 
   // ===================== Selección actual =====================
   private Long gradoSelId;
@@ -117,6 +107,7 @@ public class StudentsListController implements SesionAware {
       lblTitlePeriodo.setText("Periodo " + s.getPeriodoNombre());
       lblTitleRol.setText(formatRoles(s.getRoles()));
     }
+    tryInitContext();
   }
 
   @FXML
@@ -126,13 +117,26 @@ public class StudentsListController implements SesionAware {
     if (txtBuscar != null) {
       txtBuscar.textProperty().addListener((o, a, b) -> refiltrar());
     }
+  }
+
+  // ===================== Init "perezoso" =====================
+  private void tryInitContext() {
+    if (contextInitialized) return;
+    if (userSession == null) return;
+    if (nivelId == null) return;
+
+    String perNombre = userSession.getPeriodoNombre();
+    if (perNombre == null) {
+      Dialogs.error(null, "Error", "No se encontró el período en la sesión de usuario.");
+      return;
+    }
 
     try {
-      String perNombre = (userSession != null && userSession.getPeriodoNombre() != null)
-          ? userSession.getPeriodoNombre() : "2025";
       periodoId = periodoDao.getPeriodoIdPorNombre(perNombre);
+      System.out.println("StudentsListController: tryInitContext -> periodoId=" + periodoId + ", nivelId=" + nivelId);
 
-      if (periodoId != null && nivelId != null) {
+      if (periodoId != null) {
+        contextInitialized = true;
         cargarGradosAsync();
       }
     } catch (Exception e) {
@@ -169,7 +173,7 @@ public class StudentsListController implements SesionAware {
           paneGrados.getChildren().clear();
           grpGrados.getToggles().clear();
 
-          for (var g : grados) {
+          for (Grado g : grados) {
             ToggleButton tb = new ToggleButton(g.getNombre());
             tb.getStyleClass().add("tab");
             tb.setUserData(g);
@@ -210,7 +214,7 @@ public class StudentsListController implements SesionAware {
           paneSecciones.getChildren().clear();
           grpSecciones.getToggles().clear();
 
-          for (var s : secciones) {
+          for (Seccion s : secciones) {
             ToggleButton tb = new ToggleButton("Sección " + s.getNombre());
             tb.getStyleClass().add("section-btn");
             tb.setUserData(s);
@@ -259,11 +263,40 @@ public class StudentsListController implements SesionAware {
     );
   }
 
+  // ===================== Precarga de roles =====================
+  private void precargarRolesSeccionAsync(Long seccionId) {
+    if (seccionId == null || periodoId == null || userSession == null) return;
+    if (cacheRolesPorSeccion.containsKey(seccionId)) return; // ya está cacheado
+
+    FXAsync.run(
+        () -> {
+          try {
+            return seccionDao.getRolesEnSeccion(periodoId, seccionId, userSession.getUserId());
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        },
+        roles -> {
+          cacheRolesPorSeccion.put(seccionId, roles);
+
+          boolean esTut = roles != null && roles.isTutor();
+          if (btnDescargarBoleta != null) {
+            btnDescargarBoleta.setVisible(esTut);
+            btnDescargarBoleta.setManaged(esTut);
+          }
+        },
+        ex -> {
+          // No molestamos al usuario aquí; solo log
+          ex.printStackTrace();
+        }
+    );
+  }
+
   // ===================== Eventos UI =====================
   private void onChangeGradoDynamic() {
     Toggle sel = grpGrados.getSelectedToggle();
     if (sel == null) return;
-    var g = (Grado) ((ToggleButton) sel).getUserData();
+    Grado g = (Grado) ((ToggleButton) sel).getUserData();
     this.gradoSelId = g.getId();
     cargarSeccionesAsync(gradoSelId);
   }
@@ -271,10 +304,13 @@ public class StudentsListController implements SesionAware {
   private void onChangeSeccionDynamic() {
     Toggle sel = grpSecciones.getSelectedToggle();
     if (sel == null) return;
-    var s = (Seccion) ((ToggleButton) sel).getUserData();
+    Seccion s = (Seccion) ((ToggleButton) sel).getUserData();
     this.seccionSelId = s.getId();
-    // opcional: limpiar cache de roles si quieres que siempre refresque por sección
-    // cacheRolesPorSeccion.remove(this.seccionSelId);
+
+    // Pre-carga roles de la sección en segundo plano
+    precargarRolesSeccionAsync(this.seccionSelId);
+
+    // Luego carga alumnos
     cargarAlumnosAsync();
   }
 
@@ -316,7 +352,7 @@ public class StudentsListController implements SesionAware {
     colNombres.setStyle("-fx-alignment: CENTER-LEFT;");
     colCodigo.setStyle("-fx-alignment: CENTER-LEFT;");
 
-    colAcciones.setCellFactory(col -> new TableCell<>() {
+    colAcciones.setCellFactory(col -> new TableCell<Alumno, Void>() {
       private final Button btnEdit = IconButtons.iconButtonForCell(
           this, 28, 28, 0.55,
           pb -> {
@@ -365,36 +401,25 @@ public class StudentsListController implements SesionAware {
       return;
     }
 
+    // Intentar usar cache primero
+    RolesEnSeccionDto cached = cacheRolesPorSeccion.get(seccionSelId);
+    if (cached != null) {
+      manejarSegunRoles(alumno, anchor, cached);
+      return;
+    }
+
+    // Si no hay cache consultar BD async
     FXAsync.run(
-        () -> cacheRolesPorSeccion.computeIfAbsent(seccionSelId, sid -> {
+        () -> {
           try {
-            return seccionDao.getRolesEnSeccion(periodoId, sid, userSession.getUserId());
+            return seccionDao.getRolesEnSeccion(periodoId, seccionSelId, userSession.getUserId());
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
-        }),
+        },
         roles -> {
-          boolean esDoc = roles != null && roles.isDocente();
-          boolean esTut = roles != null && roles.isTutor();
-
-          if (esDoc && !esTut) {
-            abrirDetalleAlumno(alumno, nivelId);
-          } else if (!esDoc && esTut) {
-            abrirConductaAlumno(alumno, nivelId);
-          } else if (esDoc && esTut) {
-            ContextMenu menu = new ContextMenu();
-            MenuItem miNotas = new MenuItem("Ver Notas");
-            MenuItem miConducta = new MenuItem("Ver Conducta");
-
-            miNotas.setOnAction(e -> abrirDetalleAlumno(alumno, nivelId));
-            miConducta.setOnAction(e -> abrirConductaAlumno(alumno, nivelId));
-
-            menu.getItems().addAll(miNotas, miConducta);
-            menu.getStyleClass().add("role-menu");
-            menu.show(anchor, Side.BOTTOM, 0, 0);
-          } else {
-            Dialogs.warn(null, "Sin permisos", "No tienes permisos en esta sección.");
-          }
+          cacheRolesPorSeccion.put(seccionSelId, roles);
+          manejarSegunRoles(alumno, anchor, roles);
         },
         ex -> {
           Dialogs.errorConStacktrace(null, "Error", "No se pudo obtener tus permisos en esta sección.", ex.getMessage(), ex);
@@ -402,43 +427,75 @@ public class StudentsListController implements SesionAware {
     );
   }
 
-  private void abrirDetalleAlumno(Alumno alumno, Long nivelId) {
+  private void manejarSegunRoles(Alumno alumno, Button anchor, RolesEnSeccionDto roles) {
+    boolean esDoc = roles != null && roles.isDocente();
+    boolean esTut = roles != null && roles.isTutor();
+
+    if (esDoc && !esTut) {
+      abrirDetalleAlumno(alumno, nivelId, seccionSelId);
+
+    } else if (!esDoc && esTut) {
+      abrirConductaAlumno(alumno, nivelId);
+
+    } else if (esDoc && esTut) {
+      ContextMenu menu = new ContextMenu();
+      MenuItem miNotas = new MenuItem("Ver Notas");
+      MenuItem miConducta = new MenuItem("Ver Conducta");
+
+      miNotas.setOnAction(e -> abrirDetalleAlumno(alumno, nivelId, seccionSelId));
+      miConducta.setOnAction(e -> abrirConductaAlumno(alumno, nivelId));
+
+      menu.getItems().addAll(miNotas, miConducta);
+      menu.getStyleClass().add("role-menu");
+      menu.show(anchor, Side.BOTTOM, 0, 0);
+    } else {
+      Dialogs.warn(null, "Sin permisos", "No tienes permisos en esta sección.");
+    }
+  }
+
+  private void abrirDetalleAlumno(Alumno alumno, Long nivelId, Long seccionId) {
     if (goTo == null) {
       Dialogs.error(null, "Error", "Navegación no disponible.");
       return;
     }
 
-    goTo.accept(Constantes.Route.STUDENT_NOTAS, ctrlObj -> {
-      if (ctrlObj instanceof AlumnoNotasController) {
-        AlumnoNotasController ctrl = (AlumnoNotasController) ctrlObj;
-        if (ctrl instanceof SesionAware) {
-          SesionAware sa = (SesionAware) ctrl;
-          sa.setSession(userSession);
-        }
-        ctrl.setAlumno(alumno, nivelId);
+    setBusy(true);
 
-        final Long gradoIdActual = this.gradoSelId;
-        final Long seccionIdActual = this.seccionSelId;
-        final var goToRef = this.goTo;
-        final var sesRef = this.userSession;
-        final var nivelRef = nivelId;
+    try {
+      goTo.accept(Constantes.Route.STUDENT_NOTAS, ctrlObj -> {
+        if (ctrlObj instanceof AlumnoNotasController) {
+          AlumnoNotasController ctrl = (AlumnoNotasController) ctrlObj;
+          ctrl.setSession(userSession);
+          ctrl.setAlumno(alumno, nivelId, seccionId);
 
-        ctrl.setOnBack(() -> {
-          goToRef.accept(Constantes.Route.STUDENTS_LIST, backCtrl -> {
-            if (backCtrl instanceof StudentsListController) {
-              StudentsListController listCtrl = (StudentsListController) backCtrl;
-              listCtrl.setGoTo(goToRef);
-              listCtrl.setSession(sesRef);
-              listCtrl.restaurarVista(nivelRef, gradoIdActual, seccionIdActual);
-            }
+          final Long gradoIdActual = this.gradoSelId;
+          final Long seccionIdActual = this.seccionSelId;
+          final java.util.function.BiConsumer<Constantes.Route, java.util.function.Consumer<Object>> goToRef = this.goTo;
+          final UserSession sesRef = this.userSession;
+          final Long nivelRef = nivelId;
+
+          ctrl.setOnBack(() -> {
+            goToRef.accept(Constantes.Route.STUDENTS_LIST, backCtrl -> {
+              if (backCtrl instanceof StudentsListController) {
+                StudentsListController listCtrl = (StudentsListController) backCtrl;
+                listCtrl.setGoTo(goToRef);
+                listCtrl.setSession(sesRef);
+                listCtrl.restaurarVista(nivelRef, gradoIdActual, seccionIdActual);
+              }
+            });
           });
-        });
 
-      } else {
-        Dialogs.error(null, "Error", "El controlador no es del tipo esperado.");
-      }
-    });
+        } else {
+          Dialogs.error(null, "Error", "El controlador no es del tipo esperado.");
+        }
+        setBusy(false);
+      });
+    } catch (Exception ex) {
+      setBusy(false);
+      Dialogs.errorConStacktrace(null, "Error", "No se pudo navegar a la pantalla de notas.", ex.getMessage(), ex);
+    }
   }
+
 
   private void abrirConductaAlumno(Alumno alumno, Long nivelId) {
     if (goTo == null) {
@@ -449,17 +506,14 @@ public class StudentsListController implements SesionAware {
     goTo.accept(Constantes.Route.STUDENT_CONDUCTA, ctrlObj -> {
       if (ctrlObj instanceof AlumnoConductaController) {
         AlumnoConductaController ctrl = (AlumnoConductaController) ctrlObj;
-        if (ctrl instanceof SesionAware) {
-          SesionAware sa = (SesionAware) ctrl;
-          sa.setSession(userSession);
-        }
+        ctrl.setSession(userSession);
         ctrl.setAlumno(alumno, nivelId);
 
         final Long gradoIdActual = this.gradoSelId;
         final Long seccionIdActual = this.seccionSelId;
-        final var goToRef = this.goTo;
-        final var sesRef = this.userSession;
-        final var nivelRef = nivelId;
+        final java.util.function.BiConsumer<Constantes.Route, java.util.function.Consumer<Object>> goToRef = this.goTo;
+        final UserSession sesRef = this.userSession;
+        final Long nivelRef = nivelId;
 
         ctrl.setOnBack(() -> {
           goToRef.accept(Constantes.Route.STUDENTS_LIST, backCtrl -> {
@@ -507,9 +561,7 @@ public class StudentsListController implements SesionAware {
     this.goTo = goTo;
   }
 
-  /**
-   * Llamado por el menú para establecer nivel y recargar.
-   */
+  /** Llamado por el menú para establecer nivel y recargar. */
   public void setNivelId(long nivelId) {
     if (Objects.equals(this.nivelId, nivelId)) return;
     this.nivelId = nivelId;
@@ -519,14 +571,11 @@ public class StudentsListController implements SesionAware {
     cacheAlumnosPorSeccionPeriodo.clear();
     cacheRolesPorSeccion.clear();
 
-    if (this.periodoId != null) {
-      cargarGradosAsync();
-    }
+    contextInitialized = false;
+    tryInitContext();
   }
 
-  /**
-   * Restaurar la vista al volver desde otra pantalla.
-   */
+  /** Restaurar la vista al volver desde otra pantalla.  */
   public void restaurarVista(Long nivelId, Long gradoId, Long seccionId) {
     setNivelId(nivelId);
 

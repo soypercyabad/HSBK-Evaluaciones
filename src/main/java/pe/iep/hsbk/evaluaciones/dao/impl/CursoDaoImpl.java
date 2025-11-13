@@ -10,23 +10,24 @@ import java.util.List;
 public class CursoDaoImpl implements CursoDao {
 
   @Override
-  public List<Curso> listarCursosActivos(Long nivelId) throws Exception {
-    String sql = "CALL sp_get_curso_nivel (?)";
+  public List<Curso> listarCursosAsignados(Long periodoId, Long seccionId, Long usuarioId) throws Exception {
+    String call = "CALL sp_get_cursos_asignados(?,?,?)";
 
     try (var con = ConexionDB.getConnection();
-         var ps = con.prepareStatement(sql)) {
+         var ps = con.prepareCall(call)) {
 
-      ps.setLong(1, nivelId);
+      ps.setLong(1, periodoId);
+      ps.setLong(2, seccionId);
+      ps.setLong(3, usuarioId);
 
       try (var rs = ps.executeQuery()) {
-
         List<Curso> cursos = new ArrayList<>();
 
         while (rs.next()) {
           Curso c = new Curso();
-          c.setId(rs.getLong("id"));
+          c.setId(rs.getLong("curso_id"));
           c.setNivelId(rs.getLong("nivel_id"));
-          c.setNombre(rs.getString("nombre"));
+          c.setNombre(rs.getString("curso_nombre"));
           c.setActivo(rs.getBoolean("activo"));
           cursos.add(c);
         }

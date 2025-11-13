@@ -61,6 +61,8 @@
                         <!-- 👇 Un solo contenedor -->
                         <VBox spacing="6">
                             <Region prefHeight="6" />
+                            <Label styleClass="block-title" text="Lista de notas de cursos"/>
+                            <Region prefHeight="6" />
 
                             <!-- Cursos por area -->
                             <HBox spacing="10.0">
