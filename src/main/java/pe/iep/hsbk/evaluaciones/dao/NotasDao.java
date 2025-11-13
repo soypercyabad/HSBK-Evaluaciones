@@ -4,4 +4,5 @@ import pe.iep.hsbk.evaluaciones.dto.*;
 
 public interface NotasDao {
   NotasCursoResumenDto getNotasCursoResumen(long matriculaId, long cursoId, long bimestreId) throws Exception;
+  void guardarNotasCurso(NotasCursoResumenDto notas) throws Exception;
 }

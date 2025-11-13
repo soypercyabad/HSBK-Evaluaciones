@@ -7,6 +7,7 @@ public class NotasCursoResumenDto {
   private final Long matriculaId;
   private final Long cursoId;
   private final Long bimestreId;
+  private final Long usuarioId;
 
   private final BigDecimal p1;
   private final BigDecimal p2;
@@ -24,7 +25,7 @@ public class NotasCursoResumenDto {
   private final BigDecimal promFinal;
   private final String letra;
 
-  public NotasCursoResumenDto(Long matriculaId, Long cursoId, Long bimestreId,
+  public NotasCursoResumenDto(Long matriculaId, Long cursoId, Long bimestreId, Long usuarioId,
                        BigDecimal p1, BigDecimal p2, BigDecimal p3, BigDecimal p4, BigDecimal promPracticas,
                        BigDecimal tareaLibro, BigDecimal tareaCuaderno, BigDecimal promTareas,
                        BigDecimal exMensual, BigDecimal exBimestral,
@@ -32,6 +33,7 @@ public class NotasCursoResumenDto {
     this.matriculaId = matriculaId;
     this.cursoId = cursoId;
     this.bimestreId = bimestreId;
+    this.usuarioId = usuarioId;
     this.p1 = p1; this.p2 = p2; this.p3 = p3; this.p4 = p4; this.promPracticas = promPracticas;
     this.tareaLibro = tareaLibro; this.tareaCuaderno = tareaCuaderno; this.promTareas = promTareas;
     this.exMensual = exMensual; this.exBimestral = exBimestral;
@@ -41,6 +43,7 @@ public class NotasCursoResumenDto {
   public Long getMatriculaId() { return matriculaId; }
   public Long getCursoId() { return cursoId; }
   public Long getBimestreId() { return bimestreId; }
+  public Long getUsuarioId() { return usuarioId; }
 
   public BigDecimal getP1() { return p1; }
   public BigDecimal getP2() { return p2; }

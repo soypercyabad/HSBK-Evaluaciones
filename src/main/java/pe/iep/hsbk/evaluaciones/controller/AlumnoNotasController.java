@@ -12,6 +12,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import pe.iep.hsbk.evaluaciones.dao.*;
 import pe.iep.hsbk.evaluaciones.dao.impl.*;
+import pe.iep.hsbk.evaluaciones.dto.NotasCursoResumenDto;
 import pe.iep.hsbk.evaluaciones.model.Alumno;
 import pe.iep.hsbk.evaluaciones.model.Bimestre;
 import pe.iep.hsbk.evaluaciones.model.Curso;
@@ -428,14 +429,90 @@ public class AlumnoNotasController implements SesionAware {
   }
 
   public void registrarEvauación(ActionEvent actionEvent) {
-    // Habilitar edición de notas
-    setEditableNotas(false);
-    // Ocultar boton de registrar
-    btnRegistrarEvaluacion.setVisible(false);
-    btnRegistrarEvaluacion.setManaged(false);
-    // Ver boton de editar
-    btnEditarEvaluacion.setVisible(true);
-    btnEditarEvaluacion.setManaged(true);
+    if (matriculaId == null || cursoSelId == null || bimestreSelId == null) {
+      Dialogs.warn(null, "Error", "No se puede registrar las notas. Falta información del alumno, curso o bimestre.");
+      return;
+    }
+
+    try {
+      // 1) Leer valores desde los TextField
+      BigDecimal p1 = parseNota0a20(pract1Field);
+      BigDecimal p2 = parseNota0a20(pract2Field);
+      BigDecimal p3 = parseNota0a20(pract3Field);
+      BigDecimal p4 = parseNota0a20(pract4Field);
+
+      BigDecimal libro    = parseNota0a20(libroField);
+      BigDecimal cuaderno = parseNota0a20(cuadernoField);
+
+      BigDecimal exMen = parseNota0a20(exMenField);
+      BigDecimal exBim = parseNota0a20(exBimField);
+
+      // 3) Armar DTO para guardar
+      NotasCursoResumenDto dto = new NotasCursoResumenDto(
+          matriculaId,
+          cursoSelId,
+          bimestreSelId,
+          usuarioId,
+          p1, p2, p3, p4, null,
+          libro, cuaderno, null,
+          exMen, exBim, null, null
+      );
+
+      // Guardar con FXAsync
+      setBusy(true);
+      FXAsync.run(
+          () -> {
+            try {
+              notasDao.guardarNotasCurso(dto);
+              return null;
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          },
+          ok -> {
+            setBusy(false);
+
+            // Bloquear edición otra vez
+            setEditableNotas(false);
+            btnRegistrarEvaluacion.setVisible(false);
+            btnRegistrarEvaluacion.setManaged(false);
+            btnEditarEvaluacion.setVisible(true);
+            btnEditarEvaluacion.setManaged(true);
+
+            // Volver a cargar desde BD para refrescar promedios/letra
+            cargarNotasAsync(matriculaId, cursoSelId, bimestreSelId);
+
+            Dialogs.info(null, "Notas guardadas", "Las notas se han registrado correctamente.");
+          },
+          ex -> {
+            setBusy(false);
+            Dialogs.errorConStacktrace(null, "Error", "No se pudieron guardar las notas.", ex.getMessage(), ex);
+          }
+      );
+
+    } catch (IllegalArgumentException ex) {
+      Dialogs.warn(null, "Datos inválidos", ex.getMessage());
+    }
+  }
+
+  private BigDecimal parseNota0a20(TextField tf) {
+    BigDecimal v = parseNota(tf);
+    if (v == null) return null;
+    if (v.compareTo(BigDecimal.ZERO) < 0 || v.compareTo(new BigDecimal("20")) > 0) {
+      throw new IllegalArgumentException("La nota debe estar entre 0 y 20: " + v);
+    }
+    return v;
+  }
+
+  private BigDecimal parseNota(TextField tf) {
+    if (tf == null) return null;
+    String txt = tf.getText();
+    if (txt == null || txt.trim().isEmpty()) return null;
+    try {
+      return new BigDecimal(txt.trim());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Valor inválido: " + txt);
+    }
   }
 
   private void setEditableNotas(boolean editable) {

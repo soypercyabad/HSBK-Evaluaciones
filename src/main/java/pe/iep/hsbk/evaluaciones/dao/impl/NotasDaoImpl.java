@@ -27,6 +27,7 @@ public class NotasDaoImpl implements NotasDao {
               rs.getLong("matricula_id"),
               rs.getLong("curso_id"),
               rs.getLong("bimestre_id"),
+              null,
               getBD(rs, "p1"),
               getBD(rs, "p2"),
               getBD(rs, "p3"),
@@ -45,6 +46,7 @@ public class NotasDaoImpl implements NotasDao {
             matriculaId,
             cursoId,
             bimestreId,
+            null,
             null, null, null, null, null,
             null, null, null,
             null, null,
@@ -54,10 +56,46 @@ public class NotasDaoImpl implements NotasDao {
     }
   }
 
-
   // -------- helpers --------
   private static BigDecimal getBD(ResultSet rs, String col) throws java.sql.SQLException {
     BigDecimal v = rs.getBigDecimal(col);
     return rs.wasNull() ? null : v;
   }
+
+  @Override
+  public void guardarNotasCurso(NotasCursoResumenDto dto) throws Exception {
+    String call = "{ call sp_guardar_notas_curso(?,?,?,?,?,?,?,?,?,?,?,?) }";
+
+    try (var con = ConexionDB.getConnection();
+         var cs  = con.prepareCall(call)) {
+
+      // Parámetros de entrada
+      cs.setLong(1, dto.getMatriculaId());
+      cs.setLong(2, dto.getCursoId());
+      cs.setLong(3, dto.getBimestreId());
+      cs.setLong(4, dto.getUsuarioId());
+
+      // Prácticas
+      setBDorNull(cs, 5,  dto.getP1());
+      setBDorNull(cs, 6,  dto.getP2());
+      setBDorNull(cs, 7,  dto.getP3());
+      setBDorNull(cs, 8,  dto.getP4());
+
+      // Tareas
+      setBDorNull(cs, 9,  dto.getTareaLibro());
+      setBDorNull(cs, 10, dto.getTareaCuaderno());
+
+      // Exámenes
+      setBDorNull(cs, 11, dto.getExMensual());
+      setBDorNull(cs, 12, dto.getExBimestral());
+
+      cs.executeUpdate();
+    }
+  }
+
+  private static void setBDorNull(java.sql.CallableStatement cs, int index, BigDecimal value) throws java.sql.SQLException {
+    if (value != null) cs.setBigDecimal(index, value);
+    else cs.setNull(index, java.sql.Types.DECIMAL);
+  }
+
 }
