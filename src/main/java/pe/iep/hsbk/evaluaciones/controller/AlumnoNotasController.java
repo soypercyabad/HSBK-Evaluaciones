@@ -325,20 +325,20 @@ public class AlumnoNotasController implements SesionAware {
         },
         data -> {
           // Practicas
-          setText(pract1Field, data.getP1());
-          setText(pract2Field, data.getP2());
-          setText(pract3Field, data.getP3());
-          setText(pract4Field, data.getP4());
+          setNotaField(pract1Field, data.getP1(), data.getP1_letra());
+          setNotaField(pract2Field, data.getP2(), data.getP2_letra());
+          setNotaField(pract3Field, data.getP3(), data.getP3_letra());
+          setNotaField(pract4Field, data.getP4(), data.getP4_letra());
           setText(practPromField, data.getPromPracticas());
 
           // Tareas
-          setText(libroField, data.getTareaLibro());
-          setText(cuadernoField, data.getTareaCuaderno());
+          setNotaField(libroField,    data.getTareaLibro(),    data.getTareaLibro_letra());
+          setNotaField(cuadernoField, data.getTareaCuaderno(), data.getTareaCuaderno_letra());
           setText(tareaPromField, data.getPromTareas());
 
           // Exámenes
-          setText(exMenField, data.getExMensual());
-          setText(exBimField, data.getExBimestral());
+          setNotaField(exMenField, data.getExMensual(),    data.getExMensual_letra());
+          setNotaField(exBimField, data.getExBimestral(),  data.getExBimestral_letra());
 
           // Promedio Bimestral
           setText(pbPracticasField, data.getPromPracticas());
@@ -453,9 +453,9 @@ public class AlumnoNotasController implements SesionAware {
           cursoSelId,
           bimestreSelId,
           usuarioId,
-          p1, p2, p3, p4, null,
-          libro, cuaderno, null,
-          exMen, exBim, null, null
+          p1, null, p2, null, p3, null, p4, null, null,
+          libro, null, cuaderno,  null,null,
+          exMen, null, exBim,  null,null, null
       );
 
       // Guardar con FXAsync
@@ -514,6 +514,29 @@ public class AlumnoNotasController implements SesionAware {
       throw new IllegalArgumentException("Valor inválido: " + txt);
     }
   }
+
+  private void setNotaField(TextField tf, BigDecimal nota, String letra) {
+    if (tf == null) return;
+
+    // Resetear estilo por defecto
+    tf.setStyle(""); // o alguna styleClass si usas CSS
+
+    if (nota == null) {
+      tf.setText("");
+      return;
+    }
+
+    // nota = 0 y letra = "00"  → marcar como NO evaluado
+    if (nota.compareTo(BigDecimal.ZERO) == 0 && "00".equals(letra)) {
+      tf.setText("00");
+      // rojo + negrita
+      tf.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+    } else {
+      // nota “normal”
+      tf.setText(nota.stripTrailingZeros().toPlainString());
+    }
+  }
+
 
   private void setEditableNotas(boolean editable) {
     for (TextField tf : new TextField[]{

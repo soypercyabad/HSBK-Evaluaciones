@@ -29,15 +29,23 @@ public class NotasDaoImpl implements NotasDao {
               rs.getLong("bimestre_id"),
               null,
               getBD(rs, "p1"),
+              rs.getString("p1_letra"),
               getBD(rs, "p2"),
+              rs.getString("p2_letra"),
               getBD(rs, "p3"),
+              rs.getString("p3_letra"),
               getBD(rs, "p4"),
+              rs.getString("p4_letra"),
               getBD(rs, "prom_practicas"),
               getBD(rs, "tarea_libro"),
+              rs.getString("tarea_libro_letra"),
               getBD(rs, "tarea_cuaderno"),
+              rs.getString("tarea_cuaderno_letra"),
               getBD(rs, "prom_tareas"),
               getBD(rs, "ex_mensual"),
+              rs.getString("ex_mensual_letra"),
               getBD(rs, "ex_bimestral"),
+              rs.getString("ex_bimestral_letra"),
               getBD(rs, "prom_final"),
               rs.getString("letra")
           );
@@ -47,9 +55,9 @@ public class NotasDaoImpl implements NotasDao {
             cursoId,
             bimestreId,
             null,
+            null, null, null, null, null, null, null, null, null,
             null, null, null, null, null,
-            null, null, null,
-            null, null,
+            null, null, null, null,
             null, null
         );
       }
