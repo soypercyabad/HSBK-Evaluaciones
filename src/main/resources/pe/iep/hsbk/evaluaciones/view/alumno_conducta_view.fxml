@@ -6,9 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 
-<StackPane prefHeight="639.0" prefWidth="849.0"
-           xmlns="http://javafx.com/javafx/17.0.12"
-           xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.iep.hsbk.evaluaciones.controller.AlumnoConductaController">
+<StackPane prefHeight="639.0" prefWidth="849.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.iep.hsbk.evaluaciones.controller.AlumnoConductaController">
 
     <!-- CONTENIDO REAL -->
     <VBox spacing="16" styleClass="page">
@@ -61,237 +59,16 @@
                         <!-- 👇 Un solo contenedor -->
                         <VBox spacing="6">
                             <Region prefHeight="6" />
-                            <Label styleClass="block-title" text="Lista de notas de cursos"/>
+                            <Label styleClass="block-title" text="Lista de notas de cursos" />
                             <Region prefHeight="6" />
 
-                            <!-- Cursos por area -->
-                            <HBox spacing="10.0">
-                                <!-- ========== PANEL 1 (4 cursos) ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label styleClass="top-title-panel" text="Matemática" GridPane.columnSpan="2" />
-
-                                    <Label text="Raz. Matemático" wrapText="true" GridPane.rowIndex="1" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                    <Label text="Aritmética" wrapText="true" GridPane.rowIndex="2" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-                                    <Label text="Álgebra" wrapText="true" GridPane.rowIndex="3" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-
-                                    <Label text="Geometría" wrapText="true" GridPane.rowIndex="4" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-
-                                    <Label styleClass="top-title-panel" text="Promedio" wrapText="true" GridPane.rowIndex="5" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints vgrow="ALWAYS" />
-                                        <RowConstraints />
-                                    </rowConstraints>
-                                </GridPane>
-
-                                <!-- ========== PANEL 2 (4 cursos) ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label styleClass="top-title-panel" text="Comunicación" GridPane.columnSpan="2" />
-
-                                    <Label text="Gramática" wrapText="true" GridPane.rowIndex="1" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                    <Label text="Ortografía" wrapText="true" GridPane.rowIndex="2" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-                                    <Label text="Raz. Verbal" wrapText="true" GridPane.rowIndex="3" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-
-                                    <Label text="Plan lector" wrapText="true" GridPane.rowIndex="4" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-
-                                    <Label styleClass="top-title-panel" text="Promedio" wrapText="true" GridPane.rowIndex="5" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints vgrow="ALWAYS" />
-                                        <RowConstraints />
-                                    </rowConstraints>
-                                </GridPane>
-
-                                <!-- ========== PANEL 3 (1 curso) ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90.0" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label styleClass="top-title-panel" text="Idioma Extranjero" GridPane.columnSpan="2" />
-
-                                    <Label text="Inglés" wrapText="true" GridPane.rowIndex="1" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                    <!-- SPACER -->
-                                    <Region GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS" />
-
-                                    <Label styleClass="top-title-panel" text="Promedio" wrapText="true" GridPane.rowIndex="3" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints vgrow="ALWAYS" />
-                                        <RowConstraints />
-                                    </rowConstraints>
-                                </GridPane>
-
-                                <!-- ========== PANEL 4 (4 cursos) ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90.0" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label styleClass="top-title-panel" text="Personal Social" GridPane.columnSpan="2" />
-
-                                    <Label text="Historia del Perú" wrapText="true" GridPane.rowIndex="1" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                    <Label text="Geografía" wrapText="true" GridPane.rowIndex="2" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-                                    <!-- SPACER -->
-                                    <Region GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="4" GridPane.vgrow="ALWAYS" />
-
-                                    <Label styleClass="top-title-panel" text="Promedio" wrapText="true" GridPane.rowIndex="6" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints vgrow="ALWAYS" />
-                                        <RowConstraints />
-                                    </rowConstraints>
-                                </GridPane>
-
-                                <!-- ========== PANEL 5 (4 cursos) ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label styleClass="top-title-panel" text="Ciencia Tecnología" GridPane.columnSpan="2" />
-
-                                    <Label text="Química" wrapText="true" GridPane.rowIndex="1" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                    <Label text="Biología" wrapText="true" GridPane.rowIndex="2" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-                                    <Label text="Física" wrapText="true" GridPane.rowIndex="3" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-
-                                    <!-- SPACER -->
-                                    <Region GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="4" GridPane.vgrow="ALWAYS" />
-
-                                    <Label styleClass="top-title-panel" text="Promedio" wrapText="true" GridPane.rowIndex="5" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints vgrow="ALWAYS" />
-                                        <RowConstraints />
-                                    </rowConstraints>
-                                </GridPane>
-                            </HBox>
+                            <!-- Container Cursos por area -->
+                            <FlowPane fx:id="paneAreas" hgap="10.0" prefWrapLength="600.0" vgap="10.0" />
 
                             <Region prefHeight="6" />
 
-                            <!-- Cursos sin area -->
-                            <HBox spacing="10.0">
-                                <!-- ========== 1 curso ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90.0" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label text="Arte" wrapText="true" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" />
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                    </rowConstraints>
-
-                                </GridPane>
-
-                                <!-- ========== 1 curso ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90.0" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label text="Religión" wrapText="true" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" />
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                    </rowConstraints>
-
-                                </GridPane>
-
-                                <!-- ========== 1 curso ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90.0" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label text="Educación física" wrapText="true" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" />
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                    </rowConstraints>
-
-                                </GridPane>
-
-                                <!-- ========== 1 curso ========== -->
-                                <GridPane hgap="10.0" styleClass="grid-panel" vgap="5.0">
-                                    <columnConstraints>
-                                        <ColumnConstraints maxWidth="90.0" minWidth="90.0" prefWidth="90.0" />
-                                        <ColumnConstraints maxWidth="50.0" minWidth="50.0" prefWidth="50.0" />
-                                    </columnConstraints>
-
-                                    <Label text="Computación e informática" wrapText="true" />
-                                    <TextField alignment="CENTER" editable="false" styleClass="text-field-promedio" GridPane.columnIndex="1" />
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                    </rowConstraints>
-
-                                </GridPane>
-
-                            </HBox>
+                            <!-- Container Cursos sin area -->
+                            <FlowPane fx:id="paneCursosSinArea" hgap="10.0" prefWrapLength="600.0" vgap="10.0" />
 
                             <Region prefHeight="6" />
                             <Separator />
@@ -308,7 +85,7 @@
                                     </columnConstraints>
 
                                     <Label text="Entrega de útiles escolares" GridPane.columnSpan="2" />
-                                    <TextField fx:id="txtutilesEscolares" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtutilesEscolares" alignment="CENTER" editable="false" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -322,7 +99,7 @@
                                     </columnConstraints>
 
                                     <Label text="Participación de actividades" GridPane.columnSpan="2" />
-                                    <TextField fx:id="txtactividades" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtactividades" alignment="CENTER" editable="false" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -336,7 +113,7 @@
                                     </columnConstraints>
 
                                     <Label text="Asistencia a las reuniones" GridPane.columnSpan="2" />
-                                    <TextField fx:id="txtreuniones" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtreuniones" alignment="CENTER" editable="false" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -350,7 +127,7 @@
                                     </columnConstraints>
 
                                     <Label text="Escuela para padres" GridPane.columnSpan="2" />
-                                    <TextField fx:id="txtescuelaPadres" alignment="CENTER" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="txtescuelaPadres" alignment="CENTER" editable="false" promptText="Ingresar letra" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                                     <rowConstraints>
                                         <RowConstraints />
                                         <RowConstraints />
@@ -376,7 +153,7 @@
                                         </columnConstraints>
 
                                         <Label text="Nota" wrapText="true" />
-                                        <TextField fx:id="txtnotaConducta" alignment="CENTER" promptText="20" GridPane.rowIndex="1" />
+                                        <TextField fx:id="txtnotaConducta" alignment="CENTER" editable="false" promptText="20" GridPane.rowIndex="1" />
 
                                         <Label text="Letra" wrapText="true" GridPane.columnIndex="1" />
                                         <TextField fx:id="txtconductaLetra" alignment="CENTER" editable="false" styleClass="text-field-disabled" GridPane.columnIndex="1" GridPane.rowIndex="1" />
@@ -399,7 +176,12 @@
                                         </columnConstraints>
 
                                         <Label text="Mensaje" GridPane.columnSpan="2" />
-                                        <ComboBox fx:id="recomendacionComboBox" prefWidth="Infinity" promptText="Seleccionar mensaje" GridPane.columnSpan="2" GridPane.rowIndex="1" VBox.vgrow="ALWAYS" />
+                                        <ComboBox fx:id="recomendacionComboBox"
+                                                  prefWidth="Infinity"
+                                                  promptText="Seleccionar mensaje"
+                                                  GridPane.columnSpan="2"
+                                                  GridPane.rowIndex="1"
+                                                  VBox.vgrow="ALWAYS" />
                                         <rowConstraints>
                                             <RowConstraints />
                                             <RowConstraints />
@@ -408,9 +190,8 @@
                                     </GridPane>
                                 </VBox>
 
+                                <!-- Boton de registrar -->
                                 <VBox spacing="10.0">
-                                    <!-- Boton de registrar -->
-                                    <!-- Recomendaciones -->
                                     <Label styleClass="block-title" />
                                     <GridPane hgap="10.0" styleClass="grid-panel-simple">
                                         <columnConstraints>
@@ -419,7 +200,8 @@
                                         </columnConstraints>
 
                                         <Label wrapText="true" />
-                                        <Button styleClass="outline-btn" text="Editar evaluación" GridPane.rowIndex="1">
+
+                                        <Button fx:id="btnEditarEvaluacion" onAction="#validarEdicion" styleClass="outline-btn" text="Editar evaluación" GridPane.rowIndex="1">
                                             <graphic>
                                                 <!-- Escalamos desde 24x24 a ~18px -->
                                                 <Group scaleX="0.65" scaleY="0.65">
@@ -429,7 +211,8 @@
                                         </Button>
 
                                         <Label wrapText="true" />
-                                        <Button fx:id="btnGuardar" styleClass="primary-btn" text="Registrar evaluación" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+
+                                        <Button fx:id="btnGuardar" managed="false" styleClass="primary-btn" text="Registrar evaluación" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
                                             <graphic>
                                                 <!-- Escalamos desde 24x24 a ~18px -->
                                                 <Group scaleX="0.85" scaleY="0.85">

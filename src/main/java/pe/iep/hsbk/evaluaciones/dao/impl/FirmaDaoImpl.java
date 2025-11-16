@@ -76,4 +76,58 @@ public class FirmaDaoImpl implements FirmaDao {
       ps.executeUpdate();
     }
   }
+
+  @Override
+  public Firma getFirmaPorUsuarioId(long usuarioId) throws Exception {
+    String call = "CALL sp_get_firma_por_usuario_id(?);";
+
+    try (var con = ConexionDB.getConnection();
+         var cs = con.prepareCall(call)) {
+
+      cs.setLong(1, usuarioId);
+
+      try (var rs = cs.executeQuery()) {
+        if (rs.next()) {
+          Firma f = new Firma();
+
+          f.setId(rs.getLong("id"));
+          f.setUsuarioId(rs.getLong("usuario_id"));
+          f.setImagen(rs.getBytes("imagen"));
+          f.setActivo(rs.getBoolean("activo"));
+
+          // Estos no vienen en el SP actual, así que los dejamos null por ahora
+          f.setNombre(null);
+          f.setRol(null);
+
+          return f;
+        } else {
+          return null;
+        }
+      }
+    }
+  }
+
+  @Override
+  public Firma getFirmaDirectorActiva() throws Exception {
+    String call = "CALL sp_get_firma_director_activo();";
+
+    try (var con = ConexionDB.getConnection();
+         var cs = con.prepareCall(call);
+
+         var rs = cs.executeQuery()) {
+
+      if (rs.next()) {
+        Firma f = new Firma();
+        f.setId(null);
+        f.setUsuarioId(null);
+        f.setNombre(null);
+        f.setRol(null);
+        f.setImagen(rs.getBytes("imagen"));
+        f.setActivo(false);
+        return f;
+      } else {
+        return null;
+      }
+    }
+  }
 }

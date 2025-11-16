@@ -9,4 +9,5 @@ public interface PlantillaBoletaDao {
   void guardarPlantillaBoleta(PlantillaBoleta plantilla) throws Exception;
   void actualizarPlantillaBoleta(PlantillaBoleta plantilla) throws Exception;
   void actualizarEstadoPlantillaBoleta(PlantillaBoleta plantilla) throws Exception;
+  PlantillaBoleta obtenerPlantillaActiva() throws Exception;
 }

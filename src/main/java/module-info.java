@@ -1,11 +1,12 @@
 module pe.iep.hsbk.evaluaciones {
   requires javafx.controls;
   requires javafx.fxml;
+  requires javafx.web;
   requires java.desktop;
   requires java.sql;
   requires jbcrypt;
   requires mysql.connector.j;
-  requires javafx.web;
+  requires openhtmltopdf.pdfbox;
 
   opens pe.iep.hsbk.evaluaciones.controller to javafx.fxml;
   opens pe.iep.hsbk.evaluaciones.model;

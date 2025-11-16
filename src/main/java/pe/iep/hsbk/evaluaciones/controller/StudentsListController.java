@@ -15,13 +15,20 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import pe.iep.hsbk.evaluaciones.dao.AlumnoDao;
+import pe.iep.hsbk.evaluaciones.dao.FirmaDao;
 import pe.iep.hsbk.evaluaciones.dao.GradoDao;
 import pe.iep.hsbk.evaluaciones.dao.PeriodoDao;
+import pe.iep.hsbk.evaluaciones.dao.PlantillaBoletaDao;
+import pe.iep.hsbk.evaluaciones.dao.SelloDao;
 import pe.iep.hsbk.evaluaciones.dao.SeccionDao;
 import pe.iep.hsbk.evaluaciones.dao.impl.AlumnoDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.impl.FirmaDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.GradoDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.PeriodoDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.impl.PlantillaDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.impl.SelloDaoImpl;
 import pe.iep.hsbk.evaluaciones.dao.impl.SeccionDaoImpl;
 import pe.iep.hsbk.evaluaciones.dto.RolesEnSeccionDto;
 import pe.iep.hsbk.evaluaciones.enums.Constantes;
@@ -29,14 +36,13 @@ import pe.iep.hsbk.evaluaciones.model.Alumno;
 import pe.iep.hsbk.evaluaciones.model.Grado;
 import pe.iep.hsbk.evaluaciones.model.Seccion;
 import pe.iep.hsbk.evaluaciones.service.AuthService.UserSession;
+import pe.iep.hsbk.evaluaciones.service.BoletaPdfService;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
 import pe.iep.hsbk.evaluaciones.util.FXAsync;
 import pe.iep.hsbk.evaluaciones.util.IconButtons;
 import pe.iep.hsbk.evaluaciones.util.SesionAware;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.util.*;
 
 import static pe.iep.hsbk.evaluaciones.util.Format.formatRoles;
@@ -92,6 +98,15 @@ public class StudentsListController implements SesionAware {
   private final SeccionDao seccionDao = new SeccionDaoImpl();
   private final AlumnoDao alumnoDao = new AlumnoDaoImpl();
 
+  // DAOs específicos para boleta
+  private final PlantillaBoletaDao plantillaBoletaDao = new PlantillaDaoImpl();
+  private final FirmaDao firmaDao = new FirmaDaoImpl();
+  private final SelloDao selloDao = new SelloDaoImpl();
+
+  // Service de boletas (usa los DAOs de arriba)
+  private final BoletaPdfService boletaPdfService =
+      new BoletaPdfService(plantillaBoletaDao, firmaDao, selloDao);
+
   // ===================== Caches =====================
   private final Map<String, List<Grado>> cacheGradosPorPeriodoNivelUsuario = new HashMap<>();
   private final Map<Long, List<Seccion>> cacheSeccionesPorGradoUsuario = new HashMap<>();
@@ -133,7 +148,6 @@ public class StudentsListController implements SesionAware {
 
     try {
       periodoId = periodoDao.getPeriodoIdPorNombre(perNombre);
-      System.out.println("StudentsListController: tryInitContext -> periodoId=" + periodoId + ", nivelId=" + nivelId);
 
       if (periodoId != null) {
         contextInitialized = true;
@@ -496,7 +510,6 @@ public class StudentsListController implements SesionAware {
     }
   }
 
-
   private void abrirConductaAlumno(Alumno alumno, Long nivelId) {
     if (goTo == null) {
       Dialogs.error(null, "Error", "Navegación no disponible.");
@@ -541,19 +554,116 @@ public class StudentsListController implements SesionAware {
   @FXML
   private void onDescargar() {
     try {
-      File out = new File(System.getProperty("user.home"), "alumnos_seleccion.csv");
-      try (BufferedWriter w = new BufferedWriter(new FileWriter(out))) {
-        w.write("Apellidos,Nombres,Codigo\n");
-        for (Alumno a : tblAlumnos.getItems()) {
-          if (selectedMap.getOrDefault(a, new SimpleBooleanProperty(false)).get()) {
-            w.write(String.format("%s,%s,%s%n", a.getApellidos(), a.getNombres(), a.getCodigo()));
-          }
+      List<Alumno> seleccionados = new ArrayList<>();
+      for (Alumno a : tblAlumnos.getItems()) {
+        if (selectedMap.getOrDefault(a, new SimpleBooleanProperty(false)).get()) {
+          a = alumnoDao.obtenerPorId(a.getId().intValue(),nivelId.intValue());
+          seleccionados.add(a);
         }
       }
-      Dialogs.info(null, "Descarga Completada", "El archivo se ha generado en:\n" + out.getAbsolutePath());
+
+      if (seleccionados.isEmpty()) {
+        Dialogs.warn(null, "Sin selección", "Selecciona al menos un alumno para generar la boleta.");
+        return;
+      }
+
+      if (periodoId == null || seccionSelId == null || nivelId == null) {
+        Dialogs.warn(null, "Falta contexto", "Selecciona grado/sección y asegúrate que el período esté definido.");
+        return;
+      }
+
+      int bimestreNum = obtenerBimestreActual(); // luego lo conectas a tu UI
+
+      FileChooser fc = new FileChooser();
+      fc.setTitle("Guardar boleta(s)");
+
+      File destino;
+      if (seleccionados.size() == 1) {
+        Alumno a = seleccionados.get(0);
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivo PDF", "*.pdf"));
+        fc.setInitialFileName(formatearNombreArchivoAlumno(a) + ".pdf");
+        destino = fc.showSaveDialog(tblAlumnos.getScene().getWindow());
+      } else {
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivo ZIP", "*.zip"));
+        String nombreZip = construirNombreZipAula();
+        fc.setInitialFileName(nombreZip + ".zip");
+        destino = fc.showSaveDialog(tblAlumnos.getScene().getWindow());
+      }
+
+      if (destino == null) {
+        return;
+      }
+
+      setBusy(true);
+
+      FXAsync.run(
+          () -> {
+            try {
+              boletaPdfService.generarBoletas(
+                  periodoId,
+                  seccionSelId,
+                  nivelId,
+                  bimestreNum,
+                  seleccionados,
+                  userSession,
+                  destino
+              );
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+            return null;
+          },
+          ok -> {
+            setBusy(false);
+            Dialogs.info(null, "Boleta(s) generadas",
+                "El archivo se ha generado en:\n" + destino.getAbsolutePath());
+          },
+          ex -> {
+            setBusy(false);
+            Dialogs.errorConStacktrace(
+                null,
+                "Error al generar boletas",
+                "Ocurrió un problema al generar las boletas.",
+                ex.getMessage(), ex
+            );
+          }
+      );
+
     } catch (Exception e) {
+      setBusy(false);
       e.printStackTrace();
+      Dialogs.errorConStacktrace(
+          null,
+          "Error inesperado",
+          "No se pudo generar las boletas.",
+          e.getMessage(), e
+      );
     }
+  }
+
+  private String formatearNombreArchivoAlumno(Alumno a) {
+    String base = (a.getApellidos() + "_" + a.getNombres())
+        .trim()
+        .replace(" ", "_")
+        .replaceAll("[^A-Za-z0-9_ÁÉÍÓÚÑáéíóú]", "");
+    if (base.isEmpty()) base = "alumno";
+    return base;
+  }
+
+  private String construirNombreZipAula() {
+    // Aquí puedes usar gradoSelId, seccionSelId, nivelId y consultar BD
+    // o guardar en memoria el nombre de grado/sección cuando seleccionas.
+    // Por ahora algo simple:
+    String gradoNombre = "GRADO";
+    String seccionNombre = "SECCION";
+    String nivelNombre = (nivelId != null && nivelId == 1L) ? "PRIMARIA" : "SECUNDARIA";
+
+    return gradoNombre + "_" + seccionNombre + "_" + nivelNombre;
+  }
+
+  private int obtenerBimestreActual() {
+    // Por ahora puedes devolver fijo mientras conectas con tu UI
+    return 1;
   }
 
   // ===================== Router =====================

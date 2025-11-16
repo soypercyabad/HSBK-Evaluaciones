@@ -31,7 +31,7 @@ public class SelloDaoImpl implements SelloDao {
 
     @Override
     public void guardarSello(Sello s) throws Exception {
-        String sql = "CALL sp_ins_sello(?,?, ?)";
+        String sql = "CALL sp_ins_sello(?,?,?)";
         try (var con = ConexionDB.getConnection();
              var ps  = con.prepareStatement(sql)) {
             ps.setString(1, s.getNombre());
@@ -43,7 +43,7 @@ public class SelloDaoImpl implements SelloDao {
 
     @Override
     public void actualizarSello(Sello s) throws Exception {
-        String sql = "CALL sp_upd_sello(?, ?, ?)";
+        String sql = "CALL sp_upd_sello(?, ?, ?, ?)";
         try (var con = ConexionDB.getConnection();
              var ps  = con.prepareStatement(sql)) {
             ps.setLong(1, s.getId());
@@ -54,4 +54,24 @@ public class SelloDaoImpl implements SelloDao {
         }
     }
 
+    @Override
+    public Sello obtenerSelloActivo() throws Exception {
+        String sql = "CALL sp_get_sello_activo();";
+
+        try (var con = ConexionDB.getConnection();
+             var ps = con.prepareStatement(sql);
+             var rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                Sello sello = new Sello();
+                sello.setId(rs.getLong("id"));
+                sello.setNombre(rs.getString("nombre"));
+                sello.setSello(rs.getBytes("sello"));
+                sello.setActivo(rs.getBoolean("activo"));
+                return sello;
+            } else {
+                return null;
+            }
+        }
+    }
 }

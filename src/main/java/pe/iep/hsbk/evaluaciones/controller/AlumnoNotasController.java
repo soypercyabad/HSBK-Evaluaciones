@@ -107,14 +107,12 @@ public class AlumnoNotasController implements SesionAware {
 
     if (a != null) {
       this.matriculaId = a.getMatriculaId();
-      System.out.println("AlumnoNotasController: setAlumno -> Cargando info del alumno id=" + a.getId() + ", nivelId=" + nivelId);
       cargarInfoAlumnoAsync(a, nivelId);
     } else {
       this.matriculaId = null;
       limpiarNotas();
     }
 
-    System.out.println("AlumnoNotasController: setAlumno -> matriculaId=" + this.matriculaId + ", nivelId=" + this.nivelId + ", seccionId=" + this.seccionId);
     tryInitContext();
   }
 
@@ -159,11 +157,8 @@ public class AlumnoNotasController implements SesionAware {
       periodoId = periodoDao.getPeriodoIdPorNombre(perNombre);
       usuarioId = userSession.getUserId();
 
-      System.out.println("AlumnoNotasController: tryInitContext -> periodoId=" + periodoId + ", usuarioId=" + usuarioId + ", nivelId=" + nivelId);
-
       if (periodoId != null) {
         contextInitialized = true;
-        System.out.println("Iniciando carga de bimestres...");
         cargarBimestresAsync();
       }
     } catch (Exception e) {
@@ -192,7 +187,6 @@ public class AlumnoNotasController implements SesionAware {
 
   // ===================== Cargas asíncronas =====================
   private void cargarInfoAlumnoAsync(Alumno a, Long nivelId) {
-    System.out.println("cargarInfoAlumnoAsync: id=" + a.getId() + ", nivelId=" + nivelId);
     setBusy(true);
     FXAsync.run(
         () -> {
@@ -216,7 +210,6 @@ public class AlumnoNotasController implements SesionAware {
   }
 
   private void cargarBimestresAsync() {
-    System.out.println("cargarBimestresAsync: periodoId=" + periodoId + ", nivelId=" + nivelId);
     setBusy(true);
     final String key = periodoId + ":" + nivelId;
 
@@ -259,8 +252,6 @@ public class AlumnoNotasController implements SesionAware {
   }
 
   private void cargarCursoAsync(Long periodoId, Long seccionId, Long usuarioId) {
-    System.out.println("cargarCursoAsync: periodoId=" + periodoId + ", seccionId=" + seccionId + ", usuarioId=" + usuarioId);
-
     if (periodoId == null || seccionId == null || usuarioId == null || bimestreSelId == null) {
       limpiarNotas();
       return;
@@ -308,7 +299,6 @@ public class AlumnoNotasController implements SesionAware {
   }
 
   private void cargarNotasAsync(Long matriculaId, Long cursoId, Long bimestreId) {
-    System.out.println("cargarNotasAsync: matriculaId=" + matriculaId + ", cursoId=" + cursoId + ", bimestreId=" + bimestreId);
     if (matriculaId == null || cursoId == null || bimestreId == null) {
       limpiarNotas();
       return;
@@ -370,7 +360,6 @@ public class AlumnoNotasController implements SesionAware {
     }
 
     // Cargar cursos del bimestre seleccionado
-    System.out.println("Cargando cursos para periodoId=" + periodoId + "seccionId=" + seccionId + ", usuarioId=" + usuarioId);
     cargarCursoAsync(periodoId, seccionId, usuarioId);
 
     if (matriculaId != null && cursoSelId != null && bimestreSelId != null) {
@@ -393,7 +382,6 @@ public class AlumnoNotasController implements SesionAware {
     }
 
     if (matriculaId != null && cursoSelId != null && bimestreSelId != null) {
-      System.out.println("carga de notas para matriculaId=" + matriculaId + ", cursoSelId=" + cursoSelId + ", bimestreSelId=" + bimestreSelId);
       cargarNotasAsync(matriculaId, cursoSelId, bimestreSelId);
     } else {
       limpiarNotas();

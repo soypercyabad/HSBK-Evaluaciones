@@ -109,5 +109,7 @@
     <!-- OVERLAY DE CARGA -->
     <StackPane fx:id="overlay" managed="false" styleClass="overlay" visible="false">
         <ProgressIndicator fx:id="piMain" prefHeight="64" prefWidth="64" />
+        <!-- Ingrese una frase motivacional aquí si lo desea -->
+        <Label text="¡Descargando Boletas! 😊" styleClass="motivational-label" />
     </StackPane>
 </StackPane>

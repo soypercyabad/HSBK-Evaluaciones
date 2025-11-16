@@ -63,6 +63,7 @@ public class PlantillaDaoImpl implements PlantillaBoletaDao {
     }
   }
 
+  @Override
   public void actualizarEstadoPlantillaBoleta(PlantillaBoleta p) throws Exception {
     String sql =
         "UPDATE plantilla_boleta\n" +
@@ -74,6 +75,31 @@ public class PlantillaDaoImpl implements PlantillaBoletaDao {
       ps.setBoolean(2, p.isActivo());
       ps.setLong(3, p.getId());
       ps.executeUpdate();
+    }
+  }
+
+  @Override
+  public PlantillaBoleta obtenerPlantillaActiva() throws Exception {
+    String sql =
+        "SELECT pb.id, pb.nombre, pb.contenido_html, pb.activo\n" +
+        "FROM plantilla_boleta pb\n" +
+        "WHERE pb.activo = TRUE\n" +
+        "LIMIT 1;";
+
+    try (var con = ConexionDB.getConnection();
+         var ps = con.prepareStatement(sql);
+         var rs = ps.executeQuery()) {
+
+      if (rs.next()) {
+        PlantillaBoleta pb = new PlantillaBoleta();
+        pb.setId(rs.getLong("id"));
+        pb.setNombre(rs.getString("nombre"));
+        pb.setContenidoHtml(rs.getString("contenido_html"));
+        pb.setActivo(rs.getBoolean("activo"));
+        return pb;
+      } else {
+        return null;
+      }
     }
   }
 }

@@ -25,9 +25,6 @@ public class ConductaPanelImpl implements ConductaPanelDao {
         try (Connection cn = ConexionDB.getConnection();
              CallableStatement cs = cn.prepareCall(sql)) {
 
-            System.out.printf("[DAO] Llamando sp_get_conducta_resumen(alumnoId=%d, periodoId=%d, nivelId=%d, bimestreId=%d)%n",
-                    alumnoId, periodoId, nivelId, bimestreId);
-
             cs.setLong(1, alumnoId);
             cs.setLong(2, periodoId);
             cs.setLong(3, nivelId);
@@ -39,7 +36,7 @@ public class ConductaPanelImpl implements ConductaPanelDao {
             while (true) {
                 if (isResultSet) {
                     try (ResultSet rs = cs.getResultSet()) {
-                        System.out.println("[DAO] ResultSet #" + rsIndex);
+
                         if (rsIndex == 0) {
                             // (1) CONDUCTA
                             if (rs.next()) {
@@ -88,7 +85,6 @@ public class ConductaPanelImpl implements ConductaPanelDao {
                                 ra.setFechaRegistro(fr != null ? fr.toLocalDateTime() : null);
                                 ra.setFechaActualizacion(fa != null ? fa.toLocalDateTime() : null);
 
-                                System.out.println("[DAO] RA: recId=" + ra.getRecomendacionId() + ", msg=" + ra.getMensajeCatalogo());
                                 list.add(ra);
                             }
                             out.setRecomendacionesAlumno(list);
@@ -97,9 +93,7 @@ public class ConductaPanelImpl implements ConductaPanelDao {
                     }
                 } else {
                     int updateCount = cs.getUpdateCount();
-                    if (updateCount == -1) break; // no más resultados
-                    // hay un updateCount (p.ej. 0), no incrementes rsIndex
-                    System.out.println("[DAO] updateCount=" + updateCount);
+                    if (updateCount == -1) break;
                 }
 
                 isResultSet = cs.getMoreResults();

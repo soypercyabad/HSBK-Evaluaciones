@@ -3,14 +3,18 @@ package pe.iep.hsbk.evaluaciones.controller;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import pe.iep.hsbk.evaluaciones.dao.*;
 import pe.iep.hsbk.evaluaciones.dao.impl.*;
 import pe.iep.hsbk.evaluaciones.dto.ConductaResumenDto;
+import pe.iep.hsbk.evaluaciones.dto.PromedioAreaBimestreDto;
+import pe.iep.hsbk.evaluaciones.dto.PromedioCursoBimestreDto;
 import pe.iep.hsbk.evaluaciones.model.*;
 import pe.iep.hsbk.evaluaciones.service.AuthService;
 import pe.iep.hsbk.evaluaciones.util.Dialogs;
@@ -19,49 +23,37 @@ import pe.iep.hsbk.evaluaciones.util.SesionAware;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AlumnoConductaController implements SesionAware {
 
   // ===================== UI (FXML) =====================
-  @FXML
-  private Label lblTitleAlumno;
-  @FXML
-  private Label lblTitleGrado;
-  @FXML
-  private Label lblTitleSeccion;
-  @FXML
-  private Button btnBack;
-
-  @FXML
-  private Button btnGuardar;
-
-  @FXML
-  private Label lblBimestreSel;
+  @FXML private Label lblTitleAlumno;
+  @FXML private Label lblTitleGrado;
+  @FXML private Label lblTitleSeccion;
+  @FXML private Button btnBack;
+  @FXML private Button btnGuardar;
+  @FXML private Button btnEditarEvaluacion;
+  @FXML private Label lblBimestreSel;
 
   // Formularios
-  @FXML
-  private ComboBox<RecomendacionCatalogo> recomendacionComboBox;
-  @FXML
-  private TextField txtutilesEscolares;
-  @FXML
-  private TextField txtactividades;
-  @FXML
-  private TextField txtreuniones;
-  @FXML
-  private TextField txtescuelaPadres;
-  @FXML
-  private TextField txtnotaConducta;
-  @FXML
-  private TextField txtconductaLetra;
-  @FXML
-  private TextField txtComentarios;
+  @FXML private ComboBox<RecomendacionCatalogo> recomendacionComboBox;
+  @FXML private TextField txtutilesEscolares;
+  @FXML private TextField txtactividades;
+  @FXML private TextField txtreuniones;
+  @FXML private TextField txtescuelaPadres;
+  @FXML private TextField txtnotaConducta;
+  @FXML private TextField txtconductaLetra;
+
   // Contenedores
-  @FXML
-  private HBox paneBimestres;
+  @FXML private HBox paneBimestres;
+
+  // Contenedores dinámicos
+  @FXML private FlowPane paneAreas;
+  @FXML private FlowPane paneCursosSinArea;
 
   // Overlay de carga
-  @FXML
-  private StackPane overlay;
+  @FXML private StackPane overlay;
 
   // ===================== Grupos de toggles =====================
   private final ToggleGroup grpBimestres = new ToggleGroup();
@@ -71,6 +63,7 @@ public class AlumnoConductaController implements SesionAware {
   private AuthService.UserSession userSession;
   private Long periodoId; // p.ej. 2025
   private Long nivelId = 1L; // 1=Primaria, 2=Secundaria
+  private Long recomendacionAlumnoActualId;
 
   // ===================== Selección actual =====================
   private Long bimestreSelId;
@@ -85,8 +78,7 @@ public class AlumnoConductaController implements SesionAware {
   private final AlumnoDao alumnoDao = new AlumnoDaoImpl();
   private final RecomendacionDAO recomendacionDao = new RecomendacionImpl();
   private final ConductaPanelDao conductaPanelDao = new ConductaPanelImpl();
-
-  private Long currentMatriculaId;
+  private final NotasDao notasDao = new NotasDaoImpl();
 
   // ===================== Cachés =====================
   private final Map<String, List<Bimestre>> cacheBimestresPorPeriodoNivel = new HashMap<>();
@@ -99,11 +91,8 @@ public class AlumnoConductaController implements SesionAware {
     this.userSession = s;
   }
 
-  /**
-   * Inyecta el alumno y nivel y carga cabeceras.
-   */
+  /** Inyecta el alumno y nivel y carga cabeceras. */
   public void setAlumno(Alumno a, Long nivelId) {
-    System.out.println("setAlumno(): a=" + (a != null ? (a.getId() + " " + a.getNombres()) : "null") + " nivelId=" + nivelId);
     this.nivelId = nivelId;
     this.alumnoActual = a;
     if (a != null && a.getId() != null) {
@@ -113,17 +102,13 @@ public class AlumnoConductaController implements SesionAware {
     }
   }
 
-  /**
-   * Inyecta la acción de volver.
-   */
+  /** Inyecta la acción de volver. */
   public void setOnBack(Runnable onBack) {
     this.onBack = onBack;
     wireBackButton();
   }
 
-  /**
-   * Llamado por el menú externo para cambiar nivel y recargar.
-   */
+  /** Llamado por el menú externo para cambiar nivel y recargar. */
   public void setNivelId(long nivelId) {
     if (Objects.equals(this.nivelId, nivelId)) return;
     this.nivelId = nivelId;
@@ -142,6 +127,7 @@ public class AlumnoConductaController implements SesionAware {
   public void initialize() {
     wireBackButton();
 
+    // ESC para volver
     Platform.runLater(() -> {
       if (btnBack != null && btnBack.getScene() != null) {
         btnBack.getScene().setOnKeyPressed(k -> {
@@ -149,6 +135,20 @@ public class AlumnoConductaController implements SesionAware {
         });
       }
     });
+
+    // Estado inicial: no editable, mostrar Editar, ocultar Guardar
+    setEditableConducta(false);
+    if (btnGuardar != null) {
+      btnGuardar.setVisible(false);
+      btnGuardar.setManaged(false);
+      btnGuardar.setOnAction(e -> onGuardar());
+    }
+    if (btnEditarEvaluacion != null) {
+      // si prefieres wiring por código en lugar de onAction en FXML
+      // btnEditarEvaluacion.setOnAction(this::validarEdicion);
+      btnEditarEvaluacion.setVisible(true);
+      btnEditarEvaluacion.setManaged(true);
+    }
 
     try {
       String perNombre = (userSession != null && userSession.getPeriodoNombre() != null)
@@ -160,8 +160,6 @@ public class AlumnoConductaController implements SesionAware {
         cargarBimestresAsync();
       }
       cargarRecomendaciones();
-
-      if (btnGuardar != null) btnGuardar.setOnAction(e -> onGuardar());
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -176,7 +174,7 @@ public class AlumnoConductaController implements SesionAware {
       if (onBack != null) onBack.run();
       else System.out.println("No hay acción de retorno configurada.");
     });
-    // Si te gusta que ESC funcione automáticamente:
+    // ESC funcione automáticamente:
     btnBack.setCancelButton(true);
   }
 
@@ -204,7 +202,7 @@ public class AlumnoConductaController implements SesionAware {
           }
         },
         alumno -> {
-          setBusy(false);
+          //setBusy(false);
 
           if (alumno == null) {
             Dialogs.warn(null, "Aviso", "No se pudo cargar datos del alumno.");
@@ -228,10 +226,9 @@ public class AlumnoConductaController implements SesionAware {
     );
   }
 
-
   private void cargarBimestresAsync() {
     setBusy(true);
-    final String key = periodoId + ":" + nivelId; // clave estable para la caché
+    final String key = periodoId + ":" + nivelId;
 
     FXAsync.run(
         () -> cacheBimestresPorPeriodoNivel.computeIfAbsent(key, k -> {
@@ -314,20 +311,22 @@ public class AlumnoConductaController implements SesionAware {
         // BACKGROUND
         () -> {
           try {
-            return recomendacionDao.getRecomendaciones(); // List<RecomendacionCatalogo>
+            return recomendacionDao.getRecomendaciones();
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
         },
         // UI THREAD
         data -> {
-          System.out.println("[UI] Catálogo recomendaciones size=" + (data != null ? data.size() : 0));
           if (data == null) data = Collections.emptyList();
           recomendacionComboBox.setItems(FXCollections.observableArrayList(data));
           recomendacionesCargadas = true;
-          System.out.println(">> Combo de recomendaciones cargado: " + data.size() + " items");
+
+          // si ya tenemos una recomendación del alumno, aplicarla ahora
+          if (recomendacionAlumnoActualId != null) {
+            seleccionarRecomendacionPorId(recomendacionAlumnoActualId);
+          }
         },
-        // ERROR
         ex -> {
           ex.printStackTrace();
           Dialogs.error(null, "Error", "No se pudo cargar las recomendaciones.");
@@ -344,58 +343,20 @@ public class AlumnoConductaController implements SesionAware {
     var items = recomendacionComboBox.getItems();
     if (items == null || items.isEmpty()) return;
 
-    RecomendacionCatalogo match = null;
-    for (RecomendacionCatalogo r : items) {
-      if (Objects.equals(r.getId(), recId)) {
-        match = r;
-        break;
-      }
-    }
-    if (match != null) recomendacionComboBox.getSelectionModel().select(match);
-    else recomendacionComboBox.getSelectionModel().clearSelection();
-  }
-
-  private void seleccionarRecomendacionAlumno(ConductaResumenDto resumen) {
-    if (recomendacionComboBox.getItems() == null || recomendacionComboBox.getItems().isEmpty()) {
-      System.out.println("[UI] Combo recomendaciones aún no cargado");
-      return;
-    }
-    if (resumen == null || resumen.getRecomendacionesAlumno() == null || resumen.getRecomendacionesAlumno().isEmpty()) {
-      System.out.println("[UI] Sin recomendacionesAlumno en resumen");
-      recomendacionComboBox.getSelectionModel().clearSelection();
-      return;
-    }
-
-    var ra = resumen.getRecomendacionesAlumno().get(0); // toma la más reciente o la única
-    Long recId = ra.getRecomendacionId();               // <-- asegúrate que sea este getter
-    System.out.println("[UI] recomendacionAlumno.recomendacionId=" + recId);
-
-    if (recId == null) {
-      recomendacionComboBox.getSelectionModel().clearSelection();
-      return;
-    }
-
-    // Buscar el catálogo con el mismo id
-    RecomendacionCatalogo match = recomendacionComboBox.getItems()
-        .stream()
+    RecomendacionCatalogo match = items.stream()
         .filter(r -> Objects.equals(r.getId(), recId))
         .findFirst()
         .orElse(null);
 
     if (match != null) {
       recomendacionComboBox.getSelectionModel().select(match);
-      System.out.println("[UI] Combo seleccionado -> id=" + match.getId());
     } else {
-      System.out.println("[UI] No se encontró en catálogo el id=" + recId);
       recomendacionComboBox.getSelectionModel().clearSelection();
     }
   }
 
-
   @FXML
   private void onGuardar() {
-    System.out.println("[UI] Botón Guardar presionado");
-
 
     if (alumnoActual == null || alumnoActual.getId() == null) {
       Dialogs.warn(null, "Aviso", "Debe seleccionar un alumno antes de guardar.");
@@ -415,10 +376,6 @@ public class AlumnoConductaController implements SesionAware {
         recomendacionId = recomendacionComboBox.getValue().getId();
       }
 
-      System.out.println("[UI] Guardando datos...");
-      System.out.printf("Alumno=%d, Periodo=%d, Nivel=%d, Bimestre=%d%n",
-          alumnoActual.getId(), periodoId, nivelId, bimestreSelId);
-
       String comentarios = null;
 
       conductaPanelDao.saveConductaBimestre(
@@ -426,16 +383,27 @@ public class AlumnoConductaController implements SesionAware {
           periodoId,
           nivelId,
           bimestreSelId,
-          BigDecimal.valueOf(Double.valueOf(txtnotaConducta.getText())),   // nota
-          txtutilesEscolares.getText(),                // útiles
-          txtactividades.getText(),                    // participación
-          txtreuniones.getText(),                      // reuniones
-          txtescuelaPadres.getText(),                  // escuela de padres
-          comentarios,                                 // comentarios -> mensajePersonal
-          recomendacionId,                             // id del comboBox
-          null,                                        // mensajePersonal (ya no se usa)
+          BigDecimal.valueOf(Double.valueOf(txtnotaConducta.getText())),
+          txtutilesEscolares.getText(),
+          txtactividades.getText(),
+          txtreuniones.getText(),
+          txtescuelaPadres.getText(),
+          comentarios,
+          recomendacionId,
+          null,
           usuarioId
       );
+
+      // después de guardar, volvemos a modo solo lectura
+      setEditableConducta(false);
+      if (btnGuardar != null) {
+        btnGuardar.setVisible(false);
+        btnGuardar.setManaged(false);
+      }
+      if (btnEditarEvaluacion != null) {
+        btnEditarEvaluacion.setVisible(true);
+        btnEditarEvaluacion.setManaged(true);
+      }
 
       Dialogs.info(null, "Éxito", "Los datos se han guardado correctamente.");
 
@@ -447,34 +415,186 @@ public class AlumnoConductaController implements SesionAware {
     }
   }
 
+  // ===================== Util: formato nota =====================
+  private String formatNota(BigDecimal v) {
+    if (v == null) return "";
+    return v.stripTrailingZeros().toPlainString();
+  }
+
+  // ===================== Render de promedios =====================
+  private void renderPromedios(List<PromedioCursoBimestreDto> cursos,
+                               List<PromedioAreaBimestreDto> areas) {
+
+    if (paneAreas != null) paneAreas.getChildren().clear();
+    if (paneCursosSinArea != null) paneCursosSinArea.getChildren().clear();
+
+    if (cursos == null) cursos = Collections.emptyList();
+    if (areas == null) areas = Collections.emptyList();
+
+    // Map área -> promedio área
+    Map<Long, BigDecimal> promAreaMap = areas.stream()
+        .collect(Collectors.toMap(
+            PromedioAreaBimestreDto::getAreaId,
+            PromedioAreaBimestreDto::getPromedioBimestre,
+            (a, b) -> a
+        ));
+
+    // Agrupar cursos por área
+    Map<Long, List<PromedioCursoBimestreDto>> cursosPorArea = cursos.stream()
+        .filter(c -> c.getAreaId() != null)
+        .collect(Collectors.groupingBy(PromedioCursoBimestreDto::getAreaId));
+
+    // Calcular cuántos cursos tiene el área con más cursos (para igualar altura)
+    int maxCursos = cursosPorArea.values().stream()
+        .mapToInt(List::size)
+        .max()
+        .orElse(0);
+
+    // Paneles por área
+    cursosPorArea.forEach((areaId, listaCursos) -> {
+      String areaNombre = listaCursos.get(0).getAreaNombre();
+      BigDecimal promArea = promAreaMap.get(areaId);
+      GridPane panelArea = buildAreaPanel(areaNombre, listaCursos, promArea, maxCursos);
+      paneAreas.getChildren().add(panelArea);
+    });
+
+    // Cursos sin área
+    cursos.stream()
+        .filter(c -> c.getAreaId() == null)
+        .forEach(c -> {
+          GridPane panel = buildCursoSinAreaPanel(c);
+          paneCursosSinArea.getChildren().add(panel);
+        });
+  }
+
+  // Card de área
+  private GridPane buildAreaPanel(String areaNombre,
+                                  List<PromedioCursoBimestreDto> cursos,
+                                  BigDecimal promedioArea,
+                                  int maxCursos) {
+
+    GridPane gp = new GridPane();
+    gp.getStyleClass().add("grid-panel");
+    gp.setHgap(10);
+    gp.setVgap(5);
+
+    ColumnConstraints col1 = new ColumnConstraints();
+    col1.setPrefWidth(90);
+    col1.setMinWidth(90);
+    col1.setMaxWidth(90);
+
+    ColumnConstraints col2 = new ColumnConstraints();
+    col2.setPrefWidth(50);
+    col2.setMinWidth(50);
+    col2.setMaxWidth(50);
+
+    gp.getColumnConstraints().addAll(col1, col2);
+
+    // Título de área
+    Label lblArea = new Label(areaNombre);
+    lblArea.getStyleClass().add("top-title-panel");
+    gp.add(lblArea, 0, 0, 2, 1);
+
+    int row = 1;
+
+    // Añadir cursos reales
+    for (PromedioCursoBimestreDto c : cursos) {
+      Label lblCurso = new Label(c.getCursoNombre());
+      lblCurso.setWrapText(true);
+
+      TextField txtProm = new TextField();
+      txtProm.setEditable(false);
+      txtProm.setAlignment(Pos.CENTER);
+      txtProm.getStyleClass().add("text-field-disabled");
+      txtProm.setText(formatNota(c.getPromedioBimestre()));
+
+      gp.add(lblCurso, 0, row);
+      gp.add(txtProm, 1, row);
+      row++;
+    }
+
+    // Rellenar filas vacías para que todas las cards tengan la misma altura
+    for (int i = cursos.size(); i < maxCursos; i++) {
+      TextField spacer = new TextField();
+      spacer.setEditable(false);
+      spacer.setAlignment(Pos.CENTER);
+      spacer.getStyleClass().add("text-field-promedio");
+      spacer.setVisible(false);
+      GridPane.setColumnSpan(spacer, 2);
+      gp.add(spacer, 0, row);
+      row++;
+    }
+
+    // Fila de Promedio (siempre al final)
+    Label lblProm = new Label("Promedio");
+    lblProm.getStyleClass().add("top-title-panel");
+    gp.add(lblProm, 0, row);
+
+    TextField txtPromArea = new TextField();
+    txtPromArea.setEditable(false);
+    txtPromArea.setAlignment(Pos.CENTER);
+    txtPromArea.getStyleClass().add("text-field-promedio");
+    txtPromArea.setText(formatNota(promedioArea));
+
+    gp.add(txtPromArea, 1, row);
+
+    return gp;
+  }
+
+  // Card de curso sin área
+  private GridPane buildCursoSinAreaPanel(PromedioCursoBimestreDto c) {
+    GridPane gp = new GridPane();
+    gp.getStyleClass().add("grid-panel");
+    gp.setHgap(10);
+    gp.setVgap(5);
+
+    ColumnConstraints col1 = new ColumnConstraints();
+    col1.setPrefWidth(90);
+    col1.setMinWidth(90);
+    col1.setMaxWidth(90);
+
+    ColumnConstraints col2 = new ColumnConstraints();
+    col2.setPrefWidth(50);
+    col2.setMinWidth(50);
+    col2.setMaxWidth(50);
+
+    gp.getColumnConstraints().addAll(col1, col2);
+
+    Label lblCurso = new Label(c.getCursoNombre());
+    lblCurso.setWrapText(true);
+
+    TextField txtProm = new TextField();
+    txtProm.setEditable(false);
+    txtProm.setAlignment(Pos.CENTER);
+    txtProm.getStyleClass().add("text-field-promedio");
+    txtProm.setText(formatNota(c.getPromedioBimestre()));
+
+    gp.add(lblCurso, 0, 0);
+    gp.add(txtProm, 1, 0);
+
+    return gp;
+  }
 
   // ===================== Eventos UI =====================
   private void onChangeBimestreDynamic() {
-    System.out.println(">> onChangeBimestreDynamic() called");
 
     Toggle sel = grpBimestres.getSelectedToggle();
     if (sel == null) {
-      System.out.println(">> No hay toggle seleccionado");
       return;
     }
 
     var bim = (Bimestre) ((ToggleButton) sel).getUserData();
     this.bimestreSelId = (bim != null) ? bim.getId() : null;
-    System.out.println(">> bimestreSelId=" + bimestreSelId);
 
-    if (alumnoActual == null) {
-      System.out.println(">> alumnoActual es NULL");
-      Dialogs.warn(null, "Aviso", "No hay alumno seleccionado.");
-      return;
+    if (lblBimestreSel != null && bim != null) {
+      lblBimestreSel.setText(bim.getNumero() + "° Bimestre");
     }
-    if (alumnoActual.getId() == null) {
-      System.out.println(">> alumnoActual.getId() es NULL");
-      Dialogs.warn(null, "Aviso", "El alumno no tiene ID.");
+
+    if (alumnoActual == null || alumnoActual.getId() == null) {
+      Dialogs.warn(null, "Aviso", "Debe seleccionar un alumno.");
       return;
     }
     if (periodoId == null || nivelId == null || bimestreSelId == null) {
-      System.out.printf(">> Contexto incompleto: periodoId=%s, nivelId=%s, bimestreSelId=%s%n",
-          String.valueOf(periodoId), String.valueOf(nivelId), String.valueOf(bimestreSelId));
       return;
     }
 
@@ -488,78 +608,121 @@ public class AlumnoConductaController implements SesionAware {
     FXAsync.run(
         () -> {
           try {
-            System.out.printf(">> DAO.getResumenByAlumno(alumnoId=%d, periodoId=%d, nivelId=%d, bimestreId=%d)%n",
-                alumnoId, perId, nivId, bimId);
-            return conductaPanelDao.getResumenByAlumno(alumnoId, perId, nivId, bimId);
+            ConductaResumenDto resumen = conductaPanelDao.getResumenByAlumno(alumnoId, perId, nivId, bimId);
+            System.out.println("Parametros para promedios: alumnoId=" + alumnoId + " perId=" + perId + " nivId=" + nivId + " bimId=" + bimId);
+            List<PromedioCursoBimestreDto> cursos =
+                notasDao.listarPromediosCursoBimestre(alumnoId, perId, nivId, bimId);
+            List<PromedioAreaBimestreDto> areas =
+                notasDao.listarPromediosAreaBimestre(alumnoId, perId, nivId, bimId);
+
+            return new Object[]{resumen, cursos, areas};
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
         },
-        resumen -> {
-          System.out.println(">> Resumen recibido en UI");
-          // ========== PINTAR UI ==========
+        result -> {
+          ConductaResumenDto resumen = (ConductaResumenDto) result[0];
+          List<PromedioCursoBimestreDto> cursos = (List<PromedioCursoBimestreDto>) result[1];
+          List<PromedioAreaBimestreDto> areas = (List<PromedioAreaBimestreDto>) result[2];
+
+          // ====== PINTAR CONDUCTA / FAMILIAR =========
           if (resumen.getConducta() != null) {
-            System.out.println(">> UI: conducta id=" + resumen.getConducta().getId());
             txtnotaConducta.setText(String.valueOf(resumen.getConducta().getNota()));
             txtconductaLetra.setText(resumen.getConducta().getLetra());
           } else {
-            System.out.println(">> UI: conducta sin datos");
+            txtnotaConducta.clear();
+            txtconductaLetra.clear();
           }
 
           var eval = resumen.getEvaluacionFamiliar();
           if (eval != null) {
-            System.out.println(">> UI: Eval Fam id=" + eval.getId());
-
-            if (txtutilesEscolares != null)
-              txtutilesEscolares.setText(eval.getUtiles());
-
-            if (txtactividades != null)
-              txtactividades.setText(eval.getParticipacion());
-
-            if (txtreuniones != null)
-              txtreuniones.setText(eval.getReuniones());
-
-            if (txtescuelaPadres != null)
-              txtescuelaPadres.setText(eval.getEscuelaPadres());
+            if (txtutilesEscolares != null) txtutilesEscolares.setText(eval.getUtiles());
+            if (txtactividades != null) txtactividades.setText(eval.getParticipacion());
+            if (txtreuniones != null) txtreuniones.setText(eval.getReuniones());
+            if (txtescuelaPadres != null) txtescuelaPadres.setText(eval.getEscuelaPadres());
           } else {
-            System.out.println(">> UI: eval fam sin datos (limpiando)");
-
             if (txtutilesEscolares != null) txtutilesEscolares.clear();
             if (txtactividades != null) txtactividades.clear();
             if (txtreuniones != null) txtreuniones.clear();
             if (txtescuelaPadres != null) txtescuelaPadres.clear();
           }
 
-          {
-            // === Seleccionar la recomendación del alumno, si existe ===
-            Long recIdAlumno = null;
-            if (resumen.getRecomendacionesAlumno() != null && !resumen.getRecomendacionesAlumno().isEmpty()) {
-              var ra = resumen.getRecomendacionesAlumno().get(0); // usa la más reciente o la primera según tu SP
-              recIdAlumno = ra.getRecomendacionId();
-              System.out.println(">> UI: recomendacionAlumno.recId=" + recIdAlumno);
-            } else {
-              System.out.println(">> UI: sin recomendacionAlumno registrada");
-            }
-
-            // Si el combo ya tiene el catálogo (initialize), basta con seleccionar por id
-            if (recomendacionesCargadas && recomendacionComboBox.getItems() != null && !recomendacionComboBox.getItems().isEmpty()) {
-              seleccionarRecomendacionPorId(recIdAlumno);
-            } else {
-              // Fallback: si por timing aún no cargó, espera al siguiente ciclo del FX thread
-              System.out.println(">> UI: sin recomendacionAlumno registrada");
-            }
+          // ====== RECOMENDACIÓN DEL ALUMNO ======
+          Long recIdAlumno = null;
+          if (resumen.getRecomendacionesAlumno() != null && !resumen.getRecomendacionesAlumno().isEmpty()) {
+            var ra = resumen.getRecomendacionesAlumno().get(0);
+            recIdAlumno = ra.getRecomendacionId();
           }
-          seleccionarRecomendacionAlumno(resumen);
 
+          // guardamos siempre el id (aunque sea null) para usarlo luego
+          recomendacionAlumnoActualId = recIdAlumno;
+
+          // si el combo ya tiene los ítems cargados, seleccionamos de inmediato
+          if (recomendacionesCargadas &&
+              recomendacionComboBox.getItems() != null &&
+              !recomendacionComboBox.getItems().isEmpty()) {
+            seleccionarRecomendacionPorId(recomendacionAlumnoActualId);
+          }
+
+          // ====== PINTAR PROMEDIOS =========
+          renderPromedios(cursos, areas);
+
+          // Siempre que cambie de bimestre, volvemos a modo lectura
+          setEditableConducta(false);
+          if (btnGuardar != null) {
+            btnGuardar.setVisible(false);
+            btnGuardar.setManaged(false);
+          }
+          if (btnEditarEvaluacion != null) {
+            btnEditarEvaluacion.setVisible(true);
+            btnEditarEvaluacion.setManaged(true);
+          }
 
           setBusy(false);
         },
         ex -> {
           setBusy(false);
           ex.printStackTrace();
-          Dialogs.errorConStacktrace(null, "Error", "No se pudo cargar el resumen de conducta", ex.getMessage(), ex);
+          Dialogs.errorConStacktrace(null, "Error", "No se pudo cargar el resumen de conducta / promedios", ex.getMessage(), ex);
         }
     );
   }
 
+  // ===================== Lógica de edición (igual que AlumnoNotas) =====================
+  public void validarEdicion(ActionEvent actionEvent) {
+    setEditableConducta(true);
+
+    if (btnGuardar != null) {
+      btnGuardar.setVisible(true);
+      btnGuardar.setManaged(true);
+    }
+    if (btnEditarEvaluacion != null) {
+      btnEditarEvaluacion.setVisible(false);
+      btnEditarEvaluacion.setManaged(false);
+    }
+  }
+
+  private void setEditableConducta(boolean editable) {
+    if (txtutilesEscolares != null) txtutilesEscolares.setEditable(editable);
+    if (txtactividades != null)    txtactividades.setEditable(editable);
+    if (txtreuniones != null)      txtreuniones.setEditable(editable);
+    if (txtescuelaPadres != null)  txtescuelaPadres.setEditable(editable);
+    if (txtnotaConducta != null)   txtnotaConducta.setEditable(editable);
+
+    if (recomendacionComboBox != null) {
+      setComboReadOnly(recomendacionComboBox, !editable);
+    }
+  }
+
+  private void setComboReadOnly(ComboBox<?> combo, boolean readOnly) {
+    if (combo == null) return;
+
+    if (readOnly) {
+      combo.setMouseTransparent(true);
+      combo.setFocusTraversable(false);
+    } else {
+      combo.setMouseTransparent(false);
+      combo.setFocusTraversable(true);
+    }
+  }
 }

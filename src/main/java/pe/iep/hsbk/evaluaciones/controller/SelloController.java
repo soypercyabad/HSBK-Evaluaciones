@@ -253,6 +253,7 @@ public class SelloController implements SesionAware {
   private void cargarEnFormulario(Sello s) {
     if (s == null) return;
     editing = s;
+    txtNombreSello.setText(s.getNombre());
     estadoComboBox.setValue(s.isActivo() ? Constantes.ESTADO_ACTIVO : Constantes.ESTADO_INACTIVO);
     txtRutaPng.clear();
   }

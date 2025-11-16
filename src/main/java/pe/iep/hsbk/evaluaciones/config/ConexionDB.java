@@ -6,20 +6,18 @@ import java.sql.SQLException;
 
 public class ConexionDB {
 
-  private static final String HOST = "maglev.proxy.rlwy.net";
-  private static final String PORT = "40876";
+  private static final String HOST = "hbkdb-juancelada753-d55e.i.aivencloud.com";
+  private static final String PORT = "14137";
   private static final String DB_NAME = "hbk_db";
-  private static final String DB_USER = "root";
-  private static final String DB_PASSWORD = "jNhFQsRfmtlJQrYpPLiAnCLBSDcXjEaM";
+  private static final String DB_USER = "avnadmin";
+  private static final String DB_PASSWORD = "";
 
   private static final String DB_URL =
       "jdbc:mysql://" + HOST + ":" + PORT + "/" + DB_NAME
           + "?useUnicode=true"
           + "&characterEncoding=utf8"
           + "&serverTimezone=America/Lima"
-          + "&useSSL=true"
-          + "&requireSSL=true"
-          + "&allowPublicKeyRetrieval=true";
+          + "&sslMode=REQUIRED";
 
 
   public static Connection getConnection() throws SQLException, ClassNotFoundException {
