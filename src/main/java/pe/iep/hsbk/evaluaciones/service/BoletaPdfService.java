@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.Year;
 import java.util.List;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -40,11 +41,9 @@ public class BoletaPdfService {
     this.selloDao = selloDao;
   }
 
-  /**
-   * Genera boletas en PDF para uno o varios alumnos.
-   * Si hay 1 alumno => genera un solo PDF.
-   * Si hay varios  => genera un ZIP con un PDF por alumno.
-   */
+  // --------------------------------------------------------
+  // MÉTODO PRINCIPAL
+  // --------------------------------------------------------
   public void generarBoletas(long periodoId,
                              long seccionId,
                              long nivelId,
@@ -57,93 +56,73 @@ public class BoletaPdfService {
       throw new IllegalArgumentException("No hay alumnos seleccionados.");
     }
 
-    // 1) Plantilla activa de boleta
+    // Plantilla
     PlantillaBoleta plantilla = plantillaBoletaDao.obtenerPlantillaActiva();
     if (plantilla == null || plantilla.getContenidoHtml() == null) {
       throw new IllegalStateException("No hay plantilla de boleta activa.");
     }
     String plantillaHtml = plantilla.getContenidoHtml();
 
-    // 2) Firma tutor (usuario logueado que genera la boleta)
     Firma firmaTutor = firmaDao.getFirmaPorUsuarioId(userSession.getUserId());
-
-    // 3) Firma directora + sello institución
     FirmaDirectoraYSello firmaDirSello = cargarFirmaDirectoraYSello();
 
-    // 4) Procesar uno o varios alumnos
+    // Solo 1 alumno → PDF directo
     if (alumnos.size() == 1) {
       Alumno a = alumnos.get(0);
 
       byte[] pdf = generarPdfParaAlumno(
-          periodoId,
-          seccionId,
-          nivelId,
-          bimestreNum,
-          a,
-          userSession,
-          plantillaHtml,
-          firmaTutor,
-          firmaDirSello
+          periodoId, seccionId, nivelId, bimestreNum,
+          a, userSession, plantillaHtml,
+          firmaTutor, firmaDirSello
       );
 
       try (FileOutputStream fos = new FileOutputStream(destino)) {
         fos.write(pdf);
       }
+      return;
+    }
 
-    } else {
-      try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(destino))) {
-        for (Alumno a : alumnos) {
-          byte[] pdf = generarPdfParaAlumno(
-              periodoId,
-              seccionId,
-              nivelId,
-              bimestreNum,
-              a,
-              userSession,
-              plantillaHtml,
-              firmaTutor,
-              firmaDirSello
-          );
+    // Varios alumnos → ZIP
+    try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(destino))) {
+      for (Alumno a : alumnos) {
 
-          String nombreEntry = formatearNombreArchivoAlumno(a) + ".pdf";
-          ZipEntry entry = new ZipEntry(nombreEntry);
-          zos.putNextEntry(entry);
-          zos.write(pdf);
-          zos.closeEntry();
-        }
+        byte[] pdf = generarPdfParaAlumno(
+            periodoId, seccionId, nivelId, bimestreNum,
+            a, userSession, plantillaHtml,
+            firmaTutor, firmaDirSello
+        );
+
+        ZipEntry entry = new ZipEntry(formatearNombreArchivoAlumno(a) + ".pdf");
+        zos.putNextEntry(entry);
+        zos.write(pdf);
+        zos.closeEntry();
       }
     }
   }
 
-  // ================== Firma directora + sello ==================
-
+  // --------------------------------------------------------
+  // FIRMA DIRECTORA & SELLO
+  // --------------------------------------------------------
   private static class FirmaDirectoraYSello {
     byte[] firmaDirectora;
-    String nombreDirectora;
     byte[] selloInstitucion;
-    String nombreInstitucion;
   }
 
   private FirmaDirectoraYSello cargarFirmaDirectoraYSello() throws Exception {
     FirmaDirectoraYSello dto = new FirmaDirectoraYSello();
 
-    // Firma directora activa
     Firma firmaDir = firmaDao.getFirmaDirectorActiva();
-    if (firmaDir != null) {
-      dto.firmaDirectora = firmaDir.getImagen();
-    }
+    if (firmaDir != null) dto.firmaDirectora = firmaDir.getImagen();
 
-    // Sello institución activo
     Sello sello = selloDao.obtenerSelloActivo();
-    if (sello != null) {
-      dto.selloInstitucion = sello.getSello();
-    }
+    if (sello != null) dto.selloInstitucion = sello.getSello();
 
     return dto;
   }
 
-  // ================== PDF por alumno ==================
-
+  // --------------------------------------------------------
+  // GENERAR PDF POR ALUMNO
+  // --------------------------------------------------------
   private byte[] generarPdfParaAlumno(long periodoId,
                                       long seccionId,
                                       long nivelId,
@@ -156,27 +135,42 @@ public class BoletaPdfService {
 
     BoletaAlumnoDatasetDto ds = construirDatasetBasico(periodoId, seccionId, nivelId, bimestreNum, alumno);
 
-    // === 1) Crear carpeta temporal para este alumno (imágenes + debug html) ===
     Path tempDir = Files.createTempDirectory("boleta-pdf-" + alumno.getId() + "-");
 
-    // === 2) Renderizar HTML reemplazando placeholders por NOMBRES DE ARCHIVO ===
-    String htmlPersonalizado = renderizarHtmlBoleta(
-        plantillaHtml,
-        alumno,
-        userSession,
-        ds,
-        firmaTutor,
-        firmaDirSello,
-        tempDir
-    );
+    try {
+      String htmlPersonalizado = renderizarHtmlBoleta(
+          plantillaHtml, alumno, userSession, ds,
+          firmaTutor, firmaDirSello, tempDir
+      );
 
-    // === 3) Generar el PDF usando esa carpeta como baseUri ===
-    return htmlToPdf(htmlPersonalizado, tempDir);
+      return htmlToPdf(htmlPersonalizado, tempDir);
+
+    } finally {
+      deleteDirectoryRecursively(tempDir);
+    }
   }
 
-  /**
-   * Por ahora devolvemos datos "mock" mientras conectas el SP real.
-   */
+  // --------------------------------------------------------
+  // BORRAR CARPETA TEMPORAL
+  // --------------------------------------------------------
+  private void deleteDirectoryRecursively(Path path) {
+    try {
+      if (Files.notExists(path)) return;
+
+      Files.walk(path)
+          .sorted((a, b) -> b.compareTo(a))
+          .forEach(p -> {
+            try {
+              Files.deleteIfExists(p);
+            } catch (IOException ignored) {}
+          });
+
+    } catch (Exception ignored) {}
+  }
+
+  // --------------------------------------------------------
+  // DATOS MOQUEADOS
+  // --------------------------------------------------------
   private BoletaAlumnoDatasetDto construirDatasetBasico(long periodoId,
                                                         long seccionId,
                                                         long nivelId,
@@ -184,16 +178,14 @@ public class BoletaPdfService {
                                                         Alumno alumno) {
 
     BoletaAlumnoDatasetDto ds = new BoletaAlumnoDatasetDto();
-
-    // Luego estos campos los vas a rellenar desde la BD.
     ds.setNivelNombre(nivelId == 1L ? "PRIMARIA" : "SECUNDARIA");
     ds.setAnio(Year.now().getValue());
-
     return ds;
   }
 
-  // ================== Rellenar HTML ==================
-
+  // --------------------------------------------------------
+  // RENDER HTML
+  // --------------------------------------------------------
   private String renderizarHtmlBoleta(String plantilla,
                                       Alumno alumno,
                                       UserSession userSession,
@@ -204,87 +196,48 @@ public class BoletaPdfService {
 
     String html = plantilla;
 
-    String apeNom = (alumno.getApellidos() + " " + alumno.getNombres()).trim();
-    html = html.replace("{{ALUMNO}}", escapeHtml(apeNom));
+    html = html.replace("{{ALUMNO}}", escapeHtml(alumno.getApellidos().toUpperCase(Locale.ROOT) + " " + alumno.getNombres().toUpperCase(Locale.ROOT)));
     html = html.replace("{{DNI}}", alumno.getDni() == null ? "" : alumno.getDni());
 
-    if (ds != null) {
-      String gradoSeccion =
-          (alumno.getGrado() != null ? alumno.getGrado() : "") + "-" +
-              (alumno.getSeccion() != null ? alumno.getSeccion() : "");
-      html = html.replace("{{GRADO_SECCION}}", gradoSeccion.trim());
-      html = html.replace("{{NIVEL}}", alumno.getNivel() != null ? alumno.getNivel() : "");
-      html = html.replace("{{ANIO}}", String.valueOf(ds.getAnio()));
-      html = html.replace("{{NUM_ORDEN}}", alumno.getNumeroOrden() != null ? alumno.getNumeroOrden().toString() : "0");
-    } else {
-      html = html.replace("{{GRADO_SECCION}}", "");
-      html = html.replace("{{NIVEL}}", "");
-      html = html.replace("{{ANIO}}", "");
-      html = html.replace("{{NUM_ORDEN}}", "0");
-    }
+    html = html.replace("{{GRADO_SECCION}}", (alumno.getGrado() + "-" + alumno.getSeccion()).trim());
+    html = html.replace("{{NIVEL}}", alumno.getNivel() != null ? alumno.getNivel().toUpperCase(Locale.ROOT) : "");
+    html = html.replace("{{ANIO}}", String.valueOf(ds.getAnio()));
+    html = html.replace("{{NUM_ORDEN}}", alumno.getNumeroOrden() != null ? alumno.getNumeroOrden().toString() : "0");
 
-    // ========= Firmas y sello =========
-
-    // Firma tutor
+    // Firma Tutor
     if (firmaTutor != null && firmaTutor.getImagen() != null) {
       String fileName = "firma-tutor.png";
-      Path imgPath = tempDir.resolve(fileName);
-
-      byte[] pngBytes = ensurePngFormat(firmaTutor.getImagen());
-      Files.write(imgPath, pngBytes);
-
-      System.out.println("Firma tutor BD bytes: " + firmaTutor.getImagen().length +
-          ", PNG final: " + pngBytes.length);
-
+      Files.write(tempDir.resolve(fileName), ensurePngFormat(firmaTutor.getImagen()));
       html = html.replace("{{FIRMA_TUTOR}}", fileName);
-    } else {
-      html = html.replace("{{FIRMA_TUTOR}}", "");
-    }
+    } else html = html.replace("{{FIRMA_TUTOR}}", "");
 
-    // Firma directora
-    if (firmaDirSello != null && firmaDirSello.firmaDirectora != null) {
+    // Firma Directora
+    if (firmaDirSello.firmaDirectora != null) {
       String fileName = "firma-directora.png";
-      Path imgPath = tempDir.resolve(fileName);
-
-      byte[] pngBytes = ensurePngFormat(firmaDirSello.firmaDirectora);
-      Files.write(imgPath, pngBytes);
-
-      System.out.println("Firma directora BD bytes: " + firmaDirSello.firmaDirectora.length +
-          ", PNG final: " + pngBytes.length);
-
+      Files.write(tempDir.resolve(fileName), ensurePngFormat(firmaDirSello.firmaDirectora));
       html = html.replace("{{FIRMA_DIRECTORA}}", fileName);
-    } else {
-      html = html.replace("{{FIRMA_DIRECTORA}}", "");
-    }
+    } else html = html.replace("{{FIRMA_DIRECTORA}}", "");
 
-    // Sello institución
-    if (firmaDirSello != null && firmaDirSello.selloInstitucion != null) {
+    // Sello
+    if (firmaDirSello.selloInstitucion != null) {
       String fileName = "sello-institucion.png";
-      Path imgPath = tempDir.resolve(fileName);
-
-      byte[] pngBytes = ensurePngFormat(firmaDirSello.selloInstitucion);
-      Files.write(imgPath, pngBytes);
-
-      System.out.println("Sello BD bytes: " + firmaDirSello.selloInstitucion.length +
-          ", PNG final: " + pngBytes.length);
-
+      Files.write(tempDir.resolve(fileName), ensurePngFormat(firmaDirSello.selloInstitucion));
       html = html.replace("{{SELLO_INSTITUCION}}", fileName);
-    } else {
-      html = html.replace("{{SELLO_INSTITUCION}}", "");
-    }
+    } else html = html.replace("{{SELLO_INSTITUCION}}", "");
 
     return html;
   }
 
   private String escapeHtml(String s) {
-    if (s == null) return "";
-    return s
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;");
+    return s == null ? "" :
+        s.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;");
   }
 
-  // ================== HTML → PDF ==================
+  // --------------------------------------------------------
+  // HTML → PDF
+  // --------------------------------------------------------
   private byte[] htmlToPdf(String html, Path baseDir) throws IOException {
 
     Path debugHtml = baseDir.resolve("boleta-debug.html");
@@ -293,52 +246,42 @@ public class BoletaPdfService {
     html = html.replace("&nbsp;", "&#160;");
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
     try {
       PdfRendererBuilder builder = new PdfRendererBuilder();
-
       String baseUri = baseDir.toUri().toString();
       if (!baseUri.endsWith("/")) baseUri += "/";
-
-      System.out.println("Base URI: " + baseUri);
-      System.out.println("Existe firma tutor? " + Files.exists(baseDir.resolve("firma-tutor.png")));
 
       builder.withHtmlContent(html, baseUri);
       builder.toStream(baos);
       builder.run();
 
-    } catch (Exception e) {
-      throw new IOException("Error al renderizar PDF", e);
+    } catch (Exception ex) {
+      throw new IOException("Error al renderizar PDF", ex);
     }
+
     return baos.toByteArray();
   }
 
+  // --------------------------------------------------------
+  // UTILS
+  // --------------------------------------------------------
   private String formatearNombreArchivoAlumno(Alumno a) {
     String base = (a.getApellidos() + "_" + a.getNombres())
-        .trim()
         .replace(" ", "_")
         .replaceAll("[^A-Za-z0-9_ÁÉÍÓÚÑáéíóú]", "");
-    if (base.isEmpty()) base = "alumno";
-    return base;
+    return base.isEmpty() ? "alumno" : base;
   }
 
-  /**
-   * Asegura que los bytes representen un PNG válido, sin importar el formato original
-   * (JPG, BMP, GIF, etc.), siempre que ImageIO lo pueda leer.
-   */
   private byte[] ensurePngFormat(byte[] originalBytes) throws IOException {
-    if (originalBytes == null || originalBytes.length == 0) {
-      throw new IOException("Imagen vacía.");
-    }
+    BufferedImage img = ImageIO.read(new ByteArrayInputStream(originalBytes));
+    if (img == null) throw new IOException("Bytes no representan una imagen válida.");
 
-    ByteArrayInputStream bais = new ByteArrayInputStream(originalBytes);
-    BufferedImage img = ImageIO.read(bais);
-
-    if (img == null) {
-      throw new IOException("Los bytes no representan una imagen válida.");
-    }
+    BufferedImage rgb = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+    rgb.getGraphics().drawImage(img, 0, 0, java.awt.Color.WHITE, null);
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    ImageIO.write(img, "png", baos);
+    ImageIO.write(rgb, "png", baos);
     return baos.toByteArray();
   }
 }
