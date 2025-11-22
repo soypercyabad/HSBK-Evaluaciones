@@ -76,6 +76,7 @@ public class BoletaDatasetDaoImpl implements BoletaDatasetDao {
               BoletaAlumnoDatasetDto.CursoNota cnDto =
                   new BoletaAlumnoDatasetDto.CursoNota();
               cnDto.setCurso(rs.getString("curso"));
+              cnDto.setArea(rs.getString("area"));
               cnDto.setNotaFinal(rs.getInt("nota_final"));
               cnDto.setLetra(rs.getString("letra"));
 

@@ -20,6 +20,7 @@ public class BoletaAlumnoDatasetDto {
   // Cursos
   public static class CursoNota {
     private String curso;
+    private String area;
     private int notaFinal;
     private String letra;
 
@@ -29,6 +30,14 @@ public class BoletaAlumnoDatasetDto {
 
     public void setCurso(String curso) {
       this.curso = curso;
+    }
+
+    public String getArea () {
+      return area;
+    }
+
+    public void setArea (String area) {
+      this.area = area;
     }
 
     public int getNotaFinal() {

@@ -219,8 +219,6 @@ public class BoletaPdfService {
 
   private BoletaAlumnoDatasetDto elegirDatasetBase(Map<Integer, BoletaAlumnoDatasetDto> dsAlumnoPorBimestre,
                                                    int bimestreSeleccionado) {
-    // Preferimos el dataset del bimestre seleccionado;
-    // si no hay, buscamos el mayor bimestre disponible.
     BoletaAlumnoDatasetDto base = dsAlumnoPorBimestre.get(bimestreSeleccionado);
     if (base != null) return base;
 
@@ -273,7 +271,7 @@ public class BoletaPdfService {
     html = html.replace("{{ANIO}}", String.valueOf(dsBase.getAnio() == 0 ? Year.now().getValue() : dsBase.getAnio()));
     html = html.replace("{{NUM_ORDEN}}", dsBase.getNumeroOrden() != null ? dsBase.getNumeroOrden().toString() : "0");
 
-    // ================= CONDUCTA (por bimestre y promedio) =================
+    // ================= CONDUCTA  =================
     Integer[] conductaNotas = new Integer[4];
     String[] conductaLetras = new String[4];
 
@@ -401,7 +399,6 @@ public class BoletaPdfService {
     String puntajeTotalStr = conteoPuntajes > 0 ? String.valueOf(Math.round(sumaPuntajes)) : "";
     html = html.replace("{{PUNTAJE-TOTAL}}", puntajeTotalStr);
 
-    // Orden de mérito
     html = html.replace("{{MERITO-I}}",  safeMerito(puestos[0], 1, bimestreSeleccionado));
     html = html.replace("{{MERITO-II}}", safeMerito(puestos[1], 2, bimestreSeleccionado));
     html = html.replace("{{MERITO-III}}", safeMerito(puestos[2], 3, bimestreSeleccionado));
@@ -455,6 +452,23 @@ public class BoletaPdfService {
     return v.isEmpty() ? "" : v + "º";
   }
 
+  private String formatAreaNameMultiline(String nombreArea) {
+    if (nombreArea == null) return "";
+    String[] parts = nombreArea.trim().split("\\s+");
+    // Si solo tiene una palabra, normal
+    if (parts.length <= 1) {
+      return escapeHtml(nombreArea);
+    }
+    // Si tiene más de una, cada palabra en una línea
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < parts.length; i++) {
+      if (i > 0) sb.append("<br/>");
+      sb.append(escapeHtml(parts[i]));
+    }
+    return sb.toString();
+  }
+
+
   private String escapeHtml(String s) {
     return s == null ? "" :
         s.replace("&", "&amp;")
@@ -462,9 +476,7 @@ public class BoletaPdfService {
             .replace(">", "&gt;");
   }
 
-  // --------------------------------------------------------
-  // HTML → PDF
-  // --------------------------------------------------------
+  // ================= HTML → PDF =================
   private byte[] htmlToPdf(String html, Path baseDir) throws IOException {
 
     Path debugHtml = baseDir.resolve("boleta-debug.html");
@@ -490,9 +502,7 @@ public class BoletaPdfService {
     return baos.toByteArray();
   }
 
-  // --------------------------------------------------------
-  // UTILS
-  // --------------------------------------------------------
+  // ================= UTILS =================
   private String formatearNombreArchivoAlumno(Alumno a) {
     String base = (a.getApellidos() + "_" + a.getNombres())
         .replace(" ", "_")
@@ -531,6 +541,7 @@ public class BoletaPdfService {
   private static class AreaAcumulada {
     String nombreArea;
     Integer[] promedios = new Integer[4];   // promedio por bimestre
+    String[] letras = new String[4];        // letra por bimestre (del SP)
     List<CursoAcumulado> cursos = new ArrayList<>();
 
     AreaAcumulada(String nombreArea) {
@@ -555,7 +566,7 @@ public class BoletaPdfService {
 
         CursoAcumulado ca = cursosMap.get(nombreCurso);
         if (ca == null) {
-          String areaDeCurso = getAreaDeCurso(nombreCurso); // mapeo por nombre
+          String areaDeCurso = c.getArea();
           ca = new CursoAcumulado(nombreCurso, areaDeCurso);
           cursosMap.put(nombreCurso, ca);
         }
@@ -565,7 +576,7 @@ public class BoletaPdfService {
       }
     }
 
-    // 2) Acumular áreas por nombre y promedios por bimestre
+    // 2) Acumular áreas por nombre y promedios + letras por bimestre
     Map<String, AreaAcumulada> areasMap = new LinkedHashMap<>();
     for (int b = 1; b <= 4; b++) {
       BoletaAlumnoDatasetDto ds = dsAlumnoPorBimestre.get(b);
@@ -583,10 +594,11 @@ public class BoletaPdfService {
         }
         int idx = b - 1;
         aa.promedios[idx] = a.getPromedioArea();
+        aa.letras[idx] = a.getLetra();
       }
     }
 
-    // 3) Asignar cursos a sus áreas (cursos con área) y separar los sin área
+    // 3) Asignar cursos a sus áreas y separar sin área
     List<CursoAcumulado> cursosSinArea = new ArrayList<>();
     for (CursoAcumulado ca : cursosMap.values()) {
       if (ca.area == null || ca.area.isEmpty()) {
@@ -594,14 +606,14 @@ public class BoletaPdfService {
       } else {
         AreaAcumulada aa = areasMap.get(ca.area);
         if (aa == null) {
-          aa = new AreaAcumulada(ca.area);
-          areasMap.put(ca.area, aa);
+          cursosSinArea.add(ca);
+          continue;
         }
         aa.cursos.add(ca);
       }
     }
 
-    // 4) Ordenar áreas y cursos por nombre
+    // 4) Ordenar áreas y cursos
     List<AreaAcumulada> listaAreas = new ArrayList<>(areasMap.values());
     listaAreas.sort(Comparator.comparing(a -> a.nombreArea.toLowerCase(Locale.ROOT)));
 
@@ -634,7 +646,7 @@ public class BoletaPdfService {
           sb.append("<td class=\"area-name ")
               .append(cssArea)
               .append("\" rowspan=\"").append(rowSpan).append("\">")
-              .append(escapeHtml(area.nombreArea))
+              .append(formatAreaNameMultiline(area.nombreArea))
               .append("</td>");
         }
 
@@ -676,28 +688,21 @@ public class BoletaPdfService {
         sb.append("</tr>");
       }
 
-      // Fila de PROM. DE ÁREA
+      // Fila PROM. DE ÁREA
       sb.append("<tr>");
-      sb.append("<td class=\"prom-area ").append(cssArea).append("\">PROM. DE ÁREA</td>");
+      sb.append("<td class=\"prom-area\">PROM. DE ÁREA</td>");
 
       for (int b = 1; b <= 4; b++) {
         int idx = b - 1;
         Integer promBim = area.promedios[idx];
         String promBimStr = safeIntForBimestre(promBim, b, bimestreSeleccionado);
-        String promBimLetra = "";
-        if (!promBimStr.isEmpty()) {
-          try {
-            int val = Integer.parseInt(promBimStr);
-            promBimLetra = convertirNotaALetra(val);
-          } catch (NumberFormatException ignore) {
-          }
-        }
+        String promBimLetra = safeStrForBimestre(area.letras[idx], b, bimestreSeleccionado);
 
         sb.append("<td class=\"cel-nota-prom\">")
             .append(promBimStr)
             .append("</td>");
         sb.append("<td class=\"cel-nota-prom\">")
-            .append(escapeHtml(promBimLetra))
+            .append(promBimLetra)
             .append("</td>");
       }
 
@@ -753,7 +758,7 @@ public class BoletaPdfService {
     return sb.toString();
   }
 
-  // Calcula promedio (entero redondeado) de un arreglo de Integer hasta el bimestre seleccionado
+  // promedio hasta el bimestre seleccionado
   private Integer calcularPromedio(Integer[] valores, int bimestreSeleccionado) {
     if (valores == null) return null;
     int suma = 0;
@@ -770,48 +775,15 @@ public class BoletaPdfService {
     return Math.round(suma * 1f / conteo);
   }
 
-  // Conversión numérica -> letra (ajusta a tu escala real)
+  // Nota numérica -> letra (para promedio anual)
   private String convertirNotaALetra(int nota) {
-    // Ejemplo típico 0-20 → AD / A / B / C
     if (nota >= 18) return "AD";
-    if (nota >= 14) return "A";
-    if (nota >= 11) return "B";
+    if (nota >= 13) return "A";
+    if (nota >= 10) return "B";
     return "C";
   }
 
-  // Mapeo de nombre de curso -> nombre de área
-  private String getAreaDeCurso(String nombreCurso) {
-    String c = nombreCurso.toLowerCase(Locale.ROOT);
-
-    if (c.contains("raz.") || c.contains("aritm") || c.contains("álgebra")
-        || c.contains("algebra") || c.contains("geometr")) {
-      return "MATEMÁTICA";
-    }
-    if (c.contains("comunicación") || c.contains("comunicacion")
-        || c.contains("gramática") || c.contains("gramatica")
-        || c.contains("ortografía") || c.contains("ortografia")
-        || c.contains("raz. verbal") || c.contains("lector")) {
-      return "COMUNICACIÓN";
-    }
-    if (c.contains("inglés") || c.contains("ingles") || c.contains("idioma extranjero")) {
-      return "IDIOMA EXTRANJERO";
-    }
-    if (c.contains("historia") || c.contains("geografía") || c.contains("geografia")
-        || c.contains("personal social")) {
-      return "PERSONAL SOCIAL";
-    }
-    if (c.contains("química") || c.contains("quimica")
-        || c.contains("biología") || c.contains("biologia")
-        || c.contains("física") || c.contains("fisica")
-        || c.contains("ciencia")) {
-      return "CIENCIA TECNOLOGÍA";
-    }
-
-    // Si no matchea nada, lo tratamos como curso sin área
-    return null;
-  }
-
-  // Mapeo área -> clase CSS (colores de la plantilla)
+  // Área -> clase CSS de color
   private String getCssClassForArea(String nombreArea) {
     if (nombreArea == null) return "";
     String a = nombreArea.toLowerCase(Locale.ROOT);
@@ -825,19 +797,20 @@ public class BoletaPdfService {
     return "";
   }
 
-  // Mapeo curso sin área -> clase CSS de color
+  // Curso sin área -> clase CSS de color
   private String getCssClassForCursoSinArea(String nombreCurso) {
     if (nombreCurso == null) return "";
     String c = nombreCurso.toLowerCase(Locale.ROOT);
 
-    if (c.contains("computación") || c.contains("computacion") || c.contains("informática")) {
-      return "computacion";
-    }
+    if (c.contains("computación") || c.contains("computacion") || c.contains("informática")) return "computacion";
     if (c.contains("arte")) return "arte";
     if (c.contains("relig")) return "religion";
-    if (c.contains("educación física") || c.contains("educacion fisica") || c.contains("ed. fisica")) {
-      return "educacion-fisica";
-    }
-    return "computacion"; // color por defecto
+    if (c.contains("educación física") || c.contains("educacion fisica") || c.contains("ed. fisica")) return "educacion-fisica";
+    if (c.contains("matem")) return "matematicas";
+    if (c.contains("comunic")) return "comunicacion";
+    if (c.contains("idioma") || c.contains("inglés") || c.contains("ingles")) return "idioma-extranjero";
+    if (c.contains("personal social") || c.contains("personal")) return "personal-social";
+    if (c.contains("ciencia") || c.contains("tecnolog") || c.contains("Cienc. y Tecnol") || c.contains("cta")) return "ciencia-tecnologia";
+    return "default"; // color por defecto
   }
 }
