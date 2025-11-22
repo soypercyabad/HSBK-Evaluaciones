@@ -92,6 +92,7 @@ public class BoletaDatasetDaoImpl implements BoletaDatasetDao {
                   new BoletaAlumnoDatasetDto.AreaPromedio();
               areaDto.setArea(rs.getString("area"));
               areaDto.setPromedioArea(rs.getInt("promedio_area"));
+              areaDto.setLetra(rs.getString("letra"));
               dto.getAreas().add(areaDto);
             }
           } else if (rsIndex == 3) {

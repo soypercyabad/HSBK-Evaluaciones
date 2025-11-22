@@ -22,7 +22,6 @@ public class BoletaAlumnoDatasetDto {
     private String curso;
     private int notaFinal;
     private String letra;
-    // getters/setters
 
     public String getCurso() {
       return curso;
@@ -53,7 +52,7 @@ public class BoletaAlumnoDatasetDto {
   public static class AreaPromedio {
     private String area;
     private int promedioArea;
-    // getters/setters
+    private String letra;
 
     public String getArea() {
       return area;
@@ -69,6 +68,14 @@ public class BoletaAlumnoDatasetDto {
 
     public void setPromedioArea(int promedioArea) {
       this.promedioArea = promedioArea;
+    }
+
+    public String getLetra() {
+      return letra;
+    }
+
+    public void setLetra(String letra) {
+      this.letra = letra;
     }
   }
 
