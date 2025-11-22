@@ -94,6 +94,10 @@ public class BoletaPdfService {
           firmaDirSello
       );
 
+      if (pdf == null) {
+        throw new IllegalStateException("No se encontró dataset para el alumno seleccionado.");
+      }
+
       try (FileOutputStream fos = new FileOutputStream(destino)) {
         fos.write(pdf);
       }
@@ -122,7 +126,7 @@ public class BoletaPdfService {
     }
   }
 
-  // Carga datasets para bimestres 1..bimestreNum
+  // Carga datasets para bimestres 1..bimestreSeleccionado
   private Map<Integer, Map<Long, BoletaAlumnoDatasetDto>> cargarDatasetsMultiBimestre(
       long periodoId,
       long seccionId,
@@ -268,17 +272,12 @@ public class BoletaPdfService {
 
     html = html.replace("{{ALUMNO}}", escapeHtml(nombreCompleto));
     html = html.replace("{{DNI}}", dsBase.getDni() == null ? "" : dsBase.getDni());
-    html = html.replace("{{GRADO_SECCION}}",
-        (dsBase.getGrado() + "-" + dsBase.getSeccion()).trim());
-    html = html.replace("{{NIVEL}}",
-        dsBase.getNivel() != null ? dsBase.getNivel().toUpperCase(Locale.ROOT) : "");
-    html = html.replace("{{ANIO}}",
-        String.valueOf(dsBase.getAnio() == 0 ? Year.now().getValue() : dsBase.getAnio()));
-    html = html.replace("{{NUM_ORDEN}}",
-        dsBase.getNumeroOrden() != null ? dsBase.getNumeroOrden().toString() : "0");
+    html = html.replace("{{GRADO_SECCION}}", (dsBase.getGrado() + "-" + dsBase.getSeccion()).trim());
+    html = html.replace("{{NIVEL}}", dsBase.getNivel() != null ? dsBase.getNivel().toUpperCase(Locale.ROOT) : "");
+    html = html.replace("{{ANIO}}", String.valueOf(dsBase.getAnio() == 0 ? Year.now().getValue() : dsBase.getAnio()));
+    html = html.replace("{{NUM_ORDEN}}", dsBase.getNumeroOrden() != null ? dsBase.getNumeroOrden().toString() : "0");
 
     // ================= CONDUCTA (por bimestre y promedio) =================
-    // Arreglos para conducta por bimestre
     Integer[] conductaNotas = new Integer[4];
     String[] conductaLetras = new String[4];
 
@@ -289,7 +288,6 @@ public class BoletaPdfService {
       conductaLetras[b - 1] = ds.getConductaLetra();
     }
 
-    // Promedio de conducta (solo hasta el bimestre seleccionado)
     int sumaCond = 0;
     int conteoCond = 0;
     String ultimaLetra = "";
@@ -305,58 +303,69 @@ public class BoletaPdfService {
     }
     Integer promConducta = (conteoCond > 0) ? Math.round(sumaCond * 1f / conteoCond) : null;
 
-    // Rellenamos columnas de conducta:
-    // si aún no hay ese bimestre, se deja vacío.
-    html = html.replace("{{CNUM-I}}", safeIntForBimestre(conductaNotas[0], 1, bimestreSeleccionado));
-    html = html.replace("{{CLETRA-I}}", safeStrForBimestre(conductaLetras[0], 1, bimestreSeleccionado));
+    html = html.replace("{{CN-I}}", safeIntForBimestre(conductaNotas[0], 1, bimestreSeleccionado));
+    html = html.replace("{{CL-I}}", safeStrForBimestre(conductaLetras[0], 1, bimestreSeleccionado));
 
-    html = html.replace("{{CNUM-II}}", safeIntForBimestre(conductaNotas[1], 2, bimestreSeleccionado));
-    html = html.replace("{{CLETRA-II}}", safeStrForBimestre(conductaLetras[1], 2, bimestreSeleccionado));
+    html = html.replace("{{CN-II}}", safeIntForBimestre(conductaNotas[1], 2, bimestreSeleccionado));
+    html = html.replace("{{CL-II}}", safeStrForBimestre(conductaLetras[1], 2, bimestreSeleccionado));
 
-    html = html.replace("{{CNUM-III}}", safeIntForBimestre(conductaNotas[2], 3, bimestreSeleccionado));
-    html = html.replace("{{CLETRA-III}}", safeStrForBimestre(conductaLetras[2], 3, bimestreSeleccionado));
+    html = html.replace("{{CN-III}}", safeIntForBimestre(conductaNotas[2], 3, bimestreSeleccionado));
+    html = html.replace("{{CL-III}}", safeStrForBimestre(conductaLetras[2], 3, bimestreSeleccionado));
 
-    html = html.replace("{{CNUM-IV}}", safeIntForBimestre(conductaNotas[3], 4, bimestreSeleccionado));
-    html = html.replace("{{CLETRA-IV}}", safeStrForBimestre(conductaLetras[3], 4, bimestreSeleccionado));
+    html = html.replace("{{CN-IV}}", safeIntForBimestre(conductaNotas[3], 4, bimestreSeleccionado));
+    html = html.replace("{{CL-IV}}", safeStrForBimestre(conductaLetras[3], 4, bimestreSeleccionado));
 
-    // Promedio de conducta general (columna final)
-    html = html.replace("{{CNUM}}", promConducta != null ? String.valueOf(promConducta) : "");
-    html = html.replace("{{CLETRA}}", ultimaLetra != null ? escapeHtml(ultimaLetra) : "");
+    html = html.replace("{{CNT}}", promConducta != null ? String.valueOf(promConducta) : "");
+    html = html.replace("{{CLT}}", ultimaLetra != null ? escapeHtml(ultimaLetra) : "");
 
-    // ================= EVALUACIÓN DE PADRES (se mantiene como ahora) =================
-    // Uso el último dataset disponible (bimestre seleccionado) para estos campos
-    BoletaAlumnoDatasetDto dsEval = dsAlumnoPorBimestre.get(bimestreSeleccionado);
-    if (dsEval == null) {
-      // si por algo no hay, uso el base
-      dsEval = dsBase;
+    // ================= EVALUACIÓN DE PADRES =================
+    String[] utiles = new String[4];
+    String[] actividades = new String[4];
+    String[] reuniones = new String[4];
+    String[] escuela = new String[4];
+
+    for (int b = 1; b <= 4; b++) {
+      BoletaAlumnoDatasetDto ds = dsAlumnoPorBimestre.get(b);
+      if (ds == null) continue;
+      utiles[b - 1] = ds.getUtiles();
+      actividades[b - 1] = ds.getParticipacion();
+      reuniones[b - 1] = ds.getReuniones();
+      escuela[b - 1] = ds.getEscuelaPadres();
     }
 
-    html = html.replace("{{E1-I}}", dsEval.getUtiles() != null ? dsEval.getUtiles() : "");
-    html = html.replace("{{E2-I}}", dsEval.getParticipacion() != null ? dsEval.getParticipacion() : "");
-    html = html.replace("{{E3-I}}", dsEval.getReuniones() != null ? dsEval.getReuniones() : "");
-    html = html.replace("{{E4-I}}", dsEval.getEscuelaPadres() != null ? dsEval.getEscuelaPadres() : "");
+    html = html.replace("{{E1-I}}", safeStrForBimestre(utiles[0], 1, bimestreSeleccionado));
+    html = html.replace("{{E2-I}}", safeStrForBimestre(actividades[0], 1, bimestreSeleccionado));
+    html = html.replace("{{E3-I}}", safeStrForBimestre(reuniones[0], 1, bimestreSeleccionado));
+    html = html.replace("{{E4-I}}", safeStrForBimestre(escuela[0], 1, bimestreSeleccionado));
 
-    html = html.replace("{{E1-II}}", dsEval.getUtiles() != null ? dsEval.getUtiles() : "");
-    html = html.replace("{{E2-II}}", dsEval.getParticipacion() != null ? dsEval.getParticipacion() : "");
-    html = html.replace("{{E3-II}}", dsEval.getReuniones() != null ? dsEval.getReuniones() : "");
-    html = html.replace("{{E4-II}}", dsEval.getEscuelaPadres() != null ? dsEval.getEscuelaPadres() : "");
+    html = html.replace("{{E1-II}}", safeStrForBimestre(utiles[1], 2, bimestreSeleccionado));
+    html = html.replace("{{E2-II}}", safeStrForBimestre(actividades[1], 2, bimestreSeleccionado));
+    html = html.replace("{{E3-II}}", safeStrForBimestre(reuniones[1], 2, bimestreSeleccionado));
+    html = html.replace("{{E4-II}}", safeStrForBimestre(escuela[1], 2, bimestreSeleccionado));
 
-    html = html.replace("{{E1-III}}", dsEval.getUtiles() != null ? dsEval.getUtiles() : "");
-    html = html.replace("{{E2-III}}", dsEval.getParticipacion() != null ? dsEval.getParticipacion() : "");
-    html = html.replace("{{E3-III}}", dsEval.getReuniones() != null ? dsEval.getReuniones() : "");
-    html = html.replace("{{E4-III}}", dsEval.getEscuelaPadres() != null ? dsEval.getEscuelaPadres() : "");
+    html = html.replace("{{E1-III}}", safeStrForBimestre(utiles[2], 3, bimestreSeleccionado));
+    html = html.replace("{{E2-III}}", safeStrForBimestre(actividades[2], 3, bimestreSeleccionado));
+    html = html.replace("{{E3-III}}", safeStrForBimestre(reuniones[2], 3, bimestreSeleccionado));
+    html = html.replace("{{E4-III}}", safeStrForBimestre(escuela[2], 3, bimestreSeleccionado));
 
-    html = html.replace("{{E1-IV}}", dsEval.getUtiles() != null ? dsEval.getUtiles() : "");
-    html = html.replace("{{E2-IV}}", dsEval.getParticipacion() != null ? dsEval.getParticipacion() : "");
-    html = html.replace("{{E3-IV}}", dsEval.getReuniones() != null ? dsEval.getReuniones() : "");
-    html = html.replace("{{E4-IV}}", dsEval.getEscuelaPadres() != null ? dsEval.getEscuelaPadres() : "");
+    html = html.replace("{{E1-IV}}", safeStrForBimestre(utiles[3], 4, bimestreSeleccionado));
+    html = html.replace("{{E2-IV}}", safeStrForBimestre(actividades[3], 4, bimestreSeleccionado));
+    html = html.replace("{{E3-IV}}", safeStrForBimestre(reuniones[3], 4, bimestreSeleccionado));
+    html = html.replace("{{E4-IV}}", safeStrForBimestre(escuela[3], 4, bimestreSeleccionado));
 
-    // ================= RECOMENDACIONES (por simplicidad, uso misma para todos) =================
-    String reco = dsEval.getRecomendacion() != null ? escapeHtml(dsEval.getRecomendacion()) : "";
-    html = html.replace("{{RECOMENDACION-1}}", reco);
-    html = html.replace("{{RECOMENDACION-2}}", reco);
-    html = html.replace("{{RECOMENDACION-3}}", reco);
-    html = html.replace("{{RECOMENDACION-4}}", reco);
+    // ================= RECOMENDACIONES =================
+    String[] recomendaciones = new String[4];
+
+    for (int b = 1; b <= 4; b++) {
+      BoletaAlumnoDatasetDto ds = dsAlumnoPorBimestre.get(b);
+      if (ds == null) continue;
+      recomendaciones[b - 1] = ds.getRecomendacion();
+    }
+
+    html = html.replace("{{RECOMENDACION-I}}", safeStrForBimestre(recomendaciones[0], 1, bimestreSeleccionado));
+    html = html.replace("{{RECOMENDACION-II}}", safeStrForBimestre(recomendaciones[1], 2, bimestreSeleccionado));
+    html = html.replace("{{RECOMENDACION-III}}", safeStrForBimestre(recomendaciones[2], 3, bimestreSeleccionado));
+    html = html.replace("{{RECOMENDACION-IV}}", safeStrForBimestre(recomendaciones[3], 4, bimestreSeleccionado));
 
     // ================= PUNTAJE Y ORDEN DE MÉRITO =================
     Double[] puntajes = new Double[4];
@@ -388,20 +397,19 @@ public class BoletaPdfService {
     String p3 = safeDoubleForBimestre(puntajes[2], 3, bimestreSeleccionado);
     String p4 = safeDoubleForBimestre(puntajes[3], 4, bimestreSeleccionado);
 
-    html = html.replace("{{PUNTAJE-1}}", p1);
-    html = html.replace("{{PUNTAJE-2}}", p2);
-    html = html.replace("{{PUNTAJE-3}}", p3);
-    html = html.replace("{{PUNTAJE-4}}", p4);
+    html = html.replace("{{PUNTAJE-I}}", p1);
+    html = html.replace("{{PUNTAJE-II}}", p2);
+    html = html.replace("{{PUNTAJE-III}}", p3);
+    html = html.replace("{{PUNTAJE-IV}}", p4);
 
-    // Si es 4º bimestre → suma de los 4 puntajes; si no, suma hasta el seleccionado.
     String puntajeTotalStr = conteoPuntajes > 0 ? String.valueOf(Math.round(sumaPuntajes)) : "";
     html = html.replace("{{PUNTAJE-TOTAL}}", puntajeTotalStr);
 
     // Orden de mérito
-    html = html.replace("{{MERITO-1}}", safeIntForBimestre(puestos[0], 1, bimestreSeleccionado));
-    html = html.replace("{{MERITO-2}}", safeIntForBimestre(puestos[1], 2, bimestreSeleccionado));
-    html = html.replace("{{MERITO-3}}", safeIntForBimestre(puestos[2], 3, bimestreSeleccionado));
-    html = html.replace("{{MERITO-4}}", safeIntForBimestre(puestos[3], 4, bimestreSeleccionado));
+    html = html.replace("{{MERITO-I}}",  safeMerito(puestos[0], 1, bimestreSeleccionado));
+    html = html.replace("{{MERITO-II}}", safeMerito(puestos[1], 2, bimestreSeleccionado));
+    html = html.replace("{{MERITO-III}}", safeMerito(puestos[2], 3, bimestreSeleccionado));
+    html = html.replace("{{MERITO-IV}}", safeMerito(puestos[3], 4, bimestreSeleccionado));
 
     // ================= FIRMAS Y SELLO =================
     if (firmaTutor != null && firmaTutor.getImagen() != null) {
@@ -423,18 +431,13 @@ public class BoletaPdfService {
     } else html = html.replace("{{SELLO_INSTITUCION}}", "");
 
     // =======================================
-    // NOTA: Aquí podrías generar dinámicamente
-    // la tabla de áreas / cursos con base en:
-    //  dsAlumnoPorBimestre.get(1..bimestreSeleccionado).getAreas()
-    //  dsAlumnoPorBimestre.get(1..bimestreSeleccionado).getCursos()
-    //
-    // Ejemplo: poner marcador {{TABLA_AREAS_DINAMICA}} en el HTML
-    // y aquí hacer:
+    // (OPCIONAL) Tabla dinámica de áreas/cursos
+    // Cuando cambies la plantilla, puedes hacer algo así:
     //
     // String tablaDinamica = construirTablaAreasYCursos(dsAlumnoPorBimestre, bimestreSeleccionado);
     // html = html.replace("{{TABLA_AREAS_DINAMICA}}", tablaDinamica);
     //
-    // De momento lo dejo como comentario, así no rompo tu plantilla actual.
+    // De momento no lo activo para no romper tu tabla estática actual.
     // =======================================
 
     return html;
@@ -454,9 +457,14 @@ public class BoletaPdfService {
   private String safeDoubleForBimestre(Double valor, int bimestre, int bimestreSeleccionado) {
     if (bimestre > bimestreSeleccionado) return "";
     if (valor == null) return "";
-    // si quieres entero sin decimales:
     return String.valueOf(Math.round(valor));
   }
+
+  private String safeMerito(Integer valor, int bimestre, int bimestreSeleccionado) {
+    String v = safeIntForBimestre(valor, bimestre, bimestreSeleccionado);
+    return v.isEmpty() ? "" : v + "º";
+  }
+
 
   private String escapeHtml(String s) {
     return s == null ? "" :
@@ -514,4 +522,17 @@ public class BoletaPdfService {
     ImageIO.write(rgb, "png", baos);
     return baos.toByteArray();
   }
+
+  // --------------------------------------------------------
+  // (OPCIONAL) Tabla dinámica de áreas/cursos
+  // --------------------------------------------------------
+  // private String construirTablaAreasYCursos(Map<Integer, BoletaAlumnoDatasetDto> dsAlumnoPorBimestre,
+  //                                           int bimestreSeleccionado) {
+  //   // Aquí podrías construir un <table> en HTML usando dsAlumnoPorBimestre.get(b).getCursos()
+  //   // y dsAlumnoPorBimestre.get(b).getAreas(), combinando por nombre de curso/área
+  //   // y calculando promedios anuales de área.
+  //   //
+  //   // Lo dejo como plantilla para que lo adaptes según cómo vengan exactamente tus datos.
+  //   return "";
+  // }
 }
