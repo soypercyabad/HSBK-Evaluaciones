@@ -83,6 +83,7 @@
                     <TextField fx:id="txtBuscar" promptText="Buscar por apellido, nombre o código" HBox.hgrow="ALWAYS" />
                     <Button onAction="#onBuscar" styleClass="primary-btn" text="Buscar" />
                     <Pane HBox.hgrow="ALWAYS" />
+                    <ComboBox fx:id="bimestreComboBox" styleClass="outline-btn"  visible="false" managed="false"> </ComboBox>
                     <Button onAction="#onDescargar" fx:id="btnDescargarBoleta" styleClass="outline-btn" text="Descargar boleta" visible="false" managed="false">
                         <graphic>
                             <Group scaleX="0.8" scaleY="0.8">

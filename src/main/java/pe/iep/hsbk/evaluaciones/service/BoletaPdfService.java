@@ -14,7 +14,6 @@ import pe.iep.hsbk.evaluaciones.service.AuthService.UserSession;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -23,9 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.Year;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -74,33 +71,23 @@ public class BoletaPdfService {
     FirmaDirectoraYSello firmaDirSello = cargarFirmaDirectoraYSello();
 
     // ==========================
-    // 1) Obtener dataset del SP
+    // 1) Obtener datasets por bimestre
     // ==========================
     List<Long> alumnosIds = alumnos.stream()
         .map(Alumno::getMatriculaId)
         .collect(Collectors.toList());
 
-    Map<Long, BoletaAlumnoDatasetDto> datasetPorMatricula =
-        boletaDatasetDao.obtenerDatasetBoleta(
-            periodoId,
-            seccionId,
-            bimestreNum,
-            alumnosIds
-        );
+    // Map<bimestre, Map<matriculaId, BoletaAlumnoDatasetDto>>
+    Map<Integer, Map<Long, BoletaAlumnoDatasetDto>> datasetsPorBimestre =
+        cargarDatasetsMultiBimestre(periodoId, seccionId, bimestreNum, alumnosIds);
 
-    // Solo 1 alumno → PDF directo
+    // Si solo es 1 alumno → PDF directo
     if (alumnos.size() == 1) {
       Alumno a = alumnos.get(0);
-      Long matId = a.getMatriculaId();
-      BoletaAlumnoDatasetDto ds = datasetPorMatricula.get(matId);
-
-      if (ds == null) {
-        throw new IllegalStateException("No se encontró dataset para la matrícula " + matId);
-      }
-
-      byte[] pdf = generarPdfParaAlumno(
+      byte[] pdf = generarPdfParaAlumnoMulti(
           a,
-          ds,
+          datasetsPorBimestre,
+          bimestreNum,
           userSession,
           plantillaHtml,
           firmaTutor,
@@ -116,21 +103,16 @@ public class BoletaPdfService {
     // Varios alumnos → ZIP
     try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(destino))) {
       for (Alumno a : alumnos) {
-        Long matId = a.getMatriculaId();
-        BoletaAlumnoDatasetDto ds = datasetPorMatricula.get(matId);
-        if (ds == null) {
-          // si no hay dataset para ese alumno, lo saltas o lanzas excepción, como prefieras
-          continue;
-        }
-
-        byte[] pdf = generarPdfParaAlumno(
+        byte[] pdf = generarPdfParaAlumnoMulti(
             a,
-            ds,
+            datasetsPorBimestre,
+            bimestreNum,
             userSession,
             plantillaHtml,
             firmaTutor,
             firmaDirSello
         );
+        if (pdf == null) continue; // por si algún alumno no tiene dataset
 
         ZipEntry entry = new ZipEntry(formatearNombreArchivoAlumno(a) + ".pdf");
         zos.putNextEntry(entry);
@@ -138,6 +120,26 @@ public class BoletaPdfService {
         zos.closeEntry();
       }
     }
+  }
+
+  // Carga datasets para bimestres 1..bimestreNum
+  private Map<Integer, Map<Long, BoletaAlumnoDatasetDto>> cargarDatasetsMultiBimestre(
+      long periodoId,
+      long seccionId,
+      int bimestreSeleccionado,
+      List<Long> alumnosIds) throws Exception {
+
+    Map<Integer, Map<Long, BoletaAlumnoDatasetDto>> result = new HashMap<>();
+
+    int maxBimestre = Math.max(1, Math.min(4, bimestreSeleccionado)); // limitar a 1..4
+
+    for (int b = 1; b <= maxBimestre; b++) {
+      Map<Long, BoletaAlumnoDatasetDto> map =
+          boletaDatasetDao.obtenerDatasetBoleta(periodoId, seccionId, b, alumnosIds);
+      result.put(b, map);
+    }
+
+    return result;
   }
 
   // --------------------------------------------------------
@@ -161,22 +163,47 @@ public class BoletaPdfService {
   }
 
   // --------------------------------------------------------
-  // GENERAR PDF POR ALUMNO
+  // GENERAR PDF POR ALUMNO (MULTI-BIMESTRE)
   // --------------------------------------------------------
-  private byte[] generarPdfParaAlumno(Alumno alumno,
-                                      BoletaAlumnoDatasetDto ds,
-                                      UserSession userSession,
-                                      String plantillaHtml,
-                                      Firma firmaTutor,
-                                      FirmaDirectoraYSello firmaDirSello) throws Exception {
+  private byte[] generarPdfParaAlumnoMulti(Alumno alumno,
+                                           Map<Integer, Map<Long, BoletaAlumnoDatasetDto>> datasetsPorBimestre,
+                                           int bimestreSeleccionado,
+                                           UserSession userSession,
+                                           String plantillaHtml,
+                                           Firma firmaTutor,
+                                           FirmaDirectoraYSello firmaDirSello) throws Exception {
 
-    Path tempDir = Files.createTempDirectory("boleta-pdf-" + ds.getMatriculaId() + "-");
+    Long matId = alumno.getMatriculaId();
+
+    // Construir mapa <bimestre, datasetAlumno>
+    Map<Integer, BoletaAlumnoDatasetDto> dsAlumnoPorBimestre = new HashMap<>();
+    for (Map.Entry<Integer, Map<Long, BoletaAlumnoDatasetDto>> entry : datasetsPorBimestre.entrySet()) {
+      Integer bim = entry.getKey();
+      Map<Long, BoletaAlumnoDatasetDto> map = entry.getValue();
+      if (map == null) continue;
+      BoletaAlumnoDatasetDto ds = map.get(matId);
+      if (ds != null) {
+        dsAlumnoPorBimestre.put(bim, ds);
+      }
+    }
+
+    if (dsAlumnoPorBimestre.isEmpty()) {
+      // No hay datos para este alumno (por algún motivo)
+      return null;
+    }
+
+    // Escogemos un dataset "base" para los datos generales (nombre, DNI, etc.)
+    BoletaAlumnoDatasetDto dsBase = elegirDatasetBase(dsAlumnoPorBimestre, bimestreSeleccionado);
+
+    Path tempDir = Files.createTempDirectory("boleta-pdf-" + dsBase.getMatriculaId() + "-");
 
     try {
-      String htmlPersonalizado = renderizarHtmlBoleta(
+      String htmlPersonalizado = renderizarHtmlBoletaMulti(
           plantillaHtml,
           alumno,
-          ds,
+          dsBase,
+          dsAlumnoPorBimestre,
+          bimestreSeleccionado,
           userSession,
           firmaTutor,
           firmaDirSello,
@@ -188,6 +215,17 @@ public class BoletaPdfService {
     } finally {
       deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  private BoletaAlumnoDatasetDto elegirDatasetBase(Map<Integer, BoletaAlumnoDatasetDto> dsAlumnoPorBimestre,
+                                                   int bimestreSeleccionado) {
+    // Preferimos el dataset del bimestre seleccionado;
+    // si no hay, buscamos el mayor bimestre disponible.
+    BoletaAlumnoDatasetDto base = dsAlumnoPorBimestre.get(bimestreSeleccionado);
+    if (base != null) return base;
+
+    int maxKey = dsAlumnoPorBimestre.keySet().stream().max(Integer::compareTo).orElse(1);
+    return dsAlumnoPorBimestre.get(maxKey);
   }
 
   // --------------------------------------------------------
@@ -202,65 +240,222 @@ public class BoletaPdfService {
           .forEach(p -> {
             try {
               Files.deleteIfExists(p);
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
           });
 
-    } catch (Exception ignored) {}
+    } catch (Exception ignored) {
+    }
   }
 
   // --------------------------------------------------------
-  // RENDER HTML usando el dataset del SP
+  // RENDER HTML usando datasets de varios bimestres
   // --------------------------------------------------------
-  private String renderizarHtmlBoleta(String plantilla,
-                                      Alumno alumno,
-                                      BoletaAlumnoDatasetDto ds,
-                                      UserSession userSession,
-                                      Firma firmaTutor,
-                                      FirmaDirectoraYSello firmaDirSello,
-                                      Path tempDir) throws IOException {
+  private String renderizarHtmlBoletaMulti(String plantilla,
+                                           Alumno alumno,
+                                           BoletaAlumnoDatasetDto dsBase,
+                                           Map<Integer, BoletaAlumnoDatasetDto> dsAlumnoPorBimestre,
+                                           int bimestreSeleccionado,
+                                           UserSession userSession,
+                                           Firma firmaTutor,
+                                           FirmaDirectoraYSello firmaDirSello,
+                                           Path tempDir) throws IOException {
 
     String html = plantilla;
 
-    // Cabecera desde dataset (por si algún día cambias algo en el SP)
-    String nombreCompleto = (ds.getApellidos() + " " + ds.getNombres()).toUpperCase(Locale.ROOT);
+    // ================= CABECERA =================
+    String nombreCompleto = (dsBase.getApellidos() + " " + dsBase.getNombres()).toUpperCase(Locale.ROOT);
 
     html = html.replace("{{ALUMNO}}", escapeHtml(nombreCompleto));
-    html = html.replace("{{DNI}}", ds.getDni() == null ? "" : ds.getDni());
+    html = html.replace("{{DNI}}", dsBase.getDni() == null ? "" : dsBase.getDni());
     html = html.replace("{{GRADO_SECCION}}",
-        (ds.getGrado() + "-" + ds.getSeccion()).trim());
+        (dsBase.getGrado() + "-" + dsBase.getSeccion()).trim());
     html = html.replace("{{NIVEL}}",
-        ds.getNivel() != null ? ds.getNivel().toUpperCase(Locale.ROOT) : "");
-    html = html.replace("{{ANIO}}", String.valueOf(ds.getAnio() == 0 ? Year.now().getValue() : ds.getAnio()));
+        dsBase.getNivel() != null ? dsBase.getNivel().toUpperCase(Locale.ROOT) : "");
+    html = html.replace("{{ANIO}}",
+        String.valueOf(dsBase.getAnio() == 0 ? Year.now().getValue() : dsBase.getAnio()));
     html = html.replace("{{NUM_ORDEN}}",
-        ds.getNumeroOrden() != null ? ds.getNumeroOrden().toString() : "0");
+        dsBase.getNumeroOrden() != null ? dsBase.getNumeroOrden().toString() : "0");
 
-    // Si tu plantilla tiene más placeholders (PUNTAJE, PUESTO, CONDUCTA, etc.), puedes hacer:
-    // html = html.replace("{{PUNTAJE_TOTAL}}", ds.getPuntajeTotal() != null ? ds.getPuntajeTotal().toString() : "");
-    // html = html.replace("{{PUESTO}}", ds.getPuesto() != null ? ds.getPuesto().toString() : "");
-    // html = html.replace("{{CONDUCTA_LETRA}}", ds.getConductaLetra() != null ? ds.getConductaLetra() : "");
+    // ================= CONDUCTA (por bimestre y promedio) =================
+    // Arreglos para conducta por bimestre
+    Integer[] conductaNotas = new Integer[4];
+    String[] conductaLetras = new String[4];
 
-    // Firma Tutor
+    for (int b = 1; b <= 4; b++) {
+      BoletaAlumnoDatasetDto ds = dsAlumnoPorBimestre.get(b);
+      if (ds == null) continue;
+      conductaNotas[b - 1] = ds.getConductaNota();
+      conductaLetras[b - 1] = ds.getConductaLetra();
+    }
+
+    // Promedio de conducta (solo hasta el bimestre seleccionado)
+    int sumaCond = 0;
+    int conteoCond = 0;
+    String ultimaLetra = "";
+    for (int b = 1; b <= bimestreSeleccionado; b++) {
+      Integer nota = conductaNotas[b - 1];
+      if (nota != null && nota > 0) {
+        sumaCond += nota;
+        conteoCond++;
+      }
+      if (conductaLetras[b - 1] != null && !conductaLetras[b - 1].isEmpty()) {
+        ultimaLetra = conductaLetras[b - 1];
+      }
+    }
+    Integer promConducta = (conteoCond > 0) ? Math.round(sumaCond * 1f / conteoCond) : null;
+
+    // Rellenamos columnas de conducta:
+    // si aún no hay ese bimestre, se deja vacío.
+    html = html.replace("{{CNUM-I}}", safeIntForBimestre(conductaNotas[0], 1, bimestreSeleccionado));
+    html = html.replace("{{CLETRA-I}}", safeStrForBimestre(conductaLetras[0], 1, bimestreSeleccionado));
+
+    html = html.replace("{{CNUM-II}}", safeIntForBimestre(conductaNotas[1], 2, bimestreSeleccionado));
+    html = html.replace("{{CLETRA-II}}", safeStrForBimestre(conductaLetras[1], 2, bimestreSeleccionado));
+
+    html = html.replace("{{CNUM-III}}", safeIntForBimestre(conductaNotas[2], 3, bimestreSeleccionado));
+    html = html.replace("{{CLETRA-III}}", safeStrForBimestre(conductaLetras[2], 3, bimestreSeleccionado));
+
+    html = html.replace("{{CNUM-IV}}", safeIntForBimestre(conductaNotas[3], 4, bimestreSeleccionado));
+    html = html.replace("{{CLETRA-IV}}", safeStrForBimestre(conductaLetras[3], 4, bimestreSeleccionado));
+
+    // Promedio de conducta general (columna final)
+    html = html.replace("{{CNUM}}", promConducta != null ? String.valueOf(promConducta) : "");
+    html = html.replace("{{CLETRA}}", ultimaLetra != null ? escapeHtml(ultimaLetra) : "");
+
+    // ================= EVALUACIÓN DE PADRES (se mantiene como ahora) =================
+    // Uso el último dataset disponible (bimestre seleccionado) para estos campos
+    BoletaAlumnoDatasetDto dsEval = dsAlumnoPorBimestre.get(bimestreSeleccionado);
+    if (dsEval == null) {
+      // si por algo no hay, uso el base
+      dsEval = dsBase;
+    }
+
+    html = html.replace("{{E1-I}}", dsEval.getUtiles() != null ? dsEval.getUtiles() : "");
+    html = html.replace("{{E2-I}}", dsEval.getParticipacion() != null ? dsEval.getParticipacion() : "");
+    html = html.replace("{{E3-I}}", dsEval.getReuniones() != null ? dsEval.getReuniones() : "");
+    html = html.replace("{{E4-I}}", dsEval.getEscuelaPadres() != null ? dsEval.getEscuelaPadres() : "");
+
+    html = html.replace("{{E1-II}}", dsEval.getUtiles() != null ? dsEval.getUtiles() : "");
+    html = html.replace("{{E2-II}}", dsEval.getParticipacion() != null ? dsEval.getParticipacion() : "");
+    html = html.replace("{{E3-II}}", dsEval.getReuniones() != null ? dsEval.getReuniones() : "");
+    html = html.replace("{{E4-II}}", dsEval.getEscuelaPadres() != null ? dsEval.getEscuelaPadres() : "");
+
+    html = html.replace("{{E1-III}}", dsEval.getUtiles() != null ? dsEval.getUtiles() : "");
+    html = html.replace("{{E2-III}}", dsEval.getParticipacion() != null ? dsEval.getParticipacion() : "");
+    html = html.replace("{{E3-III}}", dsEval.getReuniones() != null ? dsEval.getReuniones() : "");
+    html = html.replace("{{E4-III}}", dsEval.getEscuelaPadres() != null ? dsEval.getEscuelaPadres() : "");
+
+    html = html.replace("{{E1-IV}}", dsEval.getUtiles() != null ? dsEval.getUtiles() : "");
+    html = html.replace("{{E2-IV}}", dsEval.getParticipacion() != null ? dsEval.getParticipacion() : "");
+    html = html.replace("{{E3-IV}}", dsEval.getReuniones() != null ? dsEval.getReuniones() : "");
+    html = html.replace("{{E4-IV}}", dsEval.getEscuelaPadres() != null ? dsEval.getEscuelaPadres() : "");
+
+    // ================= RECOMENDACIONES (por simplicidad, uso misma para todos) =================
+    String reco = dsEval.getRecomendacion() != null ? escapeHtml(dsEval.getRecomendacion()) : "";
+    html = html.replace("{{RECOMENDACION-1}}", reco);
+    html = html.replace("{{RECOMENDACION-2}}", reco);
+    html = html.replace("{{RECOMENDACION-3}}", reco);
+    html = html.replace("{{RECOMENDACION-4}}", reco);
+
+    // ================= PUNTAJE Y ORDEN DE MÉRITO =================
+    Double[] puntajes = new Double[4];
+    Integer[] puestos = new Integer[4];
+
+    for (int b = 1; b <= 4; b++) {
+      BoletaAlumnoDatasetDto ds = dsAlumnoPorBimestre.get(b);
+      if (ds == null) continue;
+      if (ds.getPuntajeTotal() != null) {
+        puntajes[b - 1] = ds.getPuntajeTotal();
+      }
+      if (ds.getPuesto() != null) {
+        puestos[b - 1] = ds.getPuesto();
+      }
+    }
+
+    double sumaPuntajes = 0d;
+    int conteoPuntajes = 0;
+    for (int b = 1; b <= bimestreSeleccionado; b++) {
+      Double p = puntajes[b - 1];
+      if (p != null && p > 0) {
+        sumaPuntajes += p;
+        conteoPuntajes++;
+      }
+    }
+
+    String p1 = safeDoubleForBimestre(puntajes[0], 1, bimestreSeleccionado);
+    String p2 = safeDoubleForBimestre(puntajes[1], 2, bimestreSeleccionado);
+    String p3 = safeDoubleForBimestre(puntajes[2], 3, bimestreSeleccionado);
+    String p4 = safeDoubleForBimestre(puntajes[3], 4, bimestreSeleccionado);
+
+    html = html.replace("{{PUNTAJE-1}}", p1);
+    html = html.replace("{{PUNTAJE-2}}", p2);
+    html = html.replace("{{PUNTAJE-3}}", p3);
+    html = html.replace("{{PUNTAJE-4}}", p4);
+
+    // Si es 4º bimestre → suma de los 4 puntajes; si no, suma hasta el seleccionado.
+    String puntajeTotalStr = conteoPuntajes > 0 ? String.valueOf(Math.round(sumaPuntajes)) : "";
+    html = html.replace("{{PUNTAJE-TOTAL}}", puntajeTotalStr);
+
+    // Orden de mérito
+    html = html.replace("{{MERITO-1}}", safeIntForBimestre(puestos[0], 1, bimestreSeleccionado));
+    html = html.replace("{{MERITO-2}}", safeIntForBimestre(puestos[1], 2, bimestreSeleccionado));
+    html = html.replace("{{MERITO-3}}", safeIntForBimestre(puestos[2], 3, bimestreSeleccionado));
+    html = html.replace("{{MERITO-4}}", safeIntForBimestre(puestos[3], 4, bimestreSeleccionado));
+
+    // ================= FIRMAS Y SELLO =================
     if (firmaTutor != null && firmaTutor.getImagen() != null) {
       String fileName = "firma-tutor.png";
       Files.write(tempDir.resolve(fileName), ensurePngFormat(firmaTutor.getImagen()));
       html = html.replace("{{FIRMA_TUTOR}}", fileName);
     } else html = html.replace("{{FIRMA_TUTOR}}", "");
 
-    // Firma Directora
     if (firmaDirSello.firmaDirectora != null) {
       String fileName = "firma-directora.png";
       Files.write(tempDir.resolve(fileName), ensurePngFormat(firmaDirSello.firmaDirectora));
       html = html.replace("{{FIRMA_DIRECTORA}}", fileName);
     } else html = html.replace("{{FIRMA_DIRECTORA}}", "");
 
-    // Sello
     if (firmaDirSello.selloInstitucion != null) {
       String fileName = "sello-institucion.png";
       Files.write(tempDir.resolve(fileName), ensurePngFormat(firmaDirSello.selloInstitucion));
       html = html.replace("{{SELLO_INSTITUCION}}", fileName);
     } else html = html.replace("{{SELLO_INSTITUCION}}", "");
 
+    // =======================================
+    // NOTA: Aquí podrías generar dinámicamente
+    // la tabla de áreas / cursos con base en:
+    //  dsAlumnoPorBimestre.get(1..bimestreSeleccionado).getAreas()
+    //  dsAlumnoPorBimestre.get(1..bimestreSeleccionado).getCursos()
+    //
+    // Ejemplo: poner marcador {{TABLA_AREAS_DINAMICA}} en el HTML
+    // y aquí hacer:
+    //
+    // String tablaDinamica = construirTablaAreasYCursos(dsAlumnoPorBimestre, bimestreSeleccionado);
+    // html = html.replace("{{TABLA_AREAS_DINAMICA}}", tablaDinamica);
+    //
+    // De momento lo dejo como comentario, así no rompo tu plantilla actual.
+    // =======================================
+
     return html;
+  }
+
+  // Helpers para mostrar/ocultar valores según el bimestre seleccionado
+  private String safeIntForBimestre(Integer valor, int bimestre, int bimestreSeleccionado) {
+    if (bimestre > bimestreSeleccionado) return "";
+    return (valor != null && valor > 0) ? String.valueOf(valor) : "";
+  }
+
+  private String safeStrForBimestre(String valor, int bimestre, int bimestreSeleccionado) {
+    if (bimestre > bimestreSeleccionado) return "";
+    return valor != null ? escapeHtml(valor) : "";
+  }
+
+  private String safeDoubleForBimestre(Double valor, int bimestre, int bimestreSeleccionado) {
+    if (bimestre > bimestreSeleccionado) return "";
+    if (valor == null) return "";
+    // si quieres entero sin decimales:
+    return String.valueOf(Math.round(valor));
   }
 
   private String escapeHtml(String s) {

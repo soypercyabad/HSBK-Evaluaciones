@@ -16,11 +16,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.util.StringConverter;
 import pe.iep.hsbk.evaluaciones.dao.*;
 import pe.iep.hsbk.evaluaciones.dao.impl.*;
 import pe.iep.hsbk.evaluaciones.dto.RolesEnSeccionDto;
 import pe.iep.hsbk.evaluaciones.enums.Constantes;
 import pe.iep.hsbk.evaluaciones.model.Alumno;
+import pe.iep.hsbk.evaluaciones.model.Bimestre;
 import pe.iep.hsbk.evaluaciones.model.Grado;
 import pe.iep.hsbk.evaluaciones.model.Seccion;
 import pe.iep.hsbk.evaluaciones.service.AuthService.UserSession;
@@ -42,6 +44,7 @@ public class StudentsListController implements SesionAware {
   @FXML private Label lblTitlePeriodo;
   @FXML private Label lblTitleRol;
   @FXML private TextField txtBuscar;
+  @FXML private ComboBox<Bimestre> bimestreComboBox;
   @FXML private Button btnDescargarBoleta;
 
   // ===================== Tabla =====================
@@ -85,6 +88,7 @@ public class StudentsListController implements SesionAware {
   private final GradoDao gradoDao = new GradoDaoImpl();
   private final SeccionDao seccionDao = new SeccionDaoImpl();
   private final AlumnoDao alumnoDao = new AlumnoDaoImpl();
+  private final BimestreDao bimestreDao = new BimestreDaoImpl();
 
   // DAOs específicos para boleta
   private final PlantillaBoletaDao plantillaBoletaDao = new PlantillaDaoImpl();
@@ -117,6 +121,7 @@ public class StudentsListController implements SesionAware {
   @FXML
   public void initialize() {
     configurarTabla();
+    configurarComboBimestres();
 
     if (txtBuscar != null) {
       txtBuscar.textProperty().addListener((o, a, b) -> refiltrar());
@@ -141,6 +146,7 @@ public class StudentsListController implements SesionAware {
       if (periodoId != null) {
         contextInitialized = true;
         cargarGradosAsync();
+        cargarBimestresAsync();  // <-- llena el combo
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -266,6 +272,35 @@ public class StudentsListController implements SesionAware {
     );
   }
 
+  private void cargarBimestresAsync() {
+    if (bimestreComboBox == null) return;
+    setBusy(true);
+
+    FXAsync.run(
+        () -> {
+          try {
+            return bimestreDao.listarbimestres(periodoId);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        },
+        bimestres -> {
+          bimestreComboBox.getItems().clear();
+          if (bimestres != null) {
+            bimestreComboBox.getItems().addAll(bimestres);
+          }
+          if (!bimestres.isEmpty()) {
+            bimestreComboBox.getSelectionModel().select(0);
+          }
+          setBusy(false);
+        },
+        ex -> {
+          setBusy(false);
+          Dialogs.errorConStacktrace(null, "Error", "Falló la carga de bimestres", ex.getMessage(), ex);
+        }
+    );
+  }
+
   // ===================== Precarga de roles =====================
   private void precargarRolesSeccionAsync(Long seccionId) {
     if (seccionId == null || periodoId == null || userSession == null) return;
@@ -283,6 +318,11 @@ public class StudentsListController implements SesionAware {
           cacheRolesPorSeccion.put(seccionId, roles);
 
           boolean esTut = roles != null && roles.isTutor();
+          if (bimestreComboBox != null) {
+            bimestreComboBox.setVisible(esTut);
+            bimestreComboBox.setManaged(esTut);
+          }
+
           if (btnDescargarBoleta != null) {
             btnDescargarBoleta.setVisible(esTut);
             btnDescargarBoleta.setManaged(esTut);
@@ -377,6 +417,51 @@ public class StudentsListController implements SesionAware {
 
     filtered = new FilteredList<>(master, a -> true);
     tblAlumnos.setItems(filtered);
+  }
+
+  private void configurarComboBimestres() {
+    if (bimestreComboBox == null) return;
+
+    // Items del desplegable
+    bimestreComboBox.setCellFactory(listView -> new ListCell<>() {
+      @Override
+      protected void updateItem(Bimestre item, boolean empty) {
+        super.updateItem(item, empty);
+        if (empty || item == null) {
+          setText(null);
+        } else {
+          setText(item.getNumero() + "º Bimestre");
+        }
+      }
+    });
+
+    // Item seleccionado (lo que se ve en la caja del combo)
+    bimestreComboBox.setButtonCell(new ListCell<>() {
+      @Override
+      protected void updateItem(Bimestre item, boolean empty) {
+        super.updateItem(item, empty);
+        if (empty || item == null) {
+          setText(null);
+        } else {
+          setText(item.getNumero() + "º Bimestre");
+        }
+      }
+    });
+
+    // Converter por si se usa setValue desde código
+    bimestreComboBox.setConverter(new StringConverter<>() {
+      @Override
+      public String toString(Bimestre item) {
+        if (item == null) return "";
+        return item.getNumero() + "º Bimestre";
+      }
+
+      @Override
+      public Bimestre fromString(String string) {
+        // No lo usamos
+        return null;
+      }
+    });
   }
 
   private void refiltrar() {
@@ -562,6 +647,7 @@ public class StudentsListController implements SesionAware {
       }
 
       int bimestreNum = obtenerBimestreActual();
+      System.out.println("Bimestre seleccionado: " + bimestreNum);
 
       FileChooser fc = new FileChooser();
       fc.setTitle("Guardar boleta(s)");
@@ -651,7 +737,11 @@ public class StudentsListController implements SesionAware {
   }
 
   private int obtenerBimestreActual() {
-    // Por ahora puedes devolver fijo mientras conectas con tu UI
+    if (bimestreComboBox == null) return 1;
+    Bimestre sel = bimestreComboBox.getSelectionModel().getSelectedItem();
+    if (sel != null) {
+      return sel.getNumero();
+    }
     return 1;
   }
 
