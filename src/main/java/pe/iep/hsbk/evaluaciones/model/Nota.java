@@ -16,7 +16,11 @@ public class Nota {
   public Nota() {
   }
 
-  public Nota(Long id, Long matriculaId, Long cursoId, Long bimestreId, Long evaluacionTipoId, Double calificacion, String letra, LocalDateTime fechaRegistro, LocalDateTime fechaActualizacion) {
+  public Nota(Long id, Long matriculaId, Long cursoId,
+              Long bimestreId, Long evaluacionTipoId,
+              Double calificacion, String letra,
+              LocalDateTime fechaRegistro,
+              LocalDateTime fechaActualizacion) {
     this.id = id;
     this.matriculaId = matriculaId;
     this.cursoId = cursoId;
@@ -28,93 +32,42 @@ public class Nota {
     this.fechaActualizacion = fechaActualizacion;
   }
 
-  public Long getId() {
-    return id;
-  }
+  public Long getId() {return id;}
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+  public void setId(Long id) {this.id = id;}
 
-  public Long getMatriculaId() {
-    return matriculaId;
-  }
+  public Long getMatriculaId() {return matriculaId;}
 
-  public void setMatriculaId(Long matriculaId) {
-    this.matriculaId = matriculaId;
-  }
+  public void setMatriculaId(Long matriculaId) {this.matriculaId = matriculaId;}
 
-  public Long getCursoId() {
-    return cursoId;
-  }
+  public Long getCursoId() {return cursoId;}
 
-  public void setCursoId(Long cursoId) {
-    this.cursoId = cursoId;
-  }
+  public void setCursoId(Long cursoId) {this.cursoId = cursoId;}
 
-  public Long getBimestreId() {
-    return bimestreId;
-  }
+  public Long getBimestreId() {return bimestreId;}
 
-  public void setBimestreId(Long bimestreId) {
-    this.bimestreId = bimestreId;
-  }
+  public void setBimestreId(Long bimestreId) {this.bimestreId = bimestreId;}
 
-  public Long getEvaluacionTipoId() {
-    return evaluacionTipoId;
-  }
+  public Long getEvaluacionTipoId() {return evaluacionTipoId;}
 
-  public void setEvaluacionTipoId(Long evaluacionTipoId) {
-    this.evaluacionTipoId = evaluacionTipoId;
-  }
+  public void setEvaluacionTipoId(Long evaluacionTipoId) {this.evaluacionTipoId = evaluacionTipoId;}
 
-  public Double getCalificacion() {
-    return calificacion;
-  }
+  public Double getCalificacion() {return calificacion;}
 
-  public void setCalificacion(Double calificacion) {
-    this.calificacion = calificacion;
-  }
+  public void setCalificacion(Double calificacion) {this.calificacion = calificacion;}
 
-  public String getLetra() {
-    return letra;
-  }
+  public String getLetra() {return letra;}
 
-  public void setLetra(String letra) {
-    this.letra = letra;
-  }
+  public void setLetra(String letra) {this.letra = letra;}
 
-  public LocalDateTime getFechaRegistro() {
-    return fechaRegistro;
-  }
+  public LocalDateTime getFechaRegistro() {return fechaRegistro;}
 
-  public void setFechaRegistro(LocalDateTime fechaRegistro) {
-    this.fechaRegistro = fechaRegistro;
-  }
+  public void setFechaRegistro(LocalDateTime fechaRegistro) {this.fechaRegistro = fechaRegistro;}
 
-  public LocalDateTime getFechaActualizacion() {
-    return fechaActualizacion;
-  }
+  public LocalDateTime getFechaActualizacion() {return fechaActualizacion;}
 
-  public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
-    this.fechaActualizacion = fechaActualizacion;
-  }
+  public void setFechaActualizacion(LocalDateTime fechaActualizacion) {this.fechaActualizacion = fechaActualizacion;}
 
   @Override
-  public String toString() {
-    return "Nota{id=" + id + "}";
-  }
-
-  @Override
-  public int hashCode() {
-    return id == null ? System.identityHashCode(this) : id.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof Nota)) return false;
-    Nota other = (Nota) o;
-    return id != null && id.equals(other.id);
-  }
+  public String toString() {return "Nota{id=" + id + "}";}
 }

@@ -1,6 +1,7 @@
 package pe.iep.hsbk.evaluaciones.service;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import pe.iep.hsbk.evaluaciones.dao.BoletaDatasetDao;
 import pe.iep.hsbk.evaluaciones.dao.FirmaDao;
 import pe.iep.hsbk.evaluaciones.dao.PlantillaBoletaDao;
 import pe.iep.hsbk.evaluaciones.dao.SelloDao;
@@ -24,25 +25,30 @@ import java.nio.file.*;
 import java.time.Year;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class BoletaPdfService {
 
   private final PlantillaBoletaDao plantillaBoletaDao;
+  private final BoletaDatasetDao boletaDatasetDao;
   private final FirmaDao firmaDao;
   private final SelloDao selloDao;
 
   public BoletaPdfService(PlantillaBoletaDao plantillaBoletaDao,
+                          BoletaDatasetDao boletaDatasetDao,
                           FirmaDao firmaDao,
                           SelloDao selloDao) {
     this.plantillaBoletaDao = plantillaBoletaDao;
+    this.boletaDatasetDao = boletaDatasetDao;
     this.firmaDao = firmaDao;
     this.selloDao = selloDao;
   }
 
   // --------------------------------------------------------
-  // MÉTODO PRINCIPAL
+  // METODO PRINCIPAL
   // --------------------------------------------------------
   public void generarBoletas(long periodoId,
                              long seccionId,
@@ -63,17 +69,42 @@ public class BoletaPdfService {
     }
     String plantillaHtml = plantilla.getContenidoHtml();
 
+    // Firmas
     Firma firmaTutor = firmaDao.getFirmaPorUsuarioId(userSession.getUserId());
     FirmaDirectoraYSello firmaDirSello = cargarFirmaDirectoraYSello();
+
+    // ==========================
+    // 1) Obtener dataset del SP
+    // ==========================
+    List<Long> alumnosIds = alumnos.stream()
+        .map(Alumno::getMatriculaId)
+        .collect(Collectors.toList());
+
+    Map<Long, BoletaAlumnoDatasetDto> datasetPorMatricula =
+        boletaDatasetDao.obtenerDatasetBoleta(
+            periodoId,
+            seccionId,
+            bimestreNum,
+            alumnosIds
+        );
 
     // Solo 1 alumno → PDF directo
     if (alumnos.size() == 1) {
       Alumno a = alumnos.get(0);
+      Long matId = a.getMatriculaId();
+      BoletaAlumnoDatasetDto ds = datasetPorMatricula.get(matId);
+
+      if (ds == null) {
+        throw new IllegalStateException("No se encontró dataset para la matrícula " + matId);
+      }
 
       byte[] pdf = generarPdfParaAlumno(
-          periodoId, seccionId, nivelId, bimestreNum,
-          a, userSession, plantillaHtml,
-          firmaTutor, firmaDirSello
+          a,
+          ds,
+          userSession,
+          plantillaHtml,
+          firmaTutor,
+          firmaDirSello
       );
 
       try (FileOutputStream fos = new FileOutputStream(destino)) {
@@ -85,11 +116,20 @@ public class BoletaPdfService {
     // Varios alumnos → ZIP
     try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(destino))) {
       for (Alumno a : alumnos) {
+        Long matId = a.getMatriculaId();
+        BoletaAlumnoDatasetDto ds = datasetPorMatricula.get(matId);
+        if (ds == null) {
+          // si no hay dataset para ese alumno, lo saltas o lanzas excepción, como prefieras
+          continue;
+        }
 
         byte[] pdf = generarPdfParaAlumno(
-            periodoId, seccionId, nivelId, bimestreNum,
-            a, userSession, plantillaHtml,
-            firmaTutor, firmaDirSello
+            a,
+            ds,
+            userSession,
+            plantillaHtml,
+            firmaTutor,
+            firmaDirSello
         );
 
         ZipEntry entry = new ZipEntry(formatearNombreArchivoAlumno(a) + ".pdf");
@@ -123,24 +163,24 @@ public class BoletaPdfService {
   // --------------------------------------------------------
   // GENERAR PDF POR ALUMNO
   // --------------------------------------------------------
-  private byte[] generarPdfParaAlumno(long periodoId,
-                                      long seccionId,
-                                      long nivelId,
-                                      int bimestreNum,
-                                      Alumno alumno,
+  private byte[] generarPdfParaAlumno(Alumno alumno,
+                                      BoletaAlumnoDatasetDto ds,
                                       UserSession userSession,
                                       String plantillaHtml,
                                       Firma firmaTutor,
                                       FirmaDirectoraYSello firmaDirSello) throws Exception {
 
-    BoletaAlumnoDatasetDto ds = construirDatasetBasico(periodoId, seccionId, nivelId, bimestreNum, alumno);
-
-    Path tempDir = Files.createTempDirectory("boleta-pdf-" + alumno.getId() + "-");
+    Path tempDir = Files.createTempDirectory("boleta-pdf-" + ds.getMatriculaId() + "-");
 
     try {
       String htmlPersonalizado = renderizarHtmlBoleta(
-          plantillaHtml, alumno, userSession, ds,
-          firmaTutor, firmaDirSello, tempDir
+          plantillaHtml,
+          alumno,
+          ds,
+          userSession,
+          firmaTutor,
+          firmaDirSello,
+          tempDir
       );
 
       return htmlToPdf(htmlPersonalizado, tempDir);
@@ -169,40 +209,35 @@ public class BoletaPdfService {
   }
 
   // --------------------------------------------------------
-  // DATOS MOQUEADOS
-  // --------------------------------------------------------
-  private BoletaAlumnoDatasetDto construirDatasetBasico(long periodoId,
-                                                        long seccionId,
-                                                        long nivelId,
-                                                        int bimestreNum,
-                                                        Alumno alumno) {
-
-    BoletaAlumnoDatasetDto ds = new BoletaAlumnoDatasetDto();
-    ds.setNivelNombre(nivelId == 1L ? "PRIMARIA" : "SECUNDARIA");
-    ds.setAnio(Year.now().getValue());
-    return ds;
-  }
-
-  // --------------------------------------------------------
-  // RENDER HTML
+  // RENDER HTML usando el dataset del SP
   // --------------------------------------------------------
   private String renderizarHtmlBoleta(String plantilla,
                                       Alumno alumno,
-                                      UserSession userSession,
                                       BoletaAlumnoDatasetDto ds,
+                                      UserSession userSession,
                                       Firma firmaTutor,
                                       FirmaDirectoraYSello firmaDirSello,
                                       Path tempDir) throws IOException {
 
     String html = plantilla;
 
-    html = html.replace("{{ALUMNO}}", escapeHtml(alumno.getApellidos().toUpperCase(Locale.ROOT) + " " + alumno.getNombres().toUpperCase(Locale.ROOT)));
-    html = html.replace("{{DNI}}", alumno.getDni() == null ? "" : alumno.getDni());
+    // Cabecera desde dataset (por si algún día cambias algo en el SP)
+    String nombreCompleto = (ds.getApellidos() + " " + ds.getNombres()).toUpperCase(Locale.ROOT);
 
-    html = html.replace("{{GRADO_SECCION}}", (alumno.getGrado() + "-" + alumno.getSeccion()).trim());
-    html = html.replace("{{NIVEL}}", alumno.getNivel() != null ? alumno.getNivel().toUpperCase(Locale.ROOT) : "");
-    html = html.replace("{{ANIO}}", String.valueOf(ds.getAnio()));
-    html = html.replace("{{NUM_ORDEN}}", alumno.getNumeroOrden() != null ? alumno.getNumeroOrden().toString() : "0");
+    html = html.replace("{{ALUMNO}}", escapeHtml(nombreCompleto));
+    html = html.replace("{{DNI}}", ds.getDni() == null ? "" : ds.getDni());
+    html = html.replace("{{GRADO_SECCION}}",
+        (ds.getGrado() + "-" + ds.getSeccion()).trim());
+    html = html.replace("{{NIVEL}}",
+        ds.getNivel() != null ? ds.getNivel().toUpperCase(Locale.ROOT) : "");
+    html = html.replace("{{ANIO}}", String.valueOf(ds.getAnio() == 0 ? Year.now().getValue() : ds.getAnio()));
+    html = html.replace("{{NUM_ORDEN}}",
+        ds.getNumeroOrden() != null ? ds.getNumeroOrden().toString() : "0");
+
+    // Si tu plantilla tiene más placeholders (PUNTAJE, PUESTO, CONDUCTA, etc.), puedes hacer:
+    // html = html.replace("{{PUNTAJE_TOTAL}}", ds.getPuntajeTotal() != null ? ds.getPuntajeTotal().toString() : "");
+    // html = html.replace("{{PUESTO}}", ds.getPuesto() != null ? ds.getPuesto().toString() : "");
+    // html = html.replace("{{CONDUCTA_LETRA}}", ds.getConductaLetra() != null ? ds.getConductaLetra() : "");
 
     // Firma Tutor
     if (firmaTutor != null && firmaTutor.getImagen() != null) {

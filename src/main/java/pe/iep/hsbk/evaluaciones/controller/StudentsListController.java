@@ -16,20 +16,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import pe.iep.hsbk.evaluaciones.dao.AlumnoDao;
-import pe.iep.hsbk.evaluaciones.dao.FirmaDao;
-import pe.iep.hsbk.evaluaciones.dao.GradoDao;
-import pe.iep.hsbk.evaluaciones.dao.PeriodoDao;
-import pe.iep.hsbk.evaluaciones.dao.PlantillaBoletaDao;
-import pe.iep.hsbk.evaluaciones.dao.SelloDao;
-import pe.iep.hsbk.evaluaciones.dao.SeccionDao;
-import pe.iep.hsbk.evaluaciones.dao.impl.AlumnoDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.FirmaDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.GradoDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.PeriodoDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.PlantillaDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.SelloDaoImpl;
-import pe.iep.hsbk.evaluaciones.dao.impl.SeccionDaoImpl;
+import pe.iep.hsbk.evaluaciones.dao.*;
+import pe.iep.hsbk.evaluaciones.dao.impl.*;
 import pe.iep.hsbk.evaluaciones.dto.RolesEnSeccionDto;
 import pe.iep.hsbk.evaluaciones.enums.Constantes;
 import pe.iep.hsbk.evaluaciones.model.Alumno;
@@ -100,12 +88,13 @@ public class StudentsListController implements SesionAware {
 
   // DAOs específicos para boleta
   private final PlantillaBoletaDao plantillaBoletaDao = new PlantillaDaoImpl();
+  private final BoletaDatasetDao boletaDatasetDao = new BoletaDatasetDaoImpl();
   private final FirmaDao firmaDao = new FirmaDaoImpl();
   private final SelloDao selloDao = new SelloDaoImpl();
 
   // Service de boletas (usa los DAOs de arriba)
   private final BoletaPdfService boletaPdfService =
-      new BoletaPdfService(plantillaBoletaDao, firmaDao, selloDao);
+      new BoletaPdfService(plantillaBoletaDao, boletaDatasetDao, firmaDao, selloDao);
 
   // ===================== Caches =====================
   private final Map<String, List<Grado>> cacheGradosPorPeriodoNivelUsuario = new HashMap<>();
@@ -572,7 +561,7 @@ public class StudentsListController implements SesionAware {
         return;
       }
 
-      int bimestreNum = obtenerBimestreActual(); // luego lo conectas a tu UI
+      int bimestreNum = obtenerBimestreActual();
 
       FileChooser fc = new FileChooser();
       fc.setTitle("Guardar boleta(s)");

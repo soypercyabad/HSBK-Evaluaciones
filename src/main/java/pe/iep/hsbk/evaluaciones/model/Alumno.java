@@ -17,7 +17,7 @@ public class Alumno {
   public Alumno() {
   }
 
-  public Alumno(Long id, Long matriculaId ,String dni, String codigo, String apellidos, String nombres, Integer numeroOrden, String grado, String nivel, String seccion, boolean activo) {
+  public Alumno(Long id, Long matriculaId, String dni, String codigo, String apellidos, String nombres, Integer numeroOrden, String grado, String nivel, String seccion, boolean activo) {
     this.id = id;
     this.matriculaId = matriculaId;
     this.dni = dni;
@@ -40,11 +40,11 @@ public class Alumno {
   }
 
   public Long getMatriculaId() {
-    return id;
+    return matriculaId;
   }
 
   public void setMatriculaId(Long matriculaId) {
-    this.id = id;
+    this.matriculaId = matriculaId;
   }
 
   public String getDni() {
