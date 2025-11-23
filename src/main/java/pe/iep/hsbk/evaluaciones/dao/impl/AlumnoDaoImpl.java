@@ -23,9 +23,13 @@ public class AlumnoDaoImpl implements AlumnoDao {
         while (rs.next()) {
           Alumno a = new Alumno();
           a.setId(rs.getLong("id"));
-          a.setApellidos(rs.getString("apellidos"));
-          a.setNombres(rs.getString("nombres"));
+          a.setMatriculaId(rs.getLong("matricula_id"));
+          a.setDni(rs.getString("dni"));
           a.setCodigo(rs.getString("codigo"));
+          a.setApellidos(rs.getString("apellidos"));
+          a.setNombres(rs.getString("nombres"));;
+          a.setNumeroOrden(rs.getInt("numero_orden"));
+          a.setActivo(rs.getBoolean("activo"));
           out.add(a);
         }
       }

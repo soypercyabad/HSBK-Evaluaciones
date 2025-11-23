@@ -279,7 +279,7 @@ public class StudentsListController implements SesionAware {
     FXAsync.run(
         () -> {
           try {
-            return bimestreDao.listarbimestres(periodoId);
+            return bimestreDao.listarBimestres(periodoId);
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -393,7 +393,7 @@ public class StudentsListController implements SesionAware {
     colCodigo.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCodigo()));
     colApellidos.setStyle("-fx-alignment: CENTER-LEFT;");
     colNombres.setStyle("-fx-alignment: CENTER-LEFT;");
-    colCodigo.setStyle("-fx-alignment: CENTER-LEFT;");
+    colCodigo.setStyle("-fx-alignment: CENTER;");
 
     colAcciones.setCellFactory(col -> new TableCell<Alumno, Void>() {
       private final Button btnEdit = IconButtons.iconButtonForCell(
@@ -628,10 +628,10 @@ public class StudentsListController implements SesionAware {
   @FXML
   private void onDescargar() {
     try {
+
       List<Alumno> seleccionados = new ArrayList<>();
       for (Alumno a : tblAlumnos.getItems()) {
         if (selectedMap.getOrDefault(a, new SimpleBooleanProperty(false)).get()) {
-          a = alumnoDao.obtenerPorId(a.getId().intValue(),nivelId.intValue());
           seleccionados.add(a);
         }
       }
@@ -647,7 +647,14 @@ public class StudentsListController implements SesionAware {
       }
 
       int bimestreNum = obtenerBimestreActual();
-      System.out.println("Bimestre seleccionado: " + bimestreNum);
+
+      Bimestre b = bimestreDao.estadoBimestre( bimestreNum, periodoId);
+      if (b == null || b.isAbierto()) {
+        Dialogs.warn(null, "Bimestre no cerrado",
+            "No se pueden generar boletas para el " + bimestreNum + "º bimestre\n" +
+                "porque aún no ha sido cerrado.");
+        return;
+      }
 
       FileChooser fc = new FileChooser();
       fc.setTitle("Guardar boleta(s)");
@@ -729,8 +736,8 @@ public class StudentsListController implements SesionAware {
     // Aquí puedes usar gradoSelId, seccionSelId, nivelId y consultar BD
     // o guardar en memoria el nombre de grado/sección cuando seleccionas.
     // Por ahora algo simple:
-    String gradoNombre = "GRADO";
-    String seccionNombre = "SECCION";
+    String gradoNombre = gradoSelId.toString();
+    String seccionNombre = seccionSelId.toString();
     String nivelNombre = (nivelId != null && nivelId == 1L) ? "PRIMARIA" : "SECUNDARIA";
 
     return gradoNombre + "_" + seccionNombre + "_" + nivelNombre;

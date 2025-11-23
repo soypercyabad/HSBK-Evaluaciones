@@ -216,7 +216,7 @@ public class AlumnoNotasController implements SesionAware {
     FXAsync.run(
         () -> cacheBimestresPorPeriodoNivel.computeIfAbsent(key, k -> {
           try {
-            return bimestreDao.listarbimestres(periodoId);
+            return bimestreDao.listarBimestres(periodoId);
           } catch (Exception e) {
             throw new RuntimeException(e);
           }

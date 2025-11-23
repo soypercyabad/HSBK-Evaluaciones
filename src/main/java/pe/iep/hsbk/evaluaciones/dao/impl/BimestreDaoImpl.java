@@ -9,8 +9,30 @@ import java.util.List;
 
 public class BimestreDaoImpl implements BimestreDao {
 
+  public Bimestre estadoBimestre(Integer numBimestre, Long periodoId) throws Exception {
+    String sql = "CALL sp_get_estado_bimestre (?,?)";
+
+    try (var con = ConexionDB.getConnection();
+         var ps = con.prepareStatement(sql)) {
+
+      ps.setLong(1, numBimestre);
+      ps.setLong(2, periodoId);
+
+      try (var rs = ps.executeQuery()) {
+
+        if (rs.next()) {
+          Bimestre b  = new Bimestre();
+          b.setAbierto(rs.getBoolean("abierto"));
+          return b;
+        } else {
+          return null;
+        }
+      }
+    }
+  }
+
   @Override
-  public List<Bimestre> listarbimestres(Long periodoId) throws Exception {
+  public List<Bimestre> listarBimestres(Long periodoId) throws Exception {
     String sql = "CALL sp_get_bimestre_periodo (?)";
 
     try (var con = ConexionDB.getConnection();

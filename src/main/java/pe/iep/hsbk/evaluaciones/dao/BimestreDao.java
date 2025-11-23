@@ -5,6 +5,6 @@ import pe.iep.hsbk.evaluaciones.model.Bimestre;
 import java.util.List;
 
 public interface BimestreDao {
-
-  List<Bimestre> listarbimestres(Long periodoId) throws  Exception;
+  Bimestre estadoBimestre(Integer numBimestre, Long periodoId) throws  Exception;
+  List<Bimestre> listarBimestres(Long periodoId) throws  Exception;
 }

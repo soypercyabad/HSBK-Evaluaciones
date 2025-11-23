@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -233,7 +232,7 @@ public class AlumnoConductaController implements SesionAware {
     FXAsync.run(
         () -> cacheBimestresPorPeriodoNivel.computeIfAbsent(key, k -> {
           try {
-            return bimestreDao.listarbimestres(periodoId);
+            return bimestreDao.listarBimestres(periodoId);
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
