@@ -733,14 +733,14 @@ public class StudentsListController implements SesionAware {
   }
 
   private String construirNombreZipAula() {
-    // Aquí puedes usar gradoSelId, seccionSelId, nivelId y consultar BD
-    // o guardar en memoria el nombre de grado/sección cuando seleccionas.
-    // Por ahora algo simple:
-    String gradoNombre = gradoSelId.toString();
-    String seccionNombre = seccionSelId.toString();
-    String nivelNombre = (nivelId != null && nivelId == 1L) ? "PRIMARIA" : "SECUNDARIA";
-
-    return gradoNombre + "_" + seccionNombre + "_" + nivelNombre;
+    try {
+      String peridoNombre = userSession.getPeriodoNombre();
+      String nombreZip = boletaDatasetDao.obtenerNombreZip(nivelId, seccionSelId, gradoSelId);
+      return nombreZip + "_" + peridoNombre;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "boletas_aula_" + System.currentTimeMillis();
+    }
   }
 
   private int obtenerBimestreActual() {

@@ -148,4 +148,25 @@ public class BoletaDatasetDaoImpl implements BoletaDatasetDao {
 
     return map;
   }
+
+  @Override
+  public String obtenerNombreZip(long nivelId, long seccionId, long gradoId) throws Exception {
+    String call = "{CALL sp_get_nombre_zip(?,?,?)}";
+
+    try (Connection cn = ConexionDB.getConnection();
+         CallableStatement cs = cn.prepareCall(call)) {
+
+      cs.setLong(1, nivelId);
+      cs.setLong(2, seccionId);
+      cs.setLong(3, gradoId);
+
+      try (ResultSet rs = cs.executeQuery()) {
+        if (rs.next()) {
+          return rs.getString("nombre_zip");
+        } else {
+          return null;
+        }
+      }
+    }
+  }
 }

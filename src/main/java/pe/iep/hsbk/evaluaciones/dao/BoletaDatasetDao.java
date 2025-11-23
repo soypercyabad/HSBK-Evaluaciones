@@ -12,4 +12,6 @@ public interface BoletaDatasetDao {
       int bimestreNum,
       List<Long> alumnosIds
   ) throws Exception;
+
+  String obtenerNombreZip(long nivelId, long seccionId, long gradoId) throws Exception;
 }
