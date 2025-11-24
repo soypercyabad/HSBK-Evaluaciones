@@ -72,7 +72,7 @@
 
     <!-- Derecha: imagen de fondo + logo -->
     <StackPane fx:id="rightPane" GridPane.columnIndex="1">
-        <!-- Imagen grande que se ajusta al contenedor -->
+        <!-- Imagen grande que se ajusta al contenedor (cover) -->
         <ImageView fx:id="rightImage" preserveRatio="true">
             <image>
                 <Image url="@../assets/portada.png"/>

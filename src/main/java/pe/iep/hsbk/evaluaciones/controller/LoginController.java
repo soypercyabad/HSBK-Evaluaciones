@@ -1,7 +1,11 @@
 package pe.iep.hsbk.evaluaciones.controller;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -14,22 +18,15 @@ import java.io.IOException;
 
 public class LoginController {
 
-  @FXML
-  private TextField txtUsuario;
-  @FXML
-  private PasswordField txtPassword;
-  @FXML
-  private CheckBox chkRemember;
-  @FXML
-  private Button btnIngresar;
-  @FXML
-  private ProgressIndicator piLogin;
+  @FXML private TextField txtUsuario;
+  @FXML private PasswordField txtPassword;
+  @FXML private CheckBox chkRemember;
+  @FXML private Button btnIngresar;
+  @FXML private ProgressIndicator piLogin;
 
-  // Pane derecho e imagen grande del login
-  @FXML
-  private StackPane rightPane;
-  @FXML
-  private ImageView rightImage;
+  // Pane derecho e imagen grande
+  @FXML private StackPane rightPane;
+  @FXML private ImageView rightImage;
 
   private final AuthService authService = new AuthService();
 
@@ -40,13 +37,8 @@ public class LoginController {
     txtUsuario.setOnAction(e -> doLogin());
     txtPassword.setOnAction(e -> doLogin());
 
-    // Hacer que la imagen de la derecha se adapte al tamaño del StackPane
-    if (rightPane != null && rightImage != null) {
-      // que el ImageView siempre tenga el mismo tamaño que el StackPane
-      rightImage.fitWidthProperty().bind(rightPane.widthProperty());
-      rightImage.fitHeightProperty().bind(rightPane.heightProperty());
-      rightImage.setPreserveRatio(true); // ya está en FXML, pero lo reforzamos
-    }
+    // Configurar imagen en modo "cover"
+    setupRightImageCover();
   }
 
   @FXML
@@ -65,7 +57,6 @@ public class LoginController {
 
     setUiBusy(true);
 
-    // Ejecutar login en background con FXAsync
     FXAsync.run(
         () -> {
           try {
@@ -92,13 +83,18 @@ public class LoginController {
         },
         ex -> {
           setUiBusy(false);
-          Dialogs.errorConStacktrace(null, "Error inesperado",
-              "Ocurrió un problema", ex.getMessage(), ex);
+          Dialogs.errorConStacktrace(
+              null,
+              "Error inesperado",
+              "Ocurrió un problema",
+              ex.getMessage(),
+              ex
+          );
         }
     );
   }
 
-  // Bloquea/desbloquea el formulario y muestra/oculta el spinner.
+  /** Bloquea/desbloquea el formulario y muestra/oculta el spinner. */
   private void setUiBusy(boolean busy) {
     txtUsuario.setDisable(busy);
     txtPassword.setDisable(busy);
@@ -106,5 +102,45 @@ public class LoginController {
     btnIngresar.setDisable(busy);
     piLogin.setVisible(busy);
     piLogin.setManaged(busy);
+  }
+
+  private void setupRightImageCover() {
+    if (rightPane == null || rightImage == null) return;
+
+    rightImage.setPreserveRatio(true);
+    rightImage.setSmooth(true);
+    rightImage.setCache(true);
+
+    Runnable resize = () -> {
+      if (rightPane.getWidth() <= 0 || rightPane.getHeight() <= 0) return;
+      if (rightImage.getImage() == null) return;
+
+      double paneW = rightPane.getWidth();
+      double paneH = rightPane.getHeight();
+      double imgW  = rightImage.getImage().getWidth();
+      double imgH  = rightImage.getImage().getHeight();
+
+      if (imgW <= 0 || imgH <= 0) return;
+
+      // scale para cubrir completamente el pane (tipo background-size: cover)
+      double scale = Math.max(paneW / imgW, paneH / imgH);
+
+      rightImage.setFitWidth(imgW * scale);
+      rightImage.setFitHeight(imgH * scale);
+    };
+
+    // Recalcular cada vez que cambian las dimensiones del pane
+    rightPane.widthProperty().addListener((obs, oldV, newV) -> resize.run());
+    rightPane.heightProperty().addListener((obs, oldV, newV) -> resize.run());
+
+    // Primera vez: cuando la escena esté lista
+    rightPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
+      if (newScene != null) {
+        // Forzar un layout inicial y luego recalcular
+        rightPane.applyCss();
+        rightPane.layout();
+        resize.run();
+      }
+    });
   }
 }
