@@ -99,12 +99,15 @@
     -fx-text-fill: #2d2d2d;
 }
 
-/* botones */
+/* ===== BOTONES GENERALES (info/success/error/warning) ===== */
+
 .dialog-pane.sw .button-bar .button {
     -fx-background-radius: 8;
-    -fx-padding: 8 14 8 14;
+    -fx-border-radius: 8;
+    -fx-padding: 8 18 8 18;
 }
 
+/* color genérico base */
 .dialog-pane.sw .button {
     -fx-background-color: #3498db;
     -fx-text-fill: white;
@@ -123,10 +126,43 @@
     -fx-text-fill: #333;
 }
 
-.dialog-pane.sw.sw-confirm .button {
-    -fx-background-color: #6c5ce7;
+/* para los otros diálogos (no confirm) el hover solo baja un poco la opacidad */
+.dialog-pane.sw:not(.sw-confirm) .button:hover {
+    -fx-opacity: .90;
 }
 
-.dialog-pane.sw .button:hover {
-    -fx-opacity: .90;
+/* ===== BOTONES ESPECÍFICOS PARA CONFIRM (OK / CANCEL) ===== */
+
+/* OK (Aceptar) → botón principal relleno y redondeado */
+.dialog-pane.sw.sw-confirm .button.sw-ok {
+    -fx-background-color: #6c5ce7;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+/* Cancelar → outline morado con mismo redondeado */
+.dialog-pane.sw.sw-confirm .button.sw-cancel {
+    -fx-background-color: transparent;
+    -fx-border-color: #6c5ce7;
+    -fx-border-width: 1;
+    -fx-text-fill: #6c5ce7;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+/* HOVER ESPECÍFICO PARA CONFIRM */
+
+/* Aceptar: morado un poco más oscuro al pasar el ratón */
+.dialog-pane.sw.sw-confirm .button.sw-ok:hover {
+    -fx-background-color: #5a3ee0; /* más oscuro */
+    -fx-opacity: 1;
+}
+
+/* Cancelar: relleno suave al pasar el ratón */
+.dialog-pane.sw.sw-confirm .button.sw-cancel:hover {
+    -fx-background-color: rgba(124, 77, 255, 0.08); /* morado muy suave */
+    -fx-border-color: #5a3ee0;
+    -fx-text-fill: #5a3ee0;
+    -fx-opacity: 1;
 }

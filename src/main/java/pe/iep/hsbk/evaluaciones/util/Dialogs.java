@@ -1,7 +1,6 @@
 // Dialogs.java
 package pe.iep.hsbk.evaluaciones.util;
 
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
@@ -15,21 +14,31 @@ import java.util.Optional;
 
 public final class Dialogs {
 
-  private Dialogs() {}
+  private Dialogs() {
+  }
 
   // ======== Métodos rápidos ========
   public static void info(Stage owner, String header, String content) {
     show(owner, Alert.AlertType.INFORMATION, header, content);
   }
+
   public static void warn(Stage owner, String header, String content) {
     show(owner, Alert.AlertType.WARNING, header, content);
   }
+
   public static void error(Stage owner, String header, String content) {
     show(owner, Alert.AlertType.ERROR, header, content);
   }
+
   public static boolean confirm(Stage owner, String header, String question) {
     Alert alert = base(owner, Alert.AlertType.CONFIRMATION, header, question);
+
+    // Botones para confirmación
     alert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+
+    // Estilos específicos de confirmación (OK primario, Cancel outline)
+    styleConfirmButtons(alert);
+
     Optional<ButtonType> r = alert.showAndWait();
     return r.isPresent() && r.get() == ButtonType.OK;
   }
@@ -56,6 +65,8 @@ public final class Dialogs {
 
     alert.getDialogPane().setExpandableContent(box);
     alert.getDialogPane().setExpanded(false);
+
+    alert.getButtonTypes().setAll(ButtonType.OK);
     alert.showAndWait();
   }
 
@@ -112,10 +123,27 @@ public final class Dialogs {
     pane.setGraphic(null);       // sin gráfico nativo
     pane.setContent(root);
 
-    // Botones
-    pane.getButtonTypes().setAll(ButtonType.OK);
+  }
+
+  /**
+   * Aplica estilos SOLO al diálogo de confirmación:
+   *  - OK     (sw-ok):      primario
+   *  - CANCEL (sw-cancel):  secundario outline
+   */
+  private static void styleConfirmButtons(Alert alert) {
+    DialogPane pane = alert.getDialogPane();
+
     Button ok = (Button) pane.lookupButton(ButtonType.OK);
-    ok.getStyleClass().add("sw-ok");
+    if (ok != null) {
+      ok.getStyleClass().add("sw-ok");
+      ok.setDefaultButton(true); // ENTER -> OK
+    }
+
+    Button cancel = (Button) pane.lookupButton(ButtonType.CANCEL);
+    if (cancel != null) {
+      cancel.getStyleClass().add("sw-cancel");
+      cancel.setCancelButton(true); // ESC -> Cancel
+    }
   }
 
   private static String cssClassFor(Alert.AlertType t) {
@@ -136,7 +164,7 @@ public final class Dialogs {
       default:
         result = "sw-info";
         break;
-    };
+    }
     return result;
   }
 
@@ -165,6 +193,7 @@ public final class Dialogs {
   private static void setStageIcon(Stage stage, String path) {
     try (InputStream is = Dialogs.class.getResourceAsStream(path)) {
       if (is != null) stage.getIcons().add(new Image(is));
-    } catch (Exception ignored) {}
+    } catch (Exception ignored) {
+    }
   }
 }

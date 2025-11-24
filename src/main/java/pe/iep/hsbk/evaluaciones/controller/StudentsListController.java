@@ -78,6 +78,11 @@ public class StudentsListController implements SesionAware {
   private Long gradoSelId;
   private Long seccionSelId;
 
+  // ===================== Restauración de vista =====================
+  private Long gradoIdAReponer;
+  private Long seccionIdAReponer;
+  private boolean restaurando = false;
+
   // ===================== Datos Tabla =====================
   private final ObservableList<Alumno> master = FXCollections.observableArrayList();
   private FilteredList<Alumno> filtered;
@@ -191,9 +196,27 @@ public class StudentsListController implements SesionAware {
             paneGrados.getChildren().add(tb);
           }
 
-          if (!grados.isEmpty() && !grpGrados.getToggles().isEmpty()) {
-            grpGrados.selectToggle(grpGrados.getToggles().get(0));
-            onChangeGradoDynamic();
+          Toggle toSelect = null;
+
+          // Si estamos restaurando, intentamos seleccionar el grado original
+          if (restaurando && gradoIdAReponer != null) {
+            for (Toggle t : grpGrados.getToggles()) {
+              Grado g = (Grado) ((ToggleButton) t).getUserData();
+              if (g != null && Objects.equals(g.getId(), gradoIdAReponer)) {
+                toSelect = t;
+                break;
+              }
+            }
+          }
+
+          // Si no encontramos el grado deseado, seleccionamos el primero
+          if (toSelect == null && !grpGrados.getToggles().isEmpty()) {
+            toSelect = grpGrados.getToggles().get(0);
+          }
+
+          if (toSelect != null) {
+            grpGrados.selectToggle(toSelect);
+            onChangeGradoDynamic(); // esto disparará cargarSeccionesAsync()
           } else {
             paneSecciones.getChildren().clear();
             grpSecciones.getToggles().clear();
@@ -232,13 +255,36 @@ public class StudentsListController implements SesionAware {
             paneSecciones.getChildren().add(tb);
           }
 
-          if (!secciones.isEmpty() && !grpSecciones.getToggles().isEmpty()) {
-            grpSecciones.selectToggle(grpSecciones.getToggles().get(0));
+          Toggle toSelect = null;
+
+          // Si estamos restaurando, intentamos seleccionar la sección original
+          if (restaurando && seccionIdAReponer != null) {
+            for (Toggle t : grpSecciones.getToggles()) {
+              Seccion s = (Seccion) ((ToggleButton) t).getUserData();
+              if (s != null && Objects.equals(s.getId(), seccionIdAReponer)) {
+                toSelect = t;
+                break;
+              }
+            }
+          }
+
+          // Si no encontramos la sección deseada, seleccionamos la primera
+          if (toSelect == null && !grpSecciones.getToggles().isEmpty()) {
+            toSelect = grpSecciones.getToggles().get(0);
+          }
+
+          if (toSelect != null) {
+            grpSecciones.selectToggle(toSelect);
             onChangeSeccionDynamic();
           } else {
             master.clear();
             setBusy(false);
           }
+
+          // Una vez restaurada la vista, limpiamos flags
+          restaurando = false;
+          gradoIdAReponer = null;
+          seccionIdAReponer = null;
         },
         ex -> {
           setBusy(false);
@@ -530,6 +576,8 @@ public class StudentsListController implements SesionAware {
       MenuItem miNotas = new MenuItem("Ver Notas");
       MenuItem miConducta = new MenuItem("Ver Conducta");
 
+      System.out.println("Linea 533 → Alumno seleccionado: " + alumno.getNombres() + " " + alumno.getApellidos());
+      System.out.println("Linea 534 → NivelId: " + nivelId + ", SeccionId: " + seccionSelId + ", GradoId: " + gradoSelId);
       miNotas.setOnAction(e -> abrirDetalleAlumno(alumno, nivelId, seccionSelId));
       miConducta.setOnAction(e -> abrirConductaAlumno(alumno, nivelId));
 
@@ -554,6 +602,7 @@ public class StudentsListController implements SesionAware {
         if (ctrlObj instanceof AlumnoNotasController) {
           AlumnoNotasController ctrl = (AlumnoNotasController) ctrlObj;
           ctrl.setSession(userSession);
+          System.out.println("Linea 559 → NivelId: " + nivelId + ", SeccionId: " + seccionSelId + ", GradoId: " + gradoSelId);
           ctrl.setAlumno(alumno, nivelId, seccionId);
 
           final Long gradoIdActual = this.gradoSelId;
@@ -561,6 +610,9 @@ public class StudentsListController implements SesionAware {
           final java.util.function.BiConsumer<Constantes.Route, java.util.function.Consumer<Object>> goToRef = this.goTo;
           final UserSession sesRef = this.userSession;
           final Long nivelRef = nivelId;
+
+          System.out.println("Linea 568 → Configurando onBack: " + goToRef);
+          System.out.println("Linea 569 → gradoIdActual: " + gradoIdActual + ", seccionIdActual: " + seccionIdActual + ", nivelRef: " + nivelRef + ", GradoIdActual: " + gradoIdActual);
 
           ctrl.setOnBack(() -> {
             goToRef.accept(Constantes.Route.STUDENTS_LIST, backCtrl -> {
@@ -759,7 +811,10 @@ public class StudentsListController implements SesionAware {
 
   /** Llamado por el menú para establecer nivel y recargar. */
   public void setNivelId(long nivelId) {
-    if (Objects.equals(this.nivelId, nivelId)) return;
+    if (Objects.equals(this.nivelId, nivelId)) {
+      // Si el nivel es el mismo, no tocamos caches ni recargamos contexto
+      return;
+    }
     this.nivelId = nivelId;
 
     cacheGradosPorPeriodoNivelUsuario.clear();
@@ -773,25 +828,40 @@ public class StudentsListController implements SesionAware {
 
   /** Restaurar la vista al volver desde otra pantalla.  */
   public void restaurarVista(Long nivelId, Long gradoId, Long seccionId) {
-    setNivelId(nivelId);
+    System.out.println("Linea 783 → Restaurando vista: nivelId=" + nivelId + ", gradoId=" + gradoId + ", seccionId=" + seccionId);
 
-    javafx.application.Platform.runLater(() -> {
+    // Marcamos que estamos en modo restauración
+    this.restaurando = true;
+    this.gradoIdAReponer = gradoId;
+    this.seccionIdAReponer = seccionId;
+
+    // Si el nivel es distinto, disparamos el flujo normal de carga (async)
+    if (!Objects.equals(this.nivelId, nivelId)) {
+      setNivelId(nivelId);
+      return;
+    }
+
+    // Si el nivel es el mismo y ya estaba inicializado, intentamos seleccionar directamente
+    if (contextInitialized) {
+      // Seleccionar grado
+      Toggle gradoToggle = null;
       for (Toggle t : grpGrados.getToggles()) {
         Grado g = (Grado) ((ToggleButton) t).getUserData();
         if (g != null && Objects.equals(g.getId(), gradoId)) {
-          grpGrados.selectToggle(t);
-          onChangeGradoDynamic();
+          gradoToggle = t;
           break;
         }
       }
-      for (Toggle t : grpSecciones.getToggles()) {
-        Seccion s = (Seccion) ((ToggleButton) t).getUserData();
-        if (s != null && Objects.equals(s.getId(), seccionId)) {
-          grpSecciones.selectToggle(t);
-          onChangeSeccionDynamic();
-          break;
-        }
+      if (gradoToggle != null) {
+        grpGrados.selectToggle(gradoToggle);
+        onChangeGradoDynamic(); // esto recargará/seleccionará secciones según la lógica de restauración
+      } else if (!grpGrados.getToggles().isEmpty()) {
+        grpGrados.selectToggle(grpGrados.getToggles().get(0));
+        onChangeGradoDynamic();
       }
-    });
+    } else {
+      // Si por alguna razón aún no está inicializado, deja que tryInitContext lo maneje
+      tryInitContext();
+    }
   }
 }
