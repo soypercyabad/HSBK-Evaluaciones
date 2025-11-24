@@ -27,32 +27,50 @@ import java.util.stream.Collectors;
 public class AlumnoConductaController implements SesionAware {
 
   // ===================== UI (FXML) =====================
-  @FXML private Label lblTitleAlumno;
-  @FXML private Label lblTitleGrado;
-  @FXML private Label lblTitleSeccion;
-  @FXML private Button btnBack;
-  @FXML private Button btnGuardar;
-  @FXML private Button btnEditarEvaluacion;
-  @FXML private Label lblBimestreSel;
+  @FXML
+  private Label lblTitleAlumno;
+  @FXML
+  private Label lblTitleGrado;
+  @FXML
+  private Label lblTitleSeccion;
+  @FXML
+  private Button btnBack;
+  @FXML
+  private Button btnGuardar;
+  @FXML
+  private Button btnEditarEvaluacion;
+  @FXML
+  private Label lblBimestreSel;
 
   // Formularios
-  @FXML private ComboBox<RecomendacionCatalogo> recomendacionComboBox;
-  @FXML private TextField txtutilesEscolares;
-  @FXML private TextField txtactividades;
-  @FXML private TextField txtreuniones;
-  @FXML private TextField txtescuelaPadres;
-  @FXML private TextField txtnotaConducta;
-  @FXML private TextField txtconductaLetra;
+  @FXML
+  private ComboBox<RecomendacionCatalogo> recomendacionComboBox;
+  @FXML
+  private TextField txtutilesEscolares;
+  @FXML
+  private TextField txtactividades;
+  @FXML
+  private TextField txtreuniones;
+  @FXML
+  private TextField txtescuelaPadres;
+  @FXML
+  private TextField txtnotaConducta;
+  @FXML
+  private TextField txtconductaLetra;
 
   // Contenedores
-  @FXML private HBox paneBimestres;
+  @FXML
+  private HBox paneBimestres;
 
   // Contenedores dinámicos
-  @FXML private FlowPane paneAreas;
-  @FXML private FlowPane paneCursosSinArea;
+  @FXML
+  private FlowPane paneAreas;
+  @FXML
+  private FlowPane paneCursosSinArea;
 
   // Overlay de carga
-  @FXML private StackPane overlay;
+  @FXML
+  private StackPane overlay;
 
   // ===================== Grupos de toggles =====================
   private final ToggleGroup grpBimestres = new ToggleGroup();
@@ -90,7 +108,9 @@ public class AlumnoConductaController implements SesionAware {
     this.userSession = s;
   }
 
-  /** Inyecta el alumno y nivel y carga cabeceras. */
+  /**
+   * Inyecta el alumno y nivel y carga cabeceras.
+   */
   public void setAlumno(Alumno a, Long nivelId) {
     this.nivelId = nivelId;
     this.alumnoActual = a;
@@ -101,13 +121,17 @@ public class AlumnoConductaController implements SesionAware {
     }
   }
 
-  /** Inyecta la acción de volver. */
+  /**
+   * Inyecta la acción de volver.
+   */
   public void setOnBack(Runnable onBack) {
     this.onBack = onBack;
     wireBackButton();
   }
 
-  /** Llamado por el menú externo para cambiar nivel y recargar. */
+  /**
+   * Llamado por el menú externo para cambiar nivel y recargar.
+   */
   public void setNivelId(long nivelId) {
     if (Objects.equals(this.nivelId, nivelId)) return;
     this.nivelId = nivelId;
@@ -375,42 +399,89 @@ public class AlumnoConductaController implements SesionAware {
         recomendacionId = recomendacionComboBox.getValue().getId();
       }
 
-      String comentarios = null;
+      BigDecimal notaConducta = parseNota0a20(txtnotaConducta);
 
-      conductaPanelDao.saveConductaBimestre(
-          alumnoActual.getId(),
-          periodoId,
-          nivelId,
-          bimestreSelId,
-          BigDecimal.valueOf(Double.valueOf(txtnotaConducta.getText())),
-          txtutilesEscolares.getText(),
-          txtactividades.getText(),
-          txtreuniones.getText(),
-          txtescuelaPadres.getText(),
-          comentarios,
-          recomendacionId,
-          null,
-          usuarioId
+      String utilesEscolares = txtutilesEscolares.getText();
+      String actividades     = txtactividades.getText();
+      String reuniones       = txtreuniones.getText();
+      String escuelaPadres   = txtescuelaPadres.getText();
+      String comentarios     = null;
+
+      // Copias finales para el hilo en background
+      final Long alumnoId   = alumnoActual.getId();
+      final Long perId      = periodoId;
+      final Long nivId      = nivelId;
+      final Long bimId      = bimestreSelId;
+      final Long recId      = recomendacionId;
+      final Long userId     = usuarioId;
+
+      setBusy(true);
+
+      FXAsync.run(
+          // BACKGROUND
+          () -> {
+            try {
+              conductaPanelDao.saveConductaBimestre(
+                  alumnoId,
+                  perId,
+                  nivId,
+                  bimId,
+                  notaConducta,
+                  utilesEscolares,
+                  actividades,
+                  reuniones,
+                  escuelaPadres,
+                  comentarios,
+                  recId,
+                  null,
+                  userId
+              );
+              return null;
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          },
+          // OK (hilo de JavaFX)
+          ok -> {
+            setBusy(false);
+
+            // Volver a modo solo lectura
+            setEditableConducta(false);
+            if (btnGuardar != null) {
+              btnGuardar.setVisible(false);
+              btnGuardar.setManaged(false);
+            }
+            if (btnEditarEvaluacion != null) {
+              btnEditarEvaluacion.setVisible(true);
+              btnEditarEvaluacion.setManaged(true);
+            }
+
+            // Recargar datos desde BD para reflejar cualquier cambio
+            try {
+              onChangeBimestreDynamic();
+            } catch (Exception ex) {
+              ex.printStackTrace();
+            }
+
+            Dialogs.info(null, "Éxito", "Los datos se han guardado correctamente.");
+          },
+          // ERROR (hilo de JavaFX)
+          ex -> {
+            setBusy(false);
+            ex.printStackTrace();
+            Dialogs.errorConStacktrace(
+                null,
+                "Error",
+                "No se pudo guardar la conducta.",
+                ex.getMessage(),
+                ex
+            );
+          }
       );
 
-      // después de guardar, volvemos a modo solo lectura
-      setEditableConducta(false);
-      if (btnGuardar != null) {
-        btnGuardar.setVisible(false);
-        btnGuardar.setManaged(false);
-      }
-      if (btnEditarEvaluacion != null) {
-        btnEditarEvaluacion.setVisible(true);
-        btnEditarEvaluacion.setManaged(true);
-      }
-
-      Dialogs.info(null, "Éxito", "Los datos se han guardado correctamente.");
-
-    } catch (NumberFormatException e) {
-      Dialogs.error(null, "Error", "La nota debe ser un número válido.");
-    } catch (Exception e) {
-      e.printStackTrace();
-      Dialogs.errorConStacktrace(null, "Error", "No se pudo guardar la conducta.", e.getMessage(), e);
+    } catch (IllegalArgumentException e) {
+      // Errores de validación de nota (parseNota0a20)
+      Dialogs.warn(null, "Datos inválidos", e.getMessage());
     }
   }
 
@@ -418,6 +489,24 @@ public class AlumnoConductaController implements SesionAware {
   private String formatNota(BigDecimal v) {
     if (v == null) return "";
     return v.stripTrailingZeros().toPlainString();
+  }
+
+  private BigDecimal parseNota0a20(TextField field) {
+    String txt = (field != null) ? field.getText() : null;
+
+    if (txt == null || txt.trim().isEmpty()) {
+      throw new IllegalArgumentException("La nota de conducta es obligatoria.");
+    }
+
+    try {
+      BigDecimal nota = new BigDecimal(txt.trim());
+      if (nota.compareTo(BigDecimal.ZERO) < 0 || nota.compareTo(BigDecimal.valueOf(20)) > 0) {
+        throw new IllegalArgumentException("La nota de conducta debe estar entre 0 y 20.");
+      }
+      return nota;
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("La nota de conducta debe ser un número válido.");
+    }
   }
 
   // ===================== Render de promedios =====================
@@ -703,10 +792,10 @@ public class AlumnoConductaController implements SesionAware {
 
   private void setEditableConducta(boolean editable) {
     if (txtutilesEscolares != null) txtutilesEscolares.setEditable(editable);
-    if (txtactividades != null)    txtactividades.setEditable(editable);
-    if (txtreuniones != null)      txtreuniones.setEditable(editable);
-    if (txtescuelaPadres != null)  txtescuelaPadres.setEditable(editable);
-    if (txtnotaConducta != null)   txtnotaConducta.setEditable(editable);
+    if (txtactividades != null) txtactividades.setEditable(editable);
+    if (txtreuniones != null) txtreuniones.setEditable(editable);
+    if (txtescuelaPadres != null) txtescuelaPadres.setEditable(editable);
+    if (txtnotaConducta != null) txtnotaConducta.setEditable(editable);
 
     if (recomendacionComboBox != null) {
       setComboReadOnly(recomendacionComboBox, !editable);
