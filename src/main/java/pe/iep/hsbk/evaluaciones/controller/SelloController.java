@@ -76,7 +76,7 @@ public class SelloController implements SesionAware {
   public void setSession(AuthService.UserSession s) {
     this.userSession = s;
     if (s != null) {
-      lblTitleScreen.setText(Constantes.PANEL_PLANTILLA_BOLETA);
+      lblTitleScreen.setText(Constantes.PANEL_SELLO);
       lblTitleProfile.setText(formatRoles(s.getRoles()));
     }
   }
